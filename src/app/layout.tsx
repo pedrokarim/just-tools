@@ -61,9 +61,9 @@ export const metadata: Metadata = {
     siteName: "Just Tools",
     images: [
       {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
+        url: "/assets/images/icon-512.png",
+        width: 512,
+        height: 512,
         alt: "Just Tools - Outils de développement",
       },
     ],
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     title: "Just Tools - Suite d'outils de développement gratuits",
     description:
       "Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien.",
-    images: ["/og-image.png"],
+    images: ["/assets/images/icon-512.png"],
     creator: "@PedroKarim",
   },
   robots: {
@@ -131,7 +131,7 @@ const jsonLd = {
     "Éditeur de Motifs",
     "Effet de Trame",
   ],
-  screenshot: "https://just-tools.vercel.app/og-image.png",
+  screenshot: "https://just-tools.vercel.app/assets/images/icon-512.png",
   softwareVersion: "1.0.0",
   datePublished: "2024-12-19",
   dateModified: "2024-12-19",
@@ -146,8 +146,19 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link
+          rel="icon"
+          href="/assets/images/icon-192.png"
+          type="image/png"
+          sizes="192x192"
+        />
+        <link
+          rel="icon"
+          href="/assets/images/icon-512.png"
+          type="image/png"
+          sizes="512x512"
+        />
+        <link rel="apple-touch-icon" href="/assets/images/icon-192.png" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#3b82f6" />
         <meta name="msapplication-TileColor" content="#3b82f6" />

@@ -36,6 +36,7 @@ import { ShimmerElement } from "@/components/shimmer-element";
 import { MorphingElement } from "@/components/morphing-element";
 import { WobbleElement } from "@/components/wobble-element";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   Zap,
@@ -351,7 +352,13 @@ export default function Home() {
           <div className="flex items-center justify-center space-x-2 mb-4">
             <BounceIcon className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
               <RotateElement delay={2} duration={3} angle={360}>
-                <Sparkles className="w-5 h-5 text-white" />
+                <Image
+                  src="/assets/images/icon-origin.png"
+                  alt="Just Tools Logo"
+                  width={20}
+                  height={20}
+                  className="text-white"
+                />
               </RotateElement>
             </BounceIcon>
             <BounceElement delay={1} duration={2}>
