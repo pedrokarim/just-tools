@@ -112,14 +112,14 @@ setup() {
         print_warning "Le fichier .env existe déjà. Voulez-vous le remplacer ? (y/N)"
         read -r response
         if [[ "$response" =~ ^[Yy]$ ]]; then
-            cp env.example .env
-            print_message "Fichier .env créé à partir de env.example"
+            cp .env.example .env
+            print_message "Fichier .env créé à partir de .env.example"
         else
             print_message "Configuration annulée."
             return
         fi
     else
-        cp env.example .env
+        cp .env.example .env
         print_message "Fichier .env créé à partir de env.example"
     fi
     
