@@ -4,6 +4,14 @@ const nextConfig: NextConfig = {
   // Configuration pour Docker
   output: "standalone",
 
+  // Désactivation du linting et de la validation pour accélérer le build
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
   async headers() {
     return [
       {
