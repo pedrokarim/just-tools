@@ -23,12 +23,19 @@ import {
   Sparkles,
   Eye,
   EyeOff,
+  Compass,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  Target,
+  Zap,
 } from "lucide-react";
 
 export function ControlsPanel() {
   const { settings, updateSettings } = useHalftoneStore();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(["shape", "size", "color"])
+    new Set(["global-shape", "shape", "size", "color"])
   );
 
   const toggleSection = (section: string) => {
@@ -58,6 +65,174 @@ export function ControlsPanel() {
           <span>Paramètres</span>
         </h2>
       </div>
+
+      {/* Forme globale */}
+      <Card>
+        <CardHeader
+          className="cursor-pointer"
+          onClick={() => toggleSection("global-shape")}
+        >
+          <CardTitle className="flex items-center justify-between text-sm">
+            <div className="flex items-center space-x-2">
+              <Compass className="h-4 w-4" />
+              <span>Forme globale</span>
+            </div>
+            <Badge variant="outline">{settings.globalShape}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <AnimatePresence>
+          {expandedSections.has("global-shape") && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <CardContent className="space-y-4">
+                {/* Formes globales */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">
+                    Forme de l'ensemble
+                  </Label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {(
+                      [
+                        "circle",
+                        "square",
+                        "diamond",
+                        "hexagon",
+                        "triangle",
+                        "star",
+                        "heart",
+                      ] as const
+                    ).map((shape) => {
+                      const getIcon = (shape: string) => {
+                        switch (shape) {
+                          case "circle":
+                            return Circle;
+                          case "square":
+                            return Square;
+                          case "diamond":
+                            return Diamond;
+                          case "hexagon":
+                            return Hexagon;
+                          case "triangle":
+                            return Target;
+                          case "star":
+                            return Sparkles;
+                          case "heart":
+                            return Layers;
+                          default:
+                            return Circle;
+                        }
+                      };
+                      const Icon = getIcon(shape);
+                      return (
+                        <Button
+                          key={shape}
+                          variant={
+                            settings.globalShape === shape
+                              ? "default"
+                              : "outline"
+                          }
+                          size="sm"
+                          onClick={() => updateSettings({ globalShape: shape })}
+                          className="flex flex-col items-center space-y-1 h-12"
+                          title={shape}
+                        >
+                          <Icon className="h-3 w-3" />
+                          <span className="text-xs capitalize">{shape}</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Direction */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">
+                    Direction de l'effet
+                  </Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(
+                      [
+                        "top",
+                        "bottom",
+                        "left",
+                        "right",
+                        "center",
+                        "radial",
+                      ] as const
+                    ).map((direction) => {
+                      const getIcon = (direction: string) => {
+                        switch (direction) {
+                          case "top":
+                            return ArrowUp;
+                          case "bottom":
+                            return ArrowDown;
+                          case "left":
+                            return ArrowLeft;
+                          case "right":
+                            return ArrowRight;
+                          case "center":
+                            return Target;
+                          case "radial":
+                            return Zap;
+                          default:
+                            return Target;
+                        }
+                      };
+                      const Icon = getIcon(direction);
+                      return (
+                        <Button
+                          key={direction}
+                          variant={
+                            settings.direction === direction
+                              ? "default"
+                              : "outline"
+                          }
+                          size="sm"
+                          onClick={() => updateSettings({ direction })}
+                          className="flex flex-col items-center space-y-1 h-12"
+                          title={direction}
+                        >
+                          <Icon className="h-3 w-3" />
+                          <span className="text-xs capitalize">
+                            {direction}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Auto-application */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-medium">
+                      Application automatique
+                    </Label>
+                    <Button
+                      variant={settings.autoApply ? "default" : "outline"}
+                      size="sm"
+                      onClick={() =>
+                        updateSettings({ autoApply: !settings.autoApply })
+                      }
+                      className="h-6 px-2"
+                    >
+                      {settings.autoApply ? "Activée" : "Désactivée"}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Applique automatiquement l'effet quand vous modifiez les
+                    paramètres
+                  </p>
+                </div>
+              </CardContent>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
 
       {/* Forme */}
       <Card>

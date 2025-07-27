@@ -4,8 +4,9 @@ import { forwardRef, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useHalftoneStore } from "@/lib/halftone-store";
 import { Card, CardContent } from "@/components/ui/card";
-import { Eye, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { Eye, ZoomIn, ZoomOut, RotateCcw, X, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface PreviewCanvasProps {
   isProcessing: boolean;
@@ -13,7 +14,8 @@ interface PreviewCanvasProps {
 
 export const PreviewCanvas = forwardRef<HTMLCanvasElement, PreviewCanvasProps>(
   ({ isProcessing }, ref) => {
-    const { sourceImage, previewSize, setPreviewSize } = useHalftoneStore();
+    const { sourceImage, previewSize, setPreviewSize, clearSourceImage } =
+      useHalftoneStore();
     const containerRef = useRef<HTMLDivElement>(null);
     const [zoom, setZoom] = useState(1);
     const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -26,6 +28,13 @@ export const PreviewCanvas = forwardRef<HTMLCanvasElement, PreviewCanvasProps>(
     const handleResetView = () => {
       setZoom(1);
       setPan({ x: 0, y: 0 });
+    };
+
+    const handleRemoveImage = () => {
+      if (confirm("Voulez-vous vraiment supprimer cette image ?")) {
+        clearSourceImage();
+        toast.success("Image supprimée");
+      }
     };
 
     // Gestion du pan
@@ -163,6 +172,36 @@ export const PreviewCanvas = forwardRef<HTMLCanvasElement, PreviewCanvasProps>(
             <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
               {previewSize.width} × {previewSize.height}
             </div>
+
+            {/* Bouton de suppression d'image */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="absolute top-2 right-2"
+            >
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleRemoveImage}
+                className="h-8 w-8 p-0 rounded-full shadow-lg"
+                title="Supprimer l'image"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </motion.div>
+
+            {/* Indicateur de clic pour supprimer */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+              className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded"
+            >
+              <div className="flex items-center space-x-1">
+                <X className="h-3 w-3" />
+                <span>Cliquez pour supprimer</span>
+              </div>
+            </motion.div>
           </div>
         </div>
       </div>

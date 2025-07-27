@@ -63,6 +63,165 @@ export class HalftoneEngine {
     return { width: Math.round(width), height: Math.round(height) };
   }
 
+  // Calculer la taille basée sur la position et la direction
+  private calculateSizeFromPosition(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    settings: HalftoneSettings
+  ): number {
+    const { direction, sizeMin, sizeMax } = settings;
+
+    // Normaliser les coordonnées (0 à 1)
+    const normalizedX = x / width;
+    const normalizedY = y / height;
+
+    let gradientValue = 0;
+
+    switch (direction) {
+      case "top":
+        // Plus on va vers le haut (Y diminue), plus les points sont gros
+        gradientValue = 1 - normalizedY;
+        break;
+      case "bottom":
+        // Plus on va vers le bas (Y augmente), plus les points sont gros
+        gradientValue = normalizedY;
+        break;
+      case "left":
+        // Plus on va vers la gauche (X diminue), plus les points sont gros
+        gradientValue = 1 - normalizedX;
+        break;
+      case "right":
+        // Plus on va vers la droite (X augmente), plus les points sont gros
+        gradientValue = normalizedX;
+        break;
+      case "center":
+        // Plus on est au centre, plus les points sont gros
+        const centerX1 = 0.5;
+        const centerY1 = 0.5;
+        const distanceFromCenter1 = Math.sqrt(
+          Math.pow(normalizedX - centerX1, 2) +
+            Math.pow(normalizedY - centerY1, 2)
+        );
+        gradientValue = 1 - distanceFromCenter1;
+        break;
+      case "radial":
+        // Dégradé radial depuis le centre
+        const centerX2 = 0.5;
+        const centerY2 = 0.5;
+        const distanceFromCenter2 = Math.sqrt(
+          Math.pow(normalizedX - centerX2, 2) +
+            Math.pow(normalizedY - centerY2, 2)
+        );
+        gradientValue = 1 - distanceFromCenter2;
+        break;
+      default:
+        gradientValue = 0.5; // Valeur par défaut
+    }
+
+    // Clamper la valeur entre 0 et 1
+    gradientValue = Math.max(0, Math.min(1, gradientValue));
+
+    // Appliquer le mapping gamma si nécessaire
+    if (settings.mapping === "gamma") {
+      gradientValue = Math.pow(gradientValue, settings.gamma);
+    }
+
+    // Calculer la taille finale
+    const range = sizeMax - sizeMin;
+    return sizeMin + gradientValue * range;
+  }
+
+  // Obtenir la couleur de l'effet basée sur la position
+  private getEffectColorFromPosition(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    settings: HalftoneSettings
+  ): string {
+    // Pour l'instant, utiliser la première couleur de la palette
+    // On pourrait aussi créer un dégradé de couleur basé sur la position
+    return settings.couleurs[0] || "#000000";
+  }
+
+  // Vérifier si un point est dans la forme globale
+  private isPointInGlobalShape(
+    x: number,
+    y: number,
+    centerX: number,
+    centerY: number,
+    width: number,
+    height: number,
+    settings: HalftoneSettings
+  ): boolean {
+    const { globalShape, direction } = settings;
+
+    // Calculer la distance relative au centre
+    const relX = (x - centerX) / (width / 2);
+    const relY = (y - centerY) / (height / 2);
+    const distance = Math.sqrt(relX * relX + relY * relY);
+
+    // Appliquer la direction
+    let directionMultiplier = 1;
+    switch (direction) {
+      case "top":
+        directionMultiplier = relY < 0 ? 1 : 0.3;
+        break;
+      case "bottom":
+        directionMultiplier = relY > 0 ? 1 : 0.3;
+        break;
+      case "left":
+        directionMultiplier = relX < 0 ? 1 : 0.3;
+        break;
+      case "right":
+        directionMultiplier = relX > 0 ? 1 : 0.3;
+        break;
+      case "center":
+        directionMultiplier = distance < 0.5 ? 1 : 0.3;
+        break;
+      case "radial":
+        directionMultiplier = 1 - distance * 0.5;
+        break;
+      default:
+        directionMultiplier = 1;
+    }
+
+    // Vérifier la forme globale
+    switch (globalShape) {
+      case "circle":
+        return distance <= 1 * directionMultiplier;
+      case "square":
+        return (
+          Math.abs(relX) <= 1 * directionMultiplier &&
+          Math.abs(relY) <= 1 * directionMultiplier
+        );
+      case "diamond":
+        return Math.abs(relX) + Math.abs(relY) <= 1 * directionMultiplier;
+      case "hexagon":
+        const hexDistance = Math.abs(relX) + Math.abs(relY) * 0.866;
+        return hexDistance <= 1 * directionMultiplier;
+      case "triangle":
+        const triangleY = relY + 0.5;
+        return (
+          triangleY >= 0 &&
+          Math.abs(relX) <= (1 - triangleY) * directionMultiplier
+        );
+      case "star":
+        const angle = Math.atan2(relY, relX);
+        const starDistance = 1 + 0.3 * Math.sin(5 * angle);
+        return distance <= starDistance * directionMultiplier;
+      case "heart":
+        const heartX = Math.abs(relX);
+        const heartY = relY + 0.3;
+        const heartDistance = Math.sqrt(heartX * heartX + heartY * heartY);
+        return heartDistance <= 1 * directionMultiplier;
+      default:
+        return true; // Pour "custom" ou autres formes
+    }
+  }
+
   // Calculer la grille halftone
   private calculateGrid(
     width: number,
@@ -78,9 +237,28 @@ export class HalftoneEngine {
     const cos = Math.cos(angleRad);
     const sin = Math.sin(angleRad);
 
-    // Générer la grille
+    // Calculer le centre de l'image
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    // Générer la grille de base
     for (let y = -spacing; y < height + spacing; y += spacing) {
       for (let x = -spacing; x < width + spacing; x += spacing) {
+        // Vérifier si le point est dans la forme globale
+        if (
+          !this.isPointInGlobalShape(
+            x,
+            y,
+            centerX,
+            centerY,
+            width,
+            height,
+            settings
+          )
+        ) {
+          continue;
+        }
+
         // Appliquer la rotation
         const rotatedX = x * cos - y * sin;
         const rotatedY = x * sin + y * cos;
@@ -152,26 +330,31 @@ export class HalftoneEngine {
     point: { x: number; y: number; size: number; angle: number },
     settings: HalftoneSettings
   ): Promise<void> {
-    // Obtenir la couleur du pixel source
-    const color = this.getPixelColor(image, point.x, point.y);
-    const brightness = this.getBrightness(color);
-
-    // Appliquer le mapping
-    const mappedValue = this.applyMapping(brightness, settings);
-
-    // Calculer la taille du point d'effet
-    const size = this.mapValueToSize(mappedValue, settings);
+    // Calculer la taille basée sur la position et la direction
+    const size = this.calculateSizeFromPosition(
+      point.x,
+      point.y,
+      image.width,
+      image.height,
+      settings
+    );
     if (size <= 0) return;
 
-    // Obtenir la couleur de l'effet
-    const effectColor = this.getEffectColor(color, settings);
+    // Obtenir la couleur de l'effet (utiliser une couleur fixe ou basée sur la position)
+    const effectColor = this.getEffectColorFromPosition(
+      point.x,
+      point.y,
+      image.width,
+      image.height,
+      settings
+    );
 
     // Sauvegarder le contexte
     ctx.save();
 
     // Appliquer les transformations pour l'effet
-    ctx.globalAlpha = settings.opacity; // Effet plus visible
-    ctx.globalCompositeOperation = "multiply"; // Mode de fusion pour l'effet
+    ctx.globalAlpha = settings.opacity;
+    ctx.globalCompositeOperation = "multiply";
 
     // Dessiner l'effet de trame
     this.drawHalftoneEffect(

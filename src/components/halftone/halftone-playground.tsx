@@ -31,6 +31,7 @@ export function HalftonePlayground() {
     updateSettings,
     resetSettings,
     savePreset,
+    clearSourceImage,
   } = useHalftoneStore();
 
   const [showControls, setShowControls] = useState(true);
@@ -65,10 +66,12 @@ export function HalftonePlayground() {
     }, 100);
   }, [sourceImage, settings, setProcessing]);
 
-  // Rendu automatique quand les paramètres changent
+  // Rendu automatique seulement si autoApply est activé
   useEffect(() => {
-    renderHalftone();
-  }, [renderHalftone]);
+    if (settings.autoApply) {
+      renderHalftone();
+    }
+  }, [renderHalftone, settings.autoApply]);
 
   // Sauvegarder un preset
   const handleSavePreset = () => {
@@ -85,6 +88,16 @@ export function HalftonePlayground() {
       resetSettings();
       toast.success("Paramètres réinitialisés");
     }
+  };
+
+  // Appliquer l'effet manuellement
+  const handleApplyEffect = () => {
+    if (!sourceImage) {
+      toast.error("Aucune image chargée");
+      return;
+    }
+    renderHalftone();
+    toast.success("Effet appliqué");
   };
 
   return (
@@ -106,6 +119,26 @@ export function HalftonePlayground() {
           </div>
 
           <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => clearSourceImage()}
+              disabled={!sourceImage}
+            >
+              <Image className="h-4 w-4 mr-2" />
+              Changer d'image
+            </Button>
+
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleApplyEffect}
+              disabled={!sourceImage}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Appliquer l'effet
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
