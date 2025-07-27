@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/navbar";
-import { FloatingParticles } from "@/components/floating-particles";
+
 import { ScrollProgress } from "@/components/scroll-progress";
 import { TypingEffect } from "@/components/typing-effect";
 import { Confetti } from "@/components/confetti";
@@ -90,7 +90,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <ScrollProgress />
-      <FloatingParticles />
       <Confetti
         isActive={showConfetti}
         onComplete={() => setShowConfetti(false)}
@@ -130,7 +129,7 @@ export default function Home() {
                   La suite d'outils de développement la plus complète pour
                   <span className="font-semibold text-blue-600 dark:text-blue-400">
                     {" "}
-                    accélérer votre workflow
+                    accélérer votre workflow{" "}
                   </span>
                   et transformer votre productivité
                 </p>
@@ -254,7 +253,7 @@ export default function Home() {
             {filteredTools.map((tool, index) => (
               <TiltCard
                 key={tool.id}
-                className="group hover:shadow-2xl transition-all duration-300 hover:scale-105 border-0 shadow-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm overflow-hidden animate-fade-in-up hover-lift relative"
+                className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm overflow-hidden animate-fade-in-up hover-lift relative"
                 style={{
                   animationDelay: `${index * 150}ms`,
                 }}
@@ -336,8 +335,7 @@ export default function Home() {
               </RippleButton>
               <WaveButton
                 size="lg"
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 text-lg px-8 py-6 hover-lift"
+                className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 text-lg px-8 py-6 hover-lift transition-all duration-300"
               >
                 Voir le code source
               </WaveButton>
@@ -350,28 +348,17 @@ export default function Home() {
       <footer className="py-12 bg-slate-900 text-white">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <BounceIcon className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center hover:scale-110 transition-transform duration-200">
+            <BounceIcon className="w-12 h-12 flex items-center justify-center hover:scale-110 transition-transform duration-200">
               <RotateElement delay={2} duration={3} angle={360}>
                 <Image
                   src="/assets/images/icon-origin.png"
                   alt="Just Tools Logo"
-                  width={20}
-                  height={20}
-                  className="text-white"
+                  width={48}
+                  height={48}
                 />
               </RotateElement>
             </BounceIcon>
-            <BounceElement delay={1} duration={2}>
-              <GlowElement color="purple" intensity={0.3}>
-                <ShimmerElement delay={0.5} duration={3}>
-                  <MorphingElement delay={1} duration={2}>
-                    <WobbleElement delay={1.5} duration={1}>
-                      <span className="text-xl font-bold">Just Tools</span>
-                    </WobbleElement>
-                  </MorphingElement>
-                </ShimmerElement>
-              </GlowElement>
-            </BounceElement>
+            <span className="text-xl font-bold">Just Tools</span>
           </div>
           <FadeElement delay={1} duration={1}>
             <p className="text-slate-400">Développé avec ❤️ par PedroKarim</p>

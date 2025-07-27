@@ -172,7 +172,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden py-8"
+            className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-[90vw] w-full max-h-[95vh] overflow-hidden py-8"
             onClick={(e) => e.stopPropagation()}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">

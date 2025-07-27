@@ -32,7 +32,7 @@ export function GlowElement({
 
   return (
     <div
-      className={`animate-pulse-glow ${className}`}
+      className={className}
       style={{
         boxShadow: `0 0 20px ${getGlowColor()}`,
         filter: `brightness(${1 + intensity})`,
