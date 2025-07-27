@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
+  // Configuration du port depuis les variables d'environnement
+  env: {
+    PORT: process.env.PORT || "3000",
+  },
+
   async headers() {
     return [
       {

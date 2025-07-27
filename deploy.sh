@@ -60,9 +60,19 @@ build() {
 # Fonction de démarrage
 start() {
     print_message "Démarrage de l'application..."
+    
+    # Vérifier si un fichier .env existe
+    if [ ! -f .env ]; then
+        print_warning "Fichier .env non trouvé. Utilisation des valeurs par défaut."
+        print_message "Copiez env.example vers .env pour personnaliser la configuration."
+    fi
+    
     docker compose up -d
+    
+    # Récupérer le port depuis .env ou utiliser la valeur par défaut
+    PORT=$(grep "^PORT=" .env 2>/dev/null | cut -d'=' -f2 || echo "3000")
     print_message "Application démarrée !"
-    print_message "Accédez à l'application sur: http://localhost:3000"
+    print_message "Accédez à l'application sur: http://localhost:${PORT}"
 }
 
 # Fonction d'arrêt
@@ -94,11 +104,34 @@ clean() {
     print_message "Nettoyage terminé !"
 }
 
+# Fonction pour configurer l'environnement
+setup() {
+    print_message "Configuration de l'environnement..."
+    
+    if [ -f .env ]; then
+        print_warning "Le fichier .env existe déjà. Voulez-vous le remplacer ? (y/N)"
+        read -r response
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+            cp env.example .env
+            print_message "Fichier .env créé à partir de env.example"
+        else
+            print_message "Configuration annulée."
+            return
+        fi
+    else
+        cp env.example .env
+        print_message "Fichier .env créé à partir de env.example"
+    fi
+    
+    print_message "Vous pouvez maintenant éditer le fichier .env pour personnaliser la configuration."
+}
+
 # Fonction d'aide
 show_help() {
     echo "Usage: $0 [COMMANDE]"
     echo ""
     echo "Commandes disponibles:"
+    echo "  setup    - Configurer l'environnement (.env)"
     echo "  build    - Construire l'image Docker"
     echo "  start    - Démarrer l'application"
     echo "  stop     - Arrêter l'application"
@@ -122,6 +155,9 @@ main() {
     
     # Gestion des arguments
     case "${1:-help}" in
+        setup)
+            setup
+            ;;
         build)
             build
             ;;

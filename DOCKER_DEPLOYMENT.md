@@ -22,19 +22,25 @@ cd just-tools
 chmod +x deploy.sh
 ```
 
-### 3. Construire et démarrer l'application
+### 3. Configurer l'environnement (optionnel)
+```bash
+./deploy.sh setup
+```
+
+### 4. Construire et démarrer l'application
 ```bash
 ./deploy.sh build
 ./deploy.sh start
 ```
 
-L'application sera accessible sur `http://votre-serveur:3000`
+L'application sera accessible sur `http://votre-serveur:3000` (ou le port configuré dans `.env`)
 
 ## 🔧 Commandes Disponibles
 
 Le script `deploy.sh` offre plusieurs commandes :
 
 ```bash
+./deploy.sh setup    # Configurer l'environnement (.env)
 ./deploy.sh build    # Construire l'image Docker
 ./deploy.sh start    # Démarrer l'application
 ./deploy.sh stop     # Arrêter l'application
@@ -84,12 +90,23 @@ docker compose logs -f
 
 ### Variables d'environnement
 
-Vous pouvez créer un fichier `.env` pour configurer l'application :
+Vous pouvez créer un fichier `.env` pour configurer l'application. Utilisez la commande `./deploy.sh setup` pour créer automatiquement le fichier à partir de `env.example` :
 
+```bash
+./deploy.sh setup
+```
+
+Exemple de configuration dans `.env` :
 ```env
-NODE_ENV=production
+# Configuration du serveur
 PORT=3000
-# Ajoutez d'autres variables selon vos besoins
+
+# Configuration de l'environnement
+NODE_ENV=production
+
+# Configuration de l'application
+NEXT_PUBLIC_APP_NAME=Just Tools
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 ### Reverse Proxy avec Nginx

@@ -39,12 +39,13 @@ COPY --from=builder --chown=nextjs:bunjs /app/.next/static ./.next/static
 # Change vers l'utilisateur non-root
 USER nextjs
 
-# Expose le port 3000
-EXPOSE 3000
+# Expose le port (sera configuré via variable d'environnement)
+EXPOSE ${PORT:-3000}
 
-# Variable d'environnement pour le port
-ENV PORT=3000
+# Variables d'environnement par défaut
+ENV PORT=${PORT:-3000}
 ENV HOSTNAME="0.0.0.0"
+ENV NODE_ENV=production
 
 # Commande de démarrage avec Bun
 CMD ["bun", "server.js"] 
