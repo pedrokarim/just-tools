@@ -39,128 +39,13 @@ import Link from "next/link";
 import {
   ArrowRight,
   Zap,
-  Palette,
-  Search,
-  RefreshCw,
-  Lock,
-  FileText,
-  Grid3X3,
   Star,
   Users,
-  Code,
   Sparkles,
   CheckCircle,
   Play,
-  Image,
 } from "lucide-react";
-
-interface Tool {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  status: "coming-soon" | "in-progress" | "ready";
-  icon: React.ReactNode;
-  color: string;
-  gradient: string;
-}
-
-const tools: Tool[] = [
-  {
-    id: "code-formatter",
-    name: "Formateur de Code",
-    description:
-      "Formate automatiquement votre code dans différents langages avec une précision parfaite",
-    category: "Développement",
-    status: "ready",
-    icon: <Code className="w-6 h-6" />,
-    color: "from-blue-500 to-cyan-500",
-    gradient: "bg-gradient-to-br from-blue-500 to-cyan-500",
-  },
-  {
-    id: "color-palette",
-    name: "Générateur de Palette",
-    description:
-      "Créez des palettes de couleurs harmonieuses pour vos projets créatifs",
-    category: "Design",
-    status: "ready",
-    icon: <Palette className="w-6 h-6" />,
-    color: "from-purple-500 to-pink-500",
-    gradient: "bg-gradient-to-br from-purple-500 to-pink-500",
-  },
-  {
-    id: "json-validator",
-    name: "Validateur JSON",
-    description:
-      "Validez et formatez vos fichiers JSON avec une interface intuitive",
-    category: "Développement",
-    status: "ready",
-    icon: <Search className="w-6 h-6" />,
-    color: "from-green-500 to-emerald-500",
-    gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
-  },
-  {
-    id: "base64-converter",
-    name: "Convertisseur Base64",
-    description: "Encodez et décodez du texte en Base64 instantanément",
-    category: "Utilitaires",
-    status: "ready",
-    icon: <RefreshCw className="w-6 h-6" />,
-    color: "from-orange-500 to-red-500",
-    gradient: "bg-gradient-to-br from-orange-500 to-red-500",
-  },
-  {
-    id: "password-generator",
-    name: "Générateur de Mots de Passe",
-    description: "Générez des mots de passe sécurisés et personnalisables",
-    category: "Sécurité",
-    status: "ready",
-    icon: <Lock className="w-6 h-6" />,
-    color: "from-indigo-500 to-purple-500",
-    gradient: "bg-gradient-to-br from-indigo-500 to-purple-500",
-  },
-  {
-    id: "markdown-editor",
-    name: "Éditeur Markdown",
-    description: "Éditez et prévisualisez du contenu Markdown en temps réel",
-    category: "Édition",
-    status: "ready",
-    icon: <FileText className="w-6 h-6" />,
-    color: "from-teal-500 to-cyan-500",
-    gradient: "bg-gradient-to-br from-teal-500 to-cyan-500",
-  },
-  {
-    id: "pattern-editor",
-    name: "Éditeur de Motifs",
-    description:
-      "Créez des motifs répétitifs avec une grille interactive avancée",
-    category: "Design",
-    status: "ready",
-    icon: <Grid3X3 className="w-6 h-6" />,
-    color: "from-rose-500 to-pink-500",
-    gradient: "bg-gradient-to-br from-rose-500 to-pink-500",
-  },
-  {
-    id: "halftone",
-    name: "Effet de Trame",
-    description:
-      "Ajoutez un effet de trame halftone par-dessus vos images avec des paramètres personnalisables",
-    category: "Design",
-    status: "ready",
-    icon: <Image className="w-6 h-6" />,
-    color: "from-violet-500 to-purple-500",
-    gradient: "bg-gradient-to-br from-violet-500 to-purple-500",
-  },
-];
-
-const categories = [
-  "Tous",
-  "Développement",
-  "Design",
-  "Utilitaires",
-  "Sécurité",
-  "Édition",
-];
+import { tools, categories, getStats } from "@/lib/tools-data";
 
 const features = [
   {
@@ -183,12 +68,7 @@ const features = [
   },
 ];
 
-const stats = [
-  { number: "10K+", label: "Utilisateurs actifs" },
-  { number: "50+", label: "Outils disponibles" },
-  { number: "99.9%", label: "Disponibilité" },
-  { number: "24/7", label: "Support" },
-];
+const stats = getStats();
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("Tous");
@@ -263,7 +143,7 @@ export default function Home() {
                 onClick={() => setShowConfetti(true)}
               >
                 <Play className="w-5 h-5 mr-2" />
-                Commencer Gratuitement
+                Découvrir les Outils
                 <ArrowRight className="w-5 h-5 ml-2" />
               </RippleButton>
               <MagneticButton
@@ -301,10 +181,10 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white animate-fade-in-up">
-              Pourquoi choisir Just Tools ?
+              Pourquoi utiliser Just Tools ?
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
-              Une suite d'outils conçue par des développeurs, pour des
+              Une collection d'outils conçue par des développeurs, pour des
               développeurs
             </p>
           </div>
@@ -342,7 +222,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white animate-fade-in-up">
-              Nos Outils
+              Outils Disponibles
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
               Découvrez notre collection d'outils essentiels pour votre
@@ -429,7 +309,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Community Section */}
       <section className="py-24 bg-gradient-to-r from-blue-600 to-purple-600 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
@@ -438,11 +318,11 @@ export default function Home() {
         <div className="relative z-10 container mx-auto px-4 text-center">
           <div className="max-w-3xl mx-auto space-y-8">
             <h2 className="text-3xl md:text-4xl font-bold text-white animate-fade-in-up">
-              Prêt à transformer votre workflow ?
+              Rejoignez la communauté
             </h2>
             <p className="text-xl text-blue-100 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
-              Rejoignez des milliers de développeurs qui utilisent déjà Just
-              Tools pour accélérer leur développement
+              Contribuez au projet open source et partagez vos idées pour
+              améliorer Just Tools
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <RippleButton
@@ -450,7 +330,7 @@ export default function Home() {
                 className="bg-white text-blue-600 hover:bg-blue-50 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 text-lg px-8 py-6 font-semibold hover-lift"
                 onClick={() => setShowConfetti(true)}
               >
-                Commencer Maintenant
+                Contribuer
                 <ArrowRight className="w-5 h-5 ml-2" />
               </RippleButton>
               <WaveButton
@@ -458,7 +338,7 @@ export default function Home() {
                 variant="outline"
                 className="border-2 border-white text-white hover:bg-white hover:text-blue-600 text-lg px-8 py-6 hover-lift"
               >
-                En savoir plus
+                Voir le code source
               </WaveButton>
             </div>
           </div>
@@ -487,9 +367,7 @@ export default function Home() {
             </BounceElement>
           </div>
           <FadeElement delay={1} duration={1}>
-            <p className="text-slate-400">
-              Développé avec ❤️ pour la communauté des développeurs
-            </p>
+            <p className="text-slate-400">Développé avec ❤️ par PedroKarim</p>
           </FadeElement>
         </div>
       </footer>

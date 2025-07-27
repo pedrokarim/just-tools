@@ -1,0 +1,97 @@
+{
+  "name": "Just Tools - Outils de développement gratuits",
+  "short_name": "Just Tools",
+  "description": "Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "fr",
+  "categories": ["productivity", "utilities", "developer"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Convertisseur Base64",
+      "short_name": "Base64",
+      "description": "Encodez et décodez du texte en Base64",
+      "url": "/tools/base64-converter",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Formateur de Code",
+      "short_name": "Code",
+      "description": "Formatez votre code automatiquement",
+      "url": "/tools/code-formatter",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Générateur de Palette",
+      "short_name": "Palette",
+      "description": "Créez des palettes de couleurs harmonieuses",
+      "url": "/tools/color-palette",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Validateur JSON",
+      "short_name": "JSON",
+      "description": "Validez et formatez vos fichiers JSON",
+      "url": "/tools/json-validator",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Générateur de Mots de Passe",
+      "short_name": "MDP",
+      "description": "Générez des mots de passe sécurisés",
+      "url": "/tools/password-generator",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Éditeur Markdown",
+      "short_name": "MD",
+      "description": "Éditez et prévisualisez du Markdown",
+      "url": "/tools/markdown-editor",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Éditeur de Motifs",
+      "short_name": "Motifs",
+      "description": "Créez des motifs répétitifs interactifs",
+      "url": "/tools/pattern-editor",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Effet de Trame",
+      "short_name": "Trame",
+      "description": "Ajoutez des effets de trame halftone",
+      "url": "/tools/halftone",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Extracteur de Couleurs",
+      "short_name": "Couleurs",
+      "description": "Extrayez les couleurs dominantes d'images",
+      "url": "/tools/color-extractor",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
