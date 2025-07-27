@@ -98,10 +98,9 @@ logs() {
 
 # Fonction de nettoyage
 clean() {
-    print_warning "Nettoyage des images et conteneurs..."
+    print_warning "Nettoyage des images et conteneurs du projet..."
     docker compose down --rmi all --volumes --remove-orphans
-    docker system prune -f
-    print_message "Nettoyage terminé !"
+    print_message "Nettoyage terminé ! (seulement pour ce projet)"
 }
 
 # Fonction pour configurer l'environnement
@@ -120,11 +119,13 @@ setup() {
         fi
     else
         cp .env.example .env
-        print_message "Fichier .env créé à partir de env.example"
+        print_message "Fichier .env créé à partir de .env.example"
     fi
     
     print_message "Vous pouvez maintenant éditer le fichier .env pour personnaliser la configuration."
 }
+
+
 
 # Fonction d'aide
 show_help() {
@@ -137,7 +138,7 @@ show_help() {
     echo "  stop     - Arrêter l'application"
     echo "  restart  - Redémarrer l'application"
     echo "  logs     - Afficher les logs"
-    echo "  clean    - Nettoyer les images et conteneurs"
+    echo "  clean    - Nettoyer les images et conteneurs du projet"
     echo "  help     - Afficher cette aide"
     echo ""
     echo "Exemples:"
