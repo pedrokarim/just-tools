@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  just-tools:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: just-tools-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    # Configuration pour la santé de l'application
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Limites de ressources
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    # Volumes pour les logs (optionnel)
+    volumes:
+      - ./logs:/app/logs
+    # Réseau
+    networks:
+      - just-tools-network
+
+networks:
+  just-tools-network:
+    driver: bridge 
