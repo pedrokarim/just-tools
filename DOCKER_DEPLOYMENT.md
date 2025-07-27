@@ -4,11 +4,10 @@ Ce guide vous explique comment déployer l'application Just Tools sur un serveur
 
 ## 📋 Prérequis
 
-- Docker installé sur votre serveur Linux
-- Docker Compose installé
+- Docker installé sur votre serveur Linux (version récente avec Docker Compose intégré)
 - Git (pour cloner le projet)
 
-**Note** : Cette configuration utilise Bun au lieu de npm pour des performances améliorées.
+**Note** : Cette configuration utilise Bun au lieu de npm pour des performances améliorées. Docker Compose est maintenant intégré dans Docker.
 
 ## 🚀 Déploiement Rapide
 
@@ -68,17 +67,17 @@ docker run -d \
 
 ### Lancement
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Arrêt
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Voir les logs
 ```bash
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ## 🔒 Configuration de Production
@@ -136,7 +135,7 @@ L'application expose un endpoint de santé sur `/api/health` qui retourne :
 
 ### Logs en temps réel
 ```bash
-docker-compose logs -f just-tools
+docker compose logs -f just-tools
 ```
 
 ## 🔧 Maintenance
@@ -189,7 +188,7 @@ git pull
 ### Logs d'erreur
 ```bash
 # Voir les logs d'erreur
-docker-compose logs --tail=100 just-tools | grep ERROR
+docker compose logs --tail=100 just-tools | grep ERROR
 ```
 
 ## 📈 Optimisations

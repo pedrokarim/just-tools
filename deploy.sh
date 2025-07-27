@@ -38,8 +38,14 @@ check_docker() {
         exit 1
     fi
     
-    if ! command -v docker-compose &> /dev/null; then
-        print_error "Docker Compose n'est pas installé. Veuillez l'installer d'abord."
+    if ! command -v docker &> /dev/null; then
+        print_error "Docker n'est pas installé. Veuillez l'installer d'abord."
+        exit 1
+    fi
+    
+    # Vérifier si docker compose est disponible
+    if ! docker compose version &> /dev/null; then
+        print_error "Docker Compose n'est pas disponible. Veuillez l'installer d'abord."
         exit 1
     fi
 }
@@ -47,14 +53,14 @@ check_docker() {
 # Fonction de build
 build() {
     print_message "Construction de l'image Docker..."
-    docker-compose build --no-cache
+    docker compose build --no-cache
     print_message "Build terminé avec succès !"
 }
 
 # Fonction de démarrage
 start() {
     print_message "Démarrage de l'application..."
-    docker-compose up -d
+    docker compose up -d
     print_message "Application démarrée !"
     print_message "Accédez à l'application sur: http://localhost:3000"
 }
@@ -62,28 +68,28 @@ start() {
 # Fonction d'arrêt
 stop() {
     print_message "Arrêt de l'application..."
-    docker-compose down
+    docker compose down
     print_message "Application arrêtée !"
 }
 
 # Fonction de redémarrage
 restart() {
     print_message "Redémarrage de l'application..."
-    docker-compose down
-    docker-compose up -d
+    docker compose down
+    docker compose up -d
     print_message "Application redémarrée !"
 }
 
 # Fonction pour voir les logs
 logs() {
     print_message "Affichage des logs..."
-    docker-compose logs -f
+    docker compose logs -f
 }
 
 # Fonction de nettoyage
 clean() {
     print_warning "Nettoyage des images et conteneurs..."
-    docker-compose down --rmi all --volumes --remove-orphans
+    docker compose down --rmi all --volumes --remove-orphans
     docker system prune -f
     print_message "Nettoyage terminé !"
 }
