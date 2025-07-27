@@ -206,6 +206,66 @@ export function ControlsPanel() {
                   </div>
                 </div>
 
+                {/* Position de l'effet */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">
+                    Position de l'effet
+                  </Label>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-slate-500">
+                        <span>Position X</span>
+                        <span>{settings.effectPosition.x}%</span>
+                      </div>
+                      <Slider
+                        value={[settings.effectPosition.x]}
+                        onValueChange={([value]) =>
+                          updateSettings({
+                            effectPosition: {
+                              ...settings.effectPosition,
+                              x: value,
+                            },
+                          })
+                        }
+                        min={-100}
+                        max={200}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-slate-400">
+                        <span>-100% (gauche)</span>
+                        <span>200% (droite)</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-slate-500">
+                        <span>Position Y</span>
+                        <span>{settings.effectPosition.y}%</span>
+                      </div>
+                      <Slider
+                        value={[settings.effectPosition.y]}
+                        onValueChange={([value]) =>
+                          updateSettings({
+                            effectPosition: {
+                              ...settings.effectPosition,
+                              y: value,
+                            },
+                          })
+                        }
+                        min={-100}
+                        max={200}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-slate-400">
+                        <span>-100% (haut)</span>
+                        <span>200% (bas)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Auto-application */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -225,7 +285,7 @@ export function ControlsPanel() {
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     Applique automatiquement l'effet quand vous modifiez les
-                    paramètres
+                    paramètres (activée par défaut)
                   </p>
                 </div>
               </CardContent>

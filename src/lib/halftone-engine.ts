@@ -71,50 +71,54 @@ export class HalftoneEngine {
     height: number,
     settings: HalftoneSettings
   ): number {
-    const { direction, sizeMin, sizeMax } = settings;
+    const { direction, sizeMin, sizeMax, effectPosition } = settings;
 
     // Normaliser les coordonnées (0 à 1)
     const normalizedX = x / width;
     const normalizedY = y / height;
 
+    // Position de l'effet (0 à 1)
+    const effectX = effectPosition.x / 100;
+    const effectY = effectPosition.y / 100;
+
     let gradientValue = 0;
 
     switch (direction) {
       case "top":
-        // Plus on va vers le haut (Y diminue), plus les points sont gros
-        gradientValue = 1 - normalizedY;
+        // Distance depuis la position de l'effet vers le haut
+        const distanceFromTop = effectY - normalizedY;
+        gradientValue = Math.max(0, distanceFromTop);
         break;
       case "bottom":
-        // Plus on va vers le bas (Y augmente), plus les points sont gros
-        gradientValue = normalizedY;
+        // Distance depuis la position de l'effet vers le bas
+        const distanceFromBottom = normalizedY - effectY;
+        gradientValue = Math.max(0, distanceFromBottom);
         break;
       case "left":
-        // Plus on va vers la gauche (X diminue), plus les points sont gros
-        gradientValue = 1 - normalizedX;
+        // Distance depuis la position de l'effet vers la gauche
+        const distanceFromLeft = effectX - normalizedX;
+        gradientValue = Math.max(0, distanceFromLeft);
         break;
       case "right":
-        // Plus on va vers la droite (X augmente), plus les points sont gros
-        gradientValue = normalizedX;
+        // Distance depuis la position de l'effet vers la droite
+        const distanceFromRight = normalizedX - effectX;
+        gradientValue = Math.max(0, distanceFromRight);
         break;
       case "center":
-        // Plus on est au centre, plus les points sont gros
-        const centerX1 = 0.5;
-        const centerY1 = 0.5;
-        const distanceFromCenter1 = Math.sqrt(
-          Math.pow(normalizedX - centerX1, 2) +
-            Math.pow(normalizedY - centerY1, 2)
+        // Distance depuis la position de l'effet
+        const distanceFromCenter = Math.sqrt(
+          Math.pow(normalizedX - effectX, 2) +
+            Math.pow(normalizedY - effectY, 2)
         );
-        gradientValue = 1 - distanceFromCenter1;
+        gradientValue = Math.max(0, 1 - distanceFromCenter);
         break;
       case "radial":
-        // Dégradé radial depuis le centre
-        const centerX2 = 0.5;
-        const centerY2 = 0.5;
-        const distanceFromCenter2 = Math.sqrt(
-          Math.pow(normalizedX - centerX2, 2) +
-            Math.pow(normalizedY - centerY2, 2)
+        // Dégradé radial depuis la position de l'effet
+        const distanceFromRadial = Math.sqrt(
+          Math.pow(normalizedX - effectX, 2) +
+            Math.pow(normalizedY - effectY, 2)
         );
-        gradientValue = 1 - distanceFromCenter2;
+        gradientValue = Math.max(0, 1 - distanceFromRadial);
         break;
       default:
         gradientValue = 0.5; // Valeur par défaut

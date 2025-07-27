@@ -11,8 +11,38 @@ export type Shape =
 export type Mapping = "linear" | "gamma" | "logarithmic" | "exponential";
 export type ColorMode = "monochrome" | "channels" | "palette";
 
+export type GlobalShape =
+  | "circle"
+  | "square"
+  | "diamond"
+  | "hexagon"
+  | "triangle"
+  | "star"
+  | "heart"
+  | "custom";
+export type Direction =
+  | "top"
+  | "bottom"
+  | "left"
+  | "right"
+  | "center"
+  | "radial";
+
 export interface HalftoneSettings {
+  // Forme des points individuels
   shape: Shape;
+
+  // Forme globale de l'ensemble des points
+  globalShape: GlobalShape;
+  direction: Direction;
+
+  // Position de l'effet
+  effectPosition: {
+    x: number; // -100 à 200 (pour sortir de l'image)
+    y: number; // -100 à 200 (pour sortir de l'image)
+  };
+
+  // Paramètres de base
   angle: number;
   frequency: number;
   sizeMin: number;
@@ -33,6 +63,9 @@ export interface HalftoneSettings {
   seed: number;
   useMask: boolean;
   mask?: ImageBitmap | HTMLCanvasElement;
+
+  // Contrôle de l'application
+  autoApply: boolean;
 }
 
 export interface AppState {
@@ -56,7 +89,20 @@ export interface HalftoneStore extends AppState {
 }
 
 const defaultSettings: HalftoneSettings = {
+  // Forme des points individuels
   shape: "circle",
+
+  // Forme globale de l'ensemble des points
+  globalShape: "circle",
+  direction: "center",
+
+  // Position de l'effet
+  effectPosition: {
+    x: 50, // Centre horizontal
+    y: 50, // Centre vertical
+  },
+
+  // Paramètres de base
   angle: 0,
   frequency: 80, // Plus dense par défaut
   sizeMin: 3, // Plus visible
@@ -79,6 +125,9 @@ const defaultSettings: HalftoneSettings = {
   jitter: 0.1, // Légère variation par défaut
   seed: 0,
   useMask: false,
+
+  // Contrôle de l'application
+  autoApply: true, // Application automatique activée par défaut
 };
 
 export const useHalftoneStore = create<HalftoneStore>()(
