@@ -318,7 +318,13 @@ export default function TextToSpeech() {
       speechSynthesis.cancel();
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    // Nettoyer le texte pour la synthèse vocale
+    const cleanText = text
+      .replace(/\n+/g, " ") // Remplacer les sauts de ligne multiples par un espace
+      .replace(/\s+/g, " ") // Remplacer les espaces multiples par un seul espace
+      .trim(); // Supprimer les espaces en début et fin
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
     utteranceRef.current = utterance;
 
     // Configurer la voix
@@ -372,12 +378,16 @@ export default function TextToSpeech() {
     };
 
     utterance.onerror = (event) => {
-      console.error("Erreur TTS:", event);
+      // Ne pas afficher l'erreur "interrupted" car c'est normal lors de l'arrêt
+      if (event.error !== "interrupted") {
+        console.error("Erreur TTS:", event);
+        toast.error("Erreur lors de la lecture");
+      }
+
       setIsPlaying(false);
       setIsPaused(false);
       setCurrentText("");
       utteranceRef.current = null;
-      toast.error("Erreur lors de la lecture");
     };
 
     setIsLoading(true);
