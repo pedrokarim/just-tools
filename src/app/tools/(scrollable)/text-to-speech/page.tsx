@@ -45,11 +45,22 @@ import {
   Clipboard,
   X,
   Shield,
+  Upload,
+  FileText,
+  Image,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { LANGUAGES, getLanguageDisplayName } from "@/lib/language-data";
 import ReactCountryFlag from "react-country-flag";
+import { cleanTextForTTS } from "@/lib/text-processing";
+import {
+  importTextFile,
+  extractTextFromImage,
+  extractTextFromImageURL,
+  getClipboardText as getClipboardTextUtil,
+} from "@/lib/file-import";
 
 type Voice = SpeechSynthesisVoice;
 
@@ -120,6 +131,16 @@ export default function TextToSpeech() {
   const [saveTextName, setSaveTextName] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("all");
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [showImageUrlInput, setShowImageUrlInput] = useState(false);
+
+  // États de chargement pour les différentes opérations
+  const [isClipboardLoading, setIsClipboardLoading] = useState(false);
+  const [isFileImportLoading, setIsFileImportLoading] = useState(false);
+  const [isImageOCRLoading, setIsImageOCRLoading] = useState(false);
+  const [isImageUrlLoading, setIsImageUrlLoading] = useState(false);
+  const [isSavingText, setIsSavingText] = useState(false);
 
   // Atomes Jotai
   const [settings, setSettings] = useAtom(ttsSettingsAtom);
@@ -235,26 +256,131 @@ export default function TextToSpeech() {
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   // Fonction pour récupérer le texte du presse-papiers
-  const getClipboardText = useCallback(async () => {
+  const handleClipboardText = useCallback(async () => {
+    setIsClipboardLoading(true);
     try {
-      const clipboardText = await navigator.clipboard.readText();
-      if (clipboardText.trim()) {
-        setText(clipboardText);
-        toast.success("Texte récupéré depuis le presse-papiers");
-      } else {
-        toast.warning("Le presse-papiers est vide");
-      }
+      await getClipboardTextUtil(setText);
     } catch (error) {
-      toast.error("Impossible d'accéder au presse-papiers");
+      console.error("Erreur clipboard:", error);
+    } finally {
+      setIsClipboardLoading(false);
     }
   }, [setText]);
+
+  // Fonction pour importer un fichier texte
+  const handleFileImport = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      setIsFileImportLoading(true);
+      try {
+        await importTextFile(file, setText);
+      } catch (error) {
+        console.error("Erreur import fichier:", error);
+      } finally {
+        setIsFileImportLoading(false);
+        // Réinitialiser l'input
+        event.target.value = "";
+      }
+    },
+    [setText]
+  );
+
+  // Fonction pour extraire le texte d'une image (OCR)
+  const handleImageOCR = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      setIsImageOCRLoading(true);
+      try {
+        await extractTextFromImage(file, setText);
+      } catch (error) {
+        console.error("Erreur OCR:", error);
+      } finally {
+        setIsImageOCRLoading(false);
+        // Réinitialiser l'input
+        event.target.value = "";
+      }
+    },
+    [setText]
+  );
+
+  // Fonction pour gérer le drop de fichiers
+  const handleDrop = useCallback(
+    async (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setIsDragOver(false);
+
+      const files = Array.from(event.dataTransfer.files);
+      if (files.length === 0) return;
+
+      const file = files[0]; // On ne prend que le premier fichier
+
+      try {
+        if (file.type.startsWith("image/")) {
+          // C'est une image, faire l'OCR
+          setIsImageOCRLoading(true);
+          await extractTextFromImage(file, setText);
+        } else {
+          // C'est un fichier texte, l'importer
+          setIsFileImportLoading(true);
+          await importTextFile(file, setText);
+        }
+      } catch (error) {
+        console.error("Erreur lors du drop:", error);
+      } finally {
+        setIsImageOCRLoading(false);
+        setIsFileImportLoading(false);
+      }
+    },
+    [setText]
+  );
+
+  // Fonction pour gérer le drag over
+  const handleDragOver = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setIsDragOver(true);
+    },
+    []
+  );
+
+  // Fonction pour gérer le drag leave
+  const handleDragLeave = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setIsDragOver(false);
+    },
+    []
+  );
+
+  // Fonction pour traiter une URL d'image
+  const handleImageUrlSubmit = useCallback(async () => {
+    if (!imageUrl.trim()) {
+      toast.error("Veuillez entrer une URL d'image");
+      return;
+    }
+
+    setIsImageUrlLoading(true);
+    try {
+      await extractTextFromImageURL(imageUrl, setText);
+      setShowImageUrlInput(false);
+      setImageUrl("");
+    } catch (error) {
+      console.error("Erreur URL image:", error);
+    } finally {
+      setIsImageUrlLoading(false);
+    }
+  }, [imageUrl, setText]);
 
   // Écouter les changements du presse-papiers si l'option est activée
   useEffect(() => {
     if (!settings.clipboardAutoRead) return;
 
     const handleClipboardChange = () => {
-      getClipboardText();
+      handleClipboardText();
     };
 
     // Écouter les événements de copie
@@ -265,7 +391,7 @@ export default function TextToSpeech() {
       document.removeEventListener("copy", handleClipboardChange);
       document.removeEventListener("paste", handleClipboardChange);
     };
-  }, [settings.clipboardAutoRead, getClipboardText]);
+  }, [settings.clipboardAutoRead, handleClipboardText]);
 
   // Charger les voix disponibles
   useEffect(() => {
@@ -319,10 +445,7 @@ export default function TextToSpeech() {
     }
 
     // Nettoyer le texte pour la synthèse vocale
-    const cleanText = text
-      .replace(/\n+/g, " ") // Remplacer les sauts de ligne multiples par un espace
-      .replace(/\s+/g, " ") // Remplacer les espaces multiples par un seul espace
-      .trim(); // Supprimer les espaces en début et fin
+    const cleanText = cleanTextForTTS(text);
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utteranceRef.current = utterance;
@@ -450,16 +573,21 @@ export default function TextToSpeech() {
       return;
     }
 
-    const newText: SavedText = {
-      id: Date.now().toString(),
-      name: saveTextName.trim(),
-      content: text,
-      updatedAt: new Date(),
-    };
-    setRawSavedTexts((prev) => [newText, ...prev]);
-    setShowSaveBox(false);
-    setSaveTextName("");
-    toast.success("Texte sauvegardé");
+    setIsSavingText(true);
+    try {
+      const newText: SavedText = {
+        id: Date.now().toString(),
+        name: saveTextName.trim(),
+        content: text,
+        updatedAt: new Date(),
+      };
+      setRawSavedTexts((prev) => [newText, ...prev]);
+      setShowSaveBox(false);
+      setSaveTextName("");
+      toast.success("Texte sauvegardé");
+    } finally {
+      setIsSavingText(false);
+    }
   }, [saveTextName, text, setRawSavedTexts]);
 
   const loadText = useCallback((savedText: SavedText) => {
@@ -574,7 +702,13 @@ export default function TextToSpeech() {
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Texte à lire</span>
+                  <div className="flex items-center space-x-4">
+                    <span>Texte à lire</span>
+                    <div className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
+                      <Download className="w-4 h-4" />
+                      <span>Glissez-déposez un fichier ici</span>
+                    </div>
+                  </div>
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
@@ -598,12 +732,58 @@ export default function TextToSpeech() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Textarea
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Entrez votre texte ici ou utilisez un exemple ci-dessous..."
-                  className="min-h-[200px] resize-none"
-                />
+                <div
+                  className={`relative min-h-[200px] rounded-lg border-2 border-dashed transition-all duration-200 ${
+                    isDragOver
+                      ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/20"
+                      : "border-slate-200 dark:border-slate-700"
+                  }`}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                >
+                  <Textarea
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Entrez votre texte ici, glissez-déposez un fichier, ou utilisez un exemple ci-dessous..."
+                    className="min-h-[200px] resize-none border-0 bg-transparent focus:ring-0"
+                  />
+
+                  {/* Backdrop de drop */}
+                  {isDragOver && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-emerald-500/10 backdrop-blur-sm rounded-lg">
+                      <div className="text-center">
+                        <Upload className="w-12 h-12 text-emerald-500 mx-auto mb-2" />
+                        <p className="text-emerald-600 dark:text-emerald-400 font-medium">
+                          Déposez votre fichier ici
+                        </p>
+                        <p className="text-sm text-emerald-500 dark:text-emerald-400">
+                          Fichiers texte (.txt, .md, .csv, .json) ou images
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Indicateur de chargement */}
+                  {(isFileImportLoading ||
+                    isImageOCRLoading ||
+                    isImageUrlLoading) && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-slate-500/10 backdrop-blur-sm rounded-lg">
+                      <div className="text-center">
+                        <Loader2 className="w-12 h-12 text-emerald-500 mx-auto mb-2 animate-spin" />
+                        <p className="text-emerald-600 dark:text-emerald-400 font-medium">
+                          {isFileImportLoading && "Import en cours..."}
+                          {isImageOCRLoading && "Extraction OCR en cours..."}
+                          {isImageUrlLoading &&
+                            "Extraction depuis URL en cours..."}
+                        </p>
+                        <p className="text-sm text-emerald-500 dark:text-emerald-400">
+                          Veuillez patienter...
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
@@ -981,11 +1161,129 @@ export default function TextToSpeech() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={getClipboardText}
+                  onClick={handleClipboardText}
+                  disabled={isClipboardLoading}
                 >
-                  <Clipboard className="w-4 h-4 mr-2" />
-                  Récupérer du presse-papiers
+                  {isClipboardLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Clipboard className="w-4 h-4 mr-2" />
+                  )}
+                  {isClipboardLoading
+                    ? "Récupération..."
+                    : "Récupérer du presse-papiers"}
                 </Button>
+
+                {/* Import de fichiers */}
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept=".txt,.md,.markdown,.csv,.json,.html,.xml,text/*"
+                    onChange={handleFileImport}
+                    className="hidden"
+                    id="file-import"
+                    disabled={isFileImportLoading}
+                  />
+                  <label
+                    htmlFor="file-import"
+                    className={`w-full inline-flex items-center justify-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
+                      isFileImportLoading
+                        ? "cursor-not-allowed opacity-50"
+                        : "cursor-pointer"
+                    }`}
+                  >
+                    {isFileImportLoading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <FileText className="w-4 h-4 mr-2" />
+                    )}
+                    {isFileImportLoading
+                      ? "Import en cours..."
+                      : "Importer un fichier texte"}
+                  </label>
+                </div>
+
+                {/* OCR depuis image */}
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageOCR}
+                    className="hidden"
+                    id="image-ocr"
+                    disabled={isImageOCRLoading}
+                  />
+                  <label
+                    htmlFor="image-ocr"
+                    className={`w-full inline-flex items-center justify-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
+                      isImageOCRLoading
+                        ? "cursor-not-allowed opacity-50"
+                        : "cursor-pointer"
+                    }`}
+                  >
+                    {isImageOCRLoading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Image className="w-4 h-4 mr-2" />
+                    )}
+                    {isImageOCRLoading
+                      ? "Extraction en cours..."
+                      : "Extraire le texte d'une image (OCR)"}
+                  </label>
+                </div>
+
+                {/* OCR depuis URL d'image */}
+                <div className="space-y-2">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowImageUrlInput(!showImageUrlInput)}
+                  >
+                    <Image className="w-4 h-4 mr-2" />
+                    Extraire le texte depuis une URL d'image
+                  </Button>
+
+                  {/* Input pour l'URL d'image */}
+                  <AnimatePresence>
+                    {showImageUrlInput && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border dark:border-slate-700">
+                          <div className="flex space-x-2">
+                            <Input
+                              value={imageUrl}
+                              onChange={(e) => setImageUrl(e.target.value)}
+                              placeholder="https://example.com/image.jpg"
+                              onKeyDown={(e) =>
+                                e.key === "Enter" && handleImageUrlSubmit()
+                              }
+                              className="flex-1"
+                              autoFocus
+                              disabled={isImageUrlLoading}
+                            />
+                            <Button
+                              onClick={handleImageUrlSubmit}
+                              disabled={!imageUrl.trim() || isImageUrlLoading}
+                              className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                            >
+                              {isImageUrlLoading ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <Image className="w-4 h-4 mr-2" />
+                              )}
+                              {isImageUrlLoading ? "Extraction..." : "Extraire"}
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
                 <Button
                   variant="outline"
@@ -1021,11 +1319,15 @@ export default function TextToSpeech() {
                           />
                           <Button
                             onClick={handleSaveText}
-                            disabled={!saveTextName.trim()}
+                            disabled={!saveTextName.trim() || isSavingText}
                             className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
                           >
-                            <Save className="w-4 h-4 mr-2" />
-                            Sauvegarder
+                            {isSavingText ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Save className="w-4 h-4 mr-2" />
+                            )}
+                            {isSavingText ? "Sauvegarde..." : "Sauvegarder"}
                           </Button>
                         </div>
                       </div>
