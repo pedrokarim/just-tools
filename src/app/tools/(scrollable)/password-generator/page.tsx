@@ -165,21 +165,7 @@ export default function PasswordGenerator() {
 
   return (
     <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* En-tête */}
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center space-x-3">
-            <div className="text-4xl">🔐</div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-              Générateur de Mots de Passe
-            </h1>
-          </div>
-          <p className="text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-            Créez des mots de passe sécurisés et uniques pour protéger vos
-            comptes en ligne
-          </p>
-        </div>
-
+      <div className="w-full space-y-8">
         {/* Mot de passe généré */}
         <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
           <CardHeader>

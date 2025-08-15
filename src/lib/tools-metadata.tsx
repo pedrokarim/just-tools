@@ -10,7 +10,7 @@ import {
   Volume2,
 } from "lucide-react";
 
-export interface Tool {
+export interface ToolMetadata {
   id: string;
   name: string;
   description: string;
@@ -19,9 +19,12 @@ export interface Tool {
   icon: React.ReactNode;
   color: string;
   gradient: string;
+  route: string;
+  headerGradient: string;
+  headerIconBg: string;
 }
 
-export const tools: Tool[] = [
+export const toolsMetadata: ToolMetadata[] = [
   {
     id: "code-formatter",
     name: "Formateur de Code",
@@ -32,6 +35,9 @@ export const tools: Tool[] = [
     icon: <Code className="w-6 h-6" />,
     color: "from-blue-500 to-cyan-500",
     gradient: "bg-gradient-to-br from-blue-500 to-cyan-500",
+    route: "/tools/code-formatter",
+    headerGradient: "from-blue-600 to-cyan-600",
+    headerIconBg: "bg-gradient-to-br from-blue-500 to-cyan-500",
   },
   {
     id: "color-palette",
@@ -43,6 +49,9 @@ export const tools: Tool[] = [
     icon: <Palette className="w-6 h-6" />,
     color: "from-purple-500 to-pink-500",
     gradient: "bg-gradient-to-br from-purple-500 to-pink-500",
+    route: "/tools/color-palette",
+    headerGradient: "from-purple-600 to-pink-600",
+    headerIconBg: "bg-gradient-to-br from-purple-500 to-pink-500",
   },
   {
     id: "json-validator",
@@ -54,6 +63,9 @@ export const tools: Tool[] = [
     icon: <Search className="w-6 h-6" />,
     color: "from-green-500 to-emerald-500",
     gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
+    route: "/tools/json-validator",
+    headerGradient: "from-green-600 to-emerald-600",
+    headerIconBg: "bg-gradient-to-br from-green-500 to-emerald-500",
   },
   {
     id: "base64-converter",
@@ -64,6 +76,9 @@ export const tools: Tool[] = [
     icon: <RefreshCw className="w-6 h-6" />,
     color: "from-orange-500 to-red-500",
     gradient: "bg-gradient-to-br from-orange-500 to-red-500",
+    route: "/tools/base64-converter",
+    headerGradient: "from-orange-600 to-red-600",
+    headerIconBg: "bg-gradient-to-br from-orange-500 to-red-500",
   },
   {
     id: "password-generator",
@@ -74,6 +89,9 @@ export const tools: Tool[] = [
     icon: <Lock className="w-6 h-6" />,
     color: "from-indigo-500 to-purple-500",
     gradient: "bg-gradient-to-br from-indigo-500 to-purple-500",
+    route: "/tools/password-generator",
+    headerGradient: "from-indigo-600 to-purple-600",
+    headerIconBg: "bg-gradient-to-br from-indigo-500 to-purple-500",
   },
   {
     id: "markdown-editor",
@@ -84,6 +102,9 @@ export const tools: Tool[] = [
     icon: <FileText className="w-6 h-6" />,
     color: "from-teal-500 to-cyan-500",
     gradient: "bg-gradient-to-br from-teal-500 to-cyan-500",
+    route: "/tools/markdown-editor",
+    headerGradient: "from-teal-600 to-cyan-600",
+    headerIconBg: "bg-gradient-to-br from-teal-500 to-cyan-500",
   },
   {
     id: "pattern-editor",
@@ -95,6 +116,9 @@ export const tools: Tool[] = [
     icon: <Grid3X3 className="w-6 h-6" />,
     color: "from-rose-500 to-pink-500",
     gradient: "bg-gradient-to-br from-rose-500 to-pink-500",
+    route: "/tools/pattern-editor",
+    headerGradient: "from-rose-600 to-pink-600",
+    headerIconBg: "bg-gradient-to-br from-rose-500 to-pink-500",
   },
   {
     id: "halftone",
@@ -106,6 +130,9 @@ export const tools: Tool[] = [
     icon: <Image className="w-6 h-6" />,
     color: "from-violet-500 to-purple-500",
     gradient: "bg-gradient-to-br from-violet-500 to-purple-500",
+    route: "/tools/halftone",
+    headerGradient: "from-violet-600 to-purple-600",
+    headerIconBg: "bg-gradient-to-br from-violet-500 to-purple-500",
   },
   {
     id: "color-extractor",
@@ -117,6 +144,9 @@ export const tools: Tool[] = [
     icon: <Palette className="w-6 h-6" />,
     color: "from-amber-500 to-orange-500",
     gradient: "bg-gradient-to-br from-amber-500 to-orange-500",
+    route: "/tools/color-extractor",
+    headerGradient: "from-amber-600 to-orange-600",
+    headerIconBg: "bg-gradient-to-br from-amber-500 to-orange-500",
   },
   {
     id: "text-to-speech",
@@ -128,40 +158,30 @@ export const tools: Tool[] = [
     icon: <Volume2 className="w-6 h-6" />,
     color: "from-emerald-500 to-teal-500",
     gradient: "bg-gradient-to-br from-emerald-500 to-teal-500",
+    route: "/tools/text-to-speech",
+    headerGradient: "from-emerald-600 to-teal-600",
+    headerIconBg: "bg-gradient-to-br from-emerald-500 to-teal-500",
   },
 ];
 
-export const categories = [
-  "Tous",
-  "Développement",
-  "Design",
-  "Utilitaires",
-  "Sécurité",
-  "Édition",
-];
-
-// Fonction pour obtenir le nombre d'outils
-export const getToolsCount = (): number => {
-  return tools.length;
+// Fonction pour obtenir les métadonnées d'un outil par son ID
+export const getToolMetadata = (id: string): ToolMetadata | undefined => {
+  return toolsMetadata.find((tool) => tool.id === id);
 };
 
-// Fonction pour obtenir les outils par catégorie
-export const getToolsByCategory = (category: string): Tool[] => {
-  if (category === "Tous") {
-    return tools;
-  }
-  return tools.filter((tool) => tool.category === category);
+// Fonction pour obtenir les métadonnées d'un outil par sa route
+export const getToolMetadataByRoute = (
+  route: string
+): ToolMetadata | undefined => {
+  return toolsMetadata.find((tool) => tool.route === route);
 };
 
-// Fonction pour obtenir les outils prêts
-export const getReadyTools = (): Tool[] => {
-  return tools.filter((tool) => tool.status === "ready");
+// Fonction pour obtenir les métadonnées d'un outil par le pathname
+export const getToolMetadataByPathname = (
+  pathname: string
+): ToolMetadata | undefined => {
+  // Extraire l'ID de l'outil depuis le pathname
+  const pathParts = pathname.split("/");
+  const toolId = pathParts[pathParts.length - 1];
+  return getToolMetadata(toolId);
 };
-
-// Fonction pour obtenir les statistiques
-export const getStats = () => [
-  { number: getToolsCount().toString(), label: "Outils disponibles" },
-  { number: "100%", label: "Gratuit" },
-  { number: "Open", label: "Source" },
-  { number: "24/7", label: "Disponible" },
-];

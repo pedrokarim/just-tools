@@ -59,21 +59,7 @@ export default function Base64Converter() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* En-tête */}
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center space-x-3">
-          <div className="text-4xl">🔄</div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-            Convertisseur Base64
-          </h1>
-        </div>
-        <p className="text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-          Encodez ou décodez du texte en Base64. Cet outil vous permet de
-          convertir facilement du texte en format Base64 et vice versa.
-        </p>
-      </div>
-
+    <div className="w-full space-y-6 p-6">
       {/* Sélecteur de mode */}
       <div className="flex justify-center space-x-2">
         <Button

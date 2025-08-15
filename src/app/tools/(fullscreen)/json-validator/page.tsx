@@ -173,14 +173,6 @@ export default function JsonValidator() {
       <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <div className="text-2xl">🔍</div>
-              <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                Validateur JSON
-              </h1>
-            </div>
-
             <Separator orientation="vertical" className="h-6" />
 
             {/* Statut de validation */}
@@ -438,9 +430,7 @@ export default function JsonValidator() {
                     <p className="text-sm font-medium text-red-600 dark:text-red-400">
                       JSON invalide
                     </p>
-                    <p className="text-xs text-slate-500 max-w-md">
-                      {result.error}
-                    </p>
+                    <p className="text-xs text-slate-500">{result.error}</p>
                   </div>
                 </div>
               )}

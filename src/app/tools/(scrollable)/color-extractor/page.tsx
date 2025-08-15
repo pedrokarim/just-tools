@@ -241,20 +241,7 @@ export default function ColorExtractor() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 p-6">
-      {/* En-tête */}
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center space-x-3">
-          <div className="text-4xl">🎨</div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-            Extracteur de Couleurs
-          </h1>
-        </div>
-        <p className="text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-          Extrayez les couleurs dominantes de vos images. Uploadez une image ou
-          utilisez une URL pour obtenir une palette de couleurs harmonieuses.
-        </p>
-      </div>
+    <div className="w-full space-y-8 p-6">
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Section Upload/URL */}

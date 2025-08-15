@@ -252,14 +252,6 @@ export default function PatternEditor() {
       <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <div className="text-2xl">🎨</div>
-              <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                Éditeur de Motifs
-              </h1>
-            </div>
-
             <Separator orientation="vertical" className="h-6" />
 
             {/* Fichier */}
