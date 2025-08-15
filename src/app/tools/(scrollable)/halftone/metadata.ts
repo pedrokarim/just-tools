@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     title: "Effet de Trame - Ajoutez des effets halftone à vos images",
     description:
       "Outil gratuit pour ajouter des effets de trame halftone à vos images.",
-    url: "https://just-tools.vercel.app/tools/halftone",
+    url: "https://just-tools.ascencia.re/tools/halftone",
     type: "website",
     images: [
       {

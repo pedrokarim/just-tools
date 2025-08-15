@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     title: "Synthèse Vocale - Convertissez votre texte en parole",
     description:
       "Outil gratuit de synthèse vocale avec des voix naturelles et des paramètres personnalisables.",
-    url: "https://just-tools.vercel.app/tools/text-to-speech",
+    url: "https://just-tools.ascencia.re/tools/text-to-speech",
     type: "website",
     images: [
       {

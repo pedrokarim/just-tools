@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://just-tools.vercel.app/sitemap.xml
+Sitemap: https://just-tools.ascencia.re/sitemap.xml
 
 # Crawl-delay
 Crawl-delay: 1

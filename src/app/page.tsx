@@ -49,6 +49,7 @@ import {
 import { tools, categories, getStats } from "@/lib/tools-metadata";
 import { getLatestTool } from "@/lib/tools-metadata";
 import { ContributionModal } from "@/components/contribution-modal";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 const features = [
   {
@@ -400,6 +401,9 @@ export default function Home() {
         isOpen={showContributionModal}
         onClose={() => setShowContributionModal(false)}
       />
+
+      {/* Prompt d'installation PWA */}
+      <PWAInstallPrompt />
 
       <style jsx>{`
         @keyframes blob {

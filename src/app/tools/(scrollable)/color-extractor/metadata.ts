@@ -21,7 +21,7 @@ export const metadata: Metadata = {
       "Extracteur de Couleurs - Extrayez les couleurs dominantes d'une image",
     description:
       "Outil gratuit pour extraire les couleurs dominantes d'une image.",
-    url: "https://just-tools.vercel.app/tools/color-extractor",
+    url: "https://just-tools.ascencia.re/tools/color-extractor",
     type: "website",
     images: [
       {

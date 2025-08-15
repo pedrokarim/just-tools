@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Éditeur de Motifs - Créez des motifs répétitifs interactifs",
     description: "Outil gratuit pour créer des motifs répétitifs interactifs.",
-    url: "https://just-tools.vercel.app/tools/pattern-editor",
+    url: "https://just-tools.ascencia.re/tools/pattern-editor",
     type: "website",
     images: [
       {

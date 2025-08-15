@@ -19,7 +19,7 @@ export const metadata: Metadata = {
       "Générateur de Palette - Créez des palettes de couleurs harmonieuses",
     description:
       "Outil gratuit pour créer des palettes de couleurs harmonieuses.",
-    url: "https://just-tools.vercel.app/tools/color-palette",
+    url: "https://just-tools.ascencia.re/tools/color-palette",
     type: "website",
     images: [
       {

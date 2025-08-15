@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Validateur JSON - Validez et formatez vos fichiers JSON",
     description: "Outil gratuit pour valider et formater vos fichiers JSON.",
-    url: "https://just-tools.vercel.app/tools/json-validator",
+    url: "https://just-tools.ascencia.re/tools/json-validator",
     type: "website",
     images: [
       {

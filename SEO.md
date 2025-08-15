@@ -182,9 +182,9 @@ keywords: ["outils de développement", "convertisseur base64", ...]
 ## 📝 Notes importantes
 
 ### URLs de production
-- **Site principal**: https://just-tools.vercel.app
-- **Sitemap**: https://just-tools.vercel.app/sitemap.xml
-- **Robots**: https://just-tools.vercel.app/robots.txt
+- **Site principal**: https://just-tools.ascencia.re
+- **Sitemap**: https://just-tools.ascencia.re/sitemap.xml
+- **Robots**: https://just-tools.ascencia.re/robots.txt
 
 ### Informations d'auteur
 - **Nom**: Ahmed Karim (PedroKarim)

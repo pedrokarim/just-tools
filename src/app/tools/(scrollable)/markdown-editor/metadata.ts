@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     title: "Éditeur Markdown - Éditez et prévisualisez du Markdown",
     description:
       "Outil gratuit pour éditer et prévisualiser du Markdown en temps réel.",
-    url: "https://just-tools.vercel.app/tools/markdown-editor",
+    url: "https://just-tools.ascencia.re/tools/markdown-editor",
     type: "website",
     images: [
       {

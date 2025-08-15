@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     title: "Générateur de Mots de Passe - Créez des mots de passe sécurisés",
     description:
       "Outil gratuit pour générer des mots de passe sécurisés et aléatoires.",
-    url: "https://just-tools.vercel.app/tools/password-generator",
+    url: "https://just-tools.ascencia.re/tools/password-generator",
     type: "website",
     images: [
       {

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     title: "Formateur de Code - Formatez votre code automatiquement",
     description:
       "Outil gratuit pour formater automatiquement votre code dans différents langages.",
-    url: "https://just-tools.vercel.app/tools/code-formatter",
+    url: "https://just-tools.ascencia.re/tools/code-formatter",
     type: "website",
     images: [
       {

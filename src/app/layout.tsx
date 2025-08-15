@@ -7,6 +7,22 @@ import { ThemeProvider } from "next-themes";
 import Script from "next/script";
 import { getToolsCount } from "@/lib/tools-metadata";
 
+// Fonction pour enregistrer le service worker
+function registerServiceWorker() {
+  if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => {
+          console.log("Service Worker enregistré avec succès:", registration);
+        })
+        .catch((error) => {
+          console.log("Échec de l'enregistrement du Service Worker:", error);
+        });
+    });
+  }
+}
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -215,6 +231,16 @@ export default function RootLayout({
           <Providers>{children}</Providers>
           <Toaster />
         </ThemeProvider>
+
+        {/* Script pour enregistrer le service worker */}
+        <Script
+          id="service-worker"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html:
+              "if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').then(function(registration){console.log('Service Worker enregistré avec succès:',registration);}).catch(function(error){console.log('Échec de l\\'enregistrement du Service Worker:',error);});});}",
+          }}
+        />
       </body>
     </html>
   );

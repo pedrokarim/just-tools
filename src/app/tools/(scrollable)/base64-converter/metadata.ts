@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     title: "Convertisseur Base64 - Encodez et décodez du texte",
     description:
       "Outil gratuit pour encoder et décoder du texte en Base64. Interface simple et intuitive.",
-    url: "https://just-tools.vercel.app/tools/base64-converter",
+    url: "https://just-tools.ascencia.re/tools/base64-converter",
     type: "website",
     images: [
       {

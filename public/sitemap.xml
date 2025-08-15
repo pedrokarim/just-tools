@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Page d'accueil -->
   <url>
-    <loc>https://just-tools.vercel.app/</loc>
+    <loc>https://just-tools.ascencia.re/</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -10,64 +10,73 @@
 
   <!-- Outils -->
   <url>
-    <loc>https://just-tools.vercel.app/tools/base64-converter</loc>
+    <loc>https://just-tools.ascencia.re/tools/base64-converter</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://just-tools.vercel.app/tools/code-formatter</loc>
+    <loc>https://just-tools.ascencia.re/tools/code-formatter</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://just-tools.vercel.app/tools/color-palette</loc>
+    <loc>https://just-tools.ascencia.re/tools/color-palette</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://just-tools.vercel.app/tools/json-validator</loc>
+    <loc>https://just-tools.ascencia.re/tools/json-validator</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://just-tools.vercel.app/tools/password-generator</loc>
+    <loc>https://just-tools.ascencia.re/tools/password-generator</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://just-tools.vercel.app/tools/markdown-editor</loc>
+    <loc>https://just-tools.ascencia.re/tools/markdown-editor</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://just-tools.vercel.app/tools/pattern-editor</loc>
+    <loc>https://just-tools.ascencia.re/tools/pattern-editor</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://just-tools.vercel.app/tools/halftone</loc>
+    <loc>https://just-tools.ascencia.re/tools/halftone</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://just-tools.vercel.app/tools/color-extractor</loc>
+    <loc>https://just-tools.ascencia.re/tools/color-extractor</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- Synthèse Vocale -->
+  <url>
+    <loc>https://just-tools.ascencia.re/tools/text-to-speech</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset> 
 </urlset> 
