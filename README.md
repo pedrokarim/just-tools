@@ -1,6 +1,15 @@
-# Just Tools 🛠️
-
-Une collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien.
+<div align="center">
+  <img src="public/assets/images/icon-192.png" alt="Just Tools Logo" width="120" height="120">
+  
+  # Just Tools 🛠️
+  
+  Une collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien.
+  
+  [![GitHub](https://img.shields.io/badge/GitHub-Open%20Source-blue?style=for-the-badge&logo=github)](https://github.com/pedrokarim/just-tools)
+  [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+</div>
 
 ## 🚀 Technologies Utilisées
 
@@ -74,6 +83,18 @@ Une collection d'outils de développement pratiques et créatifs pour simplifier
 - Interface intuitive avec prévisualisation
 - Export d'images avec effets appliqués
 
+#### ✅ Extracteur de Couleurs
+- Extraction des couleurs dominantes de vos images
+- Interface intuitive avec historique local
+- Palette de couleurs harmonieuses
+- Support du glisser-déposer d'images
+
+#### ✅ Synthèse Vocale
+- Conversion de texte en parole avec des voix naturelles
+- Paramètres personnalisables (vitesse, hauteur, voix)
+- Interface moderne avec contrôles en temps réel
+- Support de multiples langues et accents
+
 ## 🏃‍♂️ Démarrage Rapide
 
 ### Prérequis
@@ -84,7 +105,7 @@ Une collection d'outils de développement pratiques et créatifs pour simplifier
 
 1. **Cloner le projet**
    ```bash
-   git clone <votre-repo>
+   git clone https://github.com/pedrokarim/just-tools.git
    cd just-tools
    ```
 
@@ -124,19 +145,22 @@ just-tools/
 ├── src/
 │   ├── app/
 │   │   ├── api/
+│   │   │   ├── health/          # API de santé
 │   │   │   └── proxy-image/     # API pour le proxy d'images
 │   │   ├── tools/
 │   │   │   ├── (scrollable)/    # Outils avec défilement
 │   │   │   │   ├── base64-converter/
-│   │   │   │   ├── code-formatter/
+│   │   │   │   ├── color-extractor/
 │   │   │   │   ├── color-palette/
 │   │   │   │   ├── halftone/
 │   │   │   │   ├── json-validator/
 │   │   │   │   ├── markdown-editor/
-│   │   │   │   └── password-generator/
-│   │   │   ├── (fullscreen)/    # Outils plein écran
-│   │   │   │   └── pattern-editor/
-│   │   │   └── halftone/        # Outil halftone standalone
+│   │   │   │   ├── password-generator/
+│   │   │   │   └── text-to-speech/
+│   │   │   └── (fullscreen)/    # Outils plein écran
+│   │   │       ├── code-formatter/
+│   │   │       ├── json-validator/
+│   │   │       └── pattern-editor/
 │   │   ├── globals.css          # Styles globaux
 │   │   ├── layout.tsx           # Layout racine
 │   │   └── page.tsx             # Page d'accueil
@@ -149,6 +173,7 @@ just-tools/
 │       ├── halftone-export.ts   # Export halftone
 │       ├── halftone-store.ts    # Store halftone
 │       ├── pattern-store.ts     # Store patterns
+│       ├── tools-metadata.tsx   # Métadonnées des outils
 │       └── utils.ts             # Utilitaires
 ├── public/                      # Assets statiques
 └── package.json
@@ -168,7 +193,7 @@ just-tools/
    
    export default function NomDeLOutil() {
      return (
-       <div className="max-w-4xl mx-auto space-y-6">
+       <div className="w-full space-y-6 p-6">
          <h1>Nom de l'outil</h1>
          {/* Votre interface ici */}
        </div>
@@ -176,8 +201,13 @@ just-tools/
    }
    ```
 
-3. **Mettre à jour la liste des outils**
-   - Modifier le tableau `tools` dans `src/app/page.tsx`
+3. **Ajouter les métadonnées de l'outil**
+   - Modifier le fichier `src/lib/tools-metadata.tsx`
+   - Ajouter une nouvelle entrée dans le tableau `toolsMetadata`
+   - Inclure toutes les propriétés requises (id, name, description, etc.)
+
+4. **Mettre à jour la liste des outils**
+   - Modifier le tableau `tools` dans `src/lib/tools-data.tsx`
    - Changer le statut de `"coming-soon"` à `"ready"`
 
 ## 🎨 Personnalisation
@@ -219,11 +249,11 @@ Le projet est optimisé pour le déploiement sur Vercel :
 
 Les contributions sont les bienvenues ! N'hésitez pas à :
 
-1. Fork le projet
+1. [Fork le projet](https://github.com/pedrokarim/just-tools/fork)
 2. Créer une branche pour votre fonctionnalité (`git checkout -b feature/AmazingFeature`)
 3. Commiter vos changements (`git commit -m 'Add some AmazingFeature'`)
 4. Pousser vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrir une Pull Request
+5. [Ouvrir une Pull Request](https://github.com/pedrokarim/just-tools/compare)
 
 ### Guide de Contribution
 
@@ -245,14 +275,30 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 - [Framer Motion](https://www.framer.com/motion/) pour les animations
 - [Vercel](https://vercel.com/) pour l'hébergement
 
+## ✨ Nouvelles Fonctionnalités
+
+### 🎯 Interface Améliorée
+- **Headers dynamiques** : Chaque outil affiche son propre header avec icône, nom et description
+- **Système de dates** : Gestion automatique des outils "nouveaux" basée sur les dates de création
+- **Navigation optimisée** : Boutons d'action différenciés sur la page d'accueil
+- **Espace maximal** : Tous les outils utilisent maintenant l'espace disponible au maximum
+
+### 🛠️ Outils Récents
+- **Synthèse Vocale** : Conversion texte-parole avec contrôles avancés
+- **Extracteur de Couleurs** : Extraction de palettes depuis vos images
+- **Headers harmonisés** : Interface cohérente sur tous les outils
+
 ## 📊 Statistiques
 
-- **9 outils** disponibles et fonctionnels
+- **10 outils** disponibles et fonctionnels
 - **Interface moderne** avec animations fluides
 - **Support complet** du mode sombre/clair
 - **Performance optimisée** avec Next.js 15 et Turbopack
 - **Accessibilité** respectée sur tous les outils
+- **Headers dynamiques** pour une expérience utilisateur améliorée
 
 ---
 
 Développé avec ❤️ pour la communauté des développeurs
+
+**⭐ N'oubliez pas de donner une étoile au projet si vous l'aimez !**

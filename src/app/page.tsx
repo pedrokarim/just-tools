@@ -47,6 +47,7 @@ import {
   Play,
 } from "lucide-react";
 import { tools, categories, getStats } from "@/lib/tools-data";
+import { getLatestTool } from "@/lib/tools-metadata";
 
 const features = [
   {
@@ -85,6 +86,9 @@ export default function Home() {
       ? tools
       : tools.filter((tool) => tool.category === selectedCategory);
 
+  // Obtenir l'outil le plus récent pour l'afficher comme "nouveau"
+  const latestTool = getLatestTool();
+
   if (!mounted) return null;
 
   return (
@@ -116,7 +120,7 @@ export default function Home() {
               <FloatingElement delay={0.5} duration={4}>
                 <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0 px-4 py-2 text-sm font-medium animate-fade-in-up">
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Nouveau : Éditeur de Motifs
+                  Nouveau : {latestTool?.name || "Synthèse Vocale"}
                 </Badge>
               </FloatingElement>
               <ScaleElement delay={0.2} duration={1} scale={0.9}>
@@ -140,7 +144,12 @@ export default function Home() {
               <RippleButton
                 size="lg"
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 text-lg px-8 py-6 animate-fade-in-up animation-delay-400 hover-lift"
-                onClick={() => setShowConfetti(true)}
+                onClick={() => {
+                  setShowConfetti(true);
+                  document
+                    .getElementById("tools")
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }}
               >
                 <Play className="w-5 h-5 mr-2" />
                 Découvrir les Outils
@@ -150,8 +159,16 @@ export default function Home() {
                 size="lg"
                 variant="outline"
                 className="border-2 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 text-lg px-8 py-6 animate-fade-in-up animation-delay-500 hover-lift"
+                onClick={() => {
+                  // Ouvrir directement l'outil le plus récent
+                  const latestTool = getLatestTool();
+                  if (latestTool) {
+                    window.location.href = latestTool.route;
+                  }
+                }}
               >
-                Voir les Outils
+                <Sparkles className="w-5 h-5 mr-2" />
+                Essayer le Plus Récent
               </MagneticButton>
             </div>
 

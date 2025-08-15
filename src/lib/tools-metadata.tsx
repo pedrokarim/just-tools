@@ -22,6 +22,7 @@ export interface ToolMetadata {
   route: string;
   headerGradient: string;
   headerIconBg: string;
+  createdAt: Date;
 }
 
 export const toolsMetadata: ToolMetadata[] = [
@@ -38,6 +39,7 @@ export const toolsMetadata: ToolMetadata[] = [
     route: "/tools/code-formatter",
     headerGradient: "from-blue-600 to-cyan-600",
     headerIconBg: "bg-gradient-to-br from-blue-500 to-cyan-500",
+    createdAt: new Date("2025-05-15"),
   },
   {
     id: "color-palette",
@@ -52,6 +54,7 @@ export const toolsMetadata: ToolMetadata[] = [
     route: "/tools/color-palette",
     headerGradient: "from-purple-600 to-pink-600",
     headerIconBg: "bg-gradient-to-br from-purple-500 to-pink-500",
+    createdAt: new Date("2025-05-25"),
   },
   {
     id: "json-validator",
@@ -66,6 +69,7 @@ export const toolsMetadata: ToolMetadata[] = [
     route: "/tools/json-validator",
     headerGradient: "from-green-600 to-emerald-600",
     headerIconBg: "bg-gradient-to-br from-green-500 to-emerald-500",
+    createdAt: new Date("2025-06-05"),
   },
   {
     id: "base64-converter",
@@ -79,6 +83,7 @@ export const toolsMetadata: ToolMetadata[] = [
     route: "/tools/base64-converter",
     headerGradient: "from-orange-600 to-red-600",
     headerIconBg: "bg-gradient-to-br from-orange-500 to-red-500",
+    createdAt: new Date("2025-06-15"),
   },
   {
     id: "password-generator",
@@ -92,6 +97,7 @@ export const toolsMetadata: ToolMetadata[] = [
     route: "/tools/password-generator",
     headerGradient: "from-indigo-600 to-purple-600",
     headerIconBg: "bg-gradient-to-br from-indigo-500 to-purple-500",
+    createdAt: new Date("2025-06-25"),
   },
   {
     id: "markdown-editor",
@@ -105,6 +111,7 @@ export const toolsMetadata: ToolMetadata[] = [
     route: "/tools/markdown-editor",
     headerGradient: "from-teal-600 to-cyan-600",
     headerIconBg: "bg-gradient-to-br from-teal-500 to-cyan-500",
+    createdAt: new Date("2025-07-05"),
   },
   {
     id: "pattern-editor",
@@ -119,6 +126,7 @@ export const toolsMetadata: ToolMetadata[] = [
     route: "/tools/pattern-editor",
     headerGradient: "from-rose-600 to-pink-600",
     headerIconBg: "bg-gradient-to-br from-rose-500 to-pink-500",
+    createdAt: new Date("2025-07-15"),
   },
   {
     id: "halftone",
@@ -133,6 +141,7 @@ export const toolsMetadata: ToolMetadata[] = [
     route: "/tools/halftone",
     headerGradient: "from-violet-600 to-purple-600",
     headerIconBg: "bg-gradient-to-br from-violet-500 to-purple-500",
+    createdAt: new Date("2025-07-25"),
   },
   {
     id: "color-extractor",
@@ -147,6 +156,7 @@ export const toolsMetadata: ToolMetadata[] = [
     route: "/tools/color-extractor",
     headerGradient: "from-amber-600 to-orange-600",
     headerIconBg: "bg-gradient-to-br from-amber-500 to-orange-500",
+    createdAt: new Date("2025-08-05"),
   },
   {
     id: "text-to-speech",
@@ -161,6 +171,7 @@ export const toolsMetadata: ToolMetadata[] = [
     route: "/tools/text-to-speech",
     headerGradient: "from-emerald-600 to-teal-600",
     headerIconBg: "bg-gradient-to-br from-emerald-500 to-teal-500",
+    createdAt: new Date("2025-08-15"), // Aujourd'hui
   },
 ];
 
@@ -184,4 +195,23 @@ export const getToolMetadataByPathname = (
   const pathParts = pathname.split("/");
   const toolId = pathParts[pathParts.length - 1];
   return getToolMetadata(toolId);
+};
+
+// Fonction pour vérifier si un outil est nouveau (moins de 30 jours)
+export const isToolNew = (tool: ToolMetadata): boolean => {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  return tool.createdAt > thirtyDaysAgo;
+};
+
+// Fonction pour obtenir les outils récents (moins de 30 jours)
+export const getRecentTools = (): ToolMetadata[] => {
+  return toolsMetadata.filter(isToolNew);
+};
+
+// Fonction pour obtenir l'outil le plus récent
+export const getLatestTool = (): ToolMetadata | undefined => {
+  return toolsMetadata.reduce((latest, current) => {
+    return current.createdAt > latest.createdAt ? current : latest;
+  });
 };
