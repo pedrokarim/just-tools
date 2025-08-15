@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { tools, categories, getStats } from "@/lib/tools-metadata";
 import { getLatestTool } from "@/lib/tools-metadata";
+import { PROJECT_CONFIG } from "@/lib/constants";
 import { ContributionModal } from "@/components/contribution-modal";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
@@ -128,7 +129,7 @@ export default function Home() {
               </FloatingElement>
               <ScaleElement delay={0.2} duration={1} scale={0.9}>
                 <h1 className="text-5xl md:text-7xl font-bold gradient-text leading-tight">
-                  <TypingEffect text="Just Tools" speed={150} />
+                  <TypingEffect text={PROJECT_CONFIG.name} speed={150} />
                 </h1>
               </ScaleElement>
               <SlideElement direction="up" delay={0.3} duration={0.8}>
@@ -201,7 +202,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white animate-fade-in-up">
-              Pourquoi utiliser Just Tools ?
+              Pourquoi utiliser {PROJECT_CONFIG.name} ?
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
               Une collection d'outils conçue par des développeurs, pour des
@@ -361,10 +362,7 @@ export default function Home() {
                 variant="outline"
                 className="bg-transparent border-white text-white hover:bg-white hover:text-blue-600 text-lg font-semibold transition-all duration-300"
                 onClick={() => {
-                  window.open(
-                    "https://github.com/pedrokarim/just-tools",
-                    "_blank"
-                  );
+                  window.open(PROJECT_CONFIG.project.github, "_blank");
                 }}
               >
                 Voir le code source
@@ -376,23 +374,72 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="py-12 bg-slate-900 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <BounceIcon className="w-12 h-12 flex items-center justify-center hover:scale-110 transition-transform duration-200">
-              <RotateElement delay={2} duration={3} angle={360}>
-                <Image
-                  src="/assets/images/icon-origin.png"
-                  alt="Just Tools Logo"
-                  width={48}
-                  height={48}
-                />
-              </RotateElement>
-            </BounceIcon>
-            <span className="text-xl font-bold">Just Tools</span>
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <BounceIcon className="w-12 h-12 flex items-center justify-center hover:scale-110 transition-transform duration-200">
+                <RotateElement delay={2} duration={3} angle={360}>
+                  <Image
+                    src="/assets/images/icon-origin.png"
+                    alt="Just Tools Logo"
+                    width={48}
+                    height={48}
+                  />
+                </RotateElement>
+              </BounceIcon>
+              <span className="text-xl font-bold">{PROJECT_CONFIG.name}</span>
+            </div>
+            <FadeElement delay={1} duration={1}>
+              <p className="text-slate-400 mb-6">
+                Développé avec ❤️ par {PROJECT_CONFIG.creator.alias}
+              </p>
+            </FadeElement>
+
+            {/* Liens légaux */}
+            <div className="flex flex-wrap justify-center gap-6 mb-6">
+              <a
+                href="/about"
+                className="text-slate-400 hover:text-white transition-colors text-sm"
+              >
+                À Propos
+              </a>
+              <a
+                href="/legal/terms"
+                className="text-slate-400 hover:text-white transition-colors text-sm"
+              >
+                Conditions d'Utilisation
+              </a>
+              <a
+                href={PROJECT_CONFIG.project.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-400 hover:text-white transition-colors text-sm"
+              >
+                Code Source
+              </a>
+              <a
+                href={PROJECT_CONFIG.company.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-400 hover:text-white transition-colors text-sm"
+              >
+                {PROJECT_CONFIG.company.name}
+              </a>
+            </div>
           </div>
-          <FadeElement delay={1} duration={1}>
-            <p className="text-slate-400">Développé avec ❤️ par PedroKarim</p>
-          </FadeElement>
+
+          {/* Copyright */}
+          <div className="border-t border-slate-800 pt-6 text-center">
+            <p className="text-slate-500 text-sm">
+              © {PROJECT_CONFIG.dates.copyrightYear}{" "}
+              {PROJECT_CONFIG.legal.developerName} -{" "}
+              {PROJECT_CONFIG.legal.companyName}. Tous droits réservés.
+            </p>
+            <p className="text-slate-500 text-xs mt-2">
+              {PROJECT_CONFIG.name} est un projet open source sous licence{" "}
+              {PROJECT_CONFIG.project.license}.
+            </p>
+          </div>
         </div>
       </footer>
 

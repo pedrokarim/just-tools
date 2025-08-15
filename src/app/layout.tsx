@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
 import { ThemeProvider } from "next-themes";
 import Script from "next/script";
+import { PROJECT_CONFIG } from "@/lib/constants";
 import { getToolsCount } from "@/lib/tools-metadata";
 
 // Fonction pour enregistrer le service worker
@@ -33,31 +34,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Fonction pour obtenir l'URL de base avec fallback
-function getBaseUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_FALLBACK_URL ||
-    "https://just-tools.ascencia.re"
-  );
-}
-
-// Fonction pour obtenir le nom du site avec fallback
-function getSiteName(): string {
-  return process.env.NEXT_PUBLIC_SITE_NAME || "Just Tools";
-}
-
-// Fonction pour obtenir la description du site avec fallback
-function getSiteDescription(): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_DESCRIPTION ||
-    "Suite d'outils de développement gratuits"
-  );
-}
-
-const baseUrl = getBaseUrl();
-const siteName = getSiteName();
-const siteDescription = getSiteDescription();
+const baseUrl = PROJECT_CONFIG.baseUrl;
+const siteName = PROJECT_CONFIG.name;
+const siteDescription = PROJECT_CONFIG.description;
 const toolsCount = getToolsCount();
 
 export const metadata: Metadata = {
@@ -106,8 +85,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/og-image.png",
-        width: 1200,
-        height: 630,
+        width: 512,
+        height: 512,
         alt: `${siteName} - Outils de développement`,
       },
     ],
@@ -178,8 +157,8 @@ const jsonLd = {
   ],
   screenshot: `${baseUrl}/assets/images/icon-512.png`,
   softwareVersion: "1.0.0",
-  datePublished: "2024-12-19",
-  dateModified: "2024-12-19",
+  datePublished: "2025-08-15",
+  dateModified: "2025-08-15",
 };
 
 export default function RootLayout({

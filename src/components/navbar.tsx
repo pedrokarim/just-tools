@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Moon, Sun, Menu, X, Sparkles } from "lucide-react";
 import { useTheme } from "next-themes";
 import { MorphingLogo } from "./morphing-logo";
+import { ToolsDropdown } from "./tools-dropdown";
 
 export function Navbar() {
   const [mounted, setMounted] = useState(false);
@@ -51,14 +52,9 @@ export function Navbar() {
             >
               Accueil
             </Link>
+            <ToolsDropdown />
             <Link
-              href="#tools"
-              className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium"
-            >
-              Outils
-            </Link>
-            <Link
-              href="#about"
+              href="/about"
               className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium"
             >
               À propos
@@ -117,15 +113,9 @@ export function Navbar() {
               >
                 Accueil
               </Link>
+              <ToolsDropdown className="w-full" isMobile={true} />
               <Link
-                href="#tools"
-                className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Outils
-              </Link>
-              <Link
-                href="#about"
+                href="/about"
                 className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
