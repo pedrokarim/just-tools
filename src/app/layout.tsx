@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
 import { ThemeProvider } from "next-themes";
 import Script from "next/script";
+import { getToolsCount } from "@/lib/tools-metadata";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,13 +17,39 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Fonction pour obtenir l'URL de base avec fallback
+function getBaseUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_FALLBACK_URL ||
+    "https://just-tools.ascencia.re"
+  );
+}
+
+// Fonction pour obtenir le nom du site avec fallback
+function getSiteName(): string {
+  return process.env.NEXT_PUBLIC_SITE_NAME || "Just Tools";
+}
+
+// Fonction pour obtenir la description du site avec fallback
+function getSiteDescription(): string {
+  return (
+    process.env.NEXT_PUBLIC_SITE_DESCRIPTION ||
+    "Suite d'outils de développement gratuits"
+  );
+}
+
+const baseUrl = getBaseUrl();
+const siteName = getSiteName();
+const siteDescription = getSiteDescription();
+const toolsCount = getToolsCount();
+
 export const metadata: Metadata = {
   title: {
-    default: "Just Tools - Suite d'outils de développement gratuits",
-    template: "%s | Just Tools",
+    default: `${siteName} - ${siteDescription}`,
+    template: `%s | ${siteName}`,
   },
-  description:
-    "Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien. Convertisseur Base64, formateur de code, générateur de palette, validateur JSON, générateur de mots de passe, éditeur Markdown, éditeur de motifs et effet de trame.",
+  description: `Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien. ${toolsCount} outils gratuits pour les développeurs.`,
   keywords: [
     "outils de développement",
     "convertisseur base64",
@@ -33,6 +60,8 @@ export const metadata: Metadata = {
     "éditeur markdown",
     "éditeur de motifs",
     "effet de trame",
+    "extracteur de couleurs",
+    "synthèse vocale",
     "développement web",
     "programmation",
     "utilitaires développeur",
@@ -47,33 +76,31 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://just-tools.vercel.app"),
+  metadataBase: new URL(baseUrl),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
     locale: "fr_FR",
-    url: "https://just-tools.vercel.app",
-    title: "Just Tools - Suite d'outils de développement gratuits",
-    description:
-      "Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien. 8 outils gratuits pour les développeurs.",
-    siteName: "Just Tools",
+    url: baseUrl,
+    title: `${siteName} - ${siteDescription}`,
+    description: `Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien. ${toolsCount} outils gratuits pour les développeurs.`,
+    siteName: siteName,
     images: [
       {
-        url: "/assets/images/icon-512.png",
-        width: 512,
-        height: 512,
-        alt: "Just Tools - Outils de développement",
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: `${siteName} - Outils de développement`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Just Tools - Suite d'outils de développement gratuits",
-    description:
-      "Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien.",
-    images: ["/assets/images/icon-512.png"],
+    title: `${siteName} - ${siteDescription}`,
+    description: `Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien. ${toolsCount} outils gratuits pour les développeurs.`,
+    images: ["/og-image.png"],
     creator: "@PedroKarim",
   },
   robots: {
@@ -99,10 +126,10 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "Just Tools",
+  name: siteName,
   description:
     "Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien",
-  url: "https://just-tools.vercel.app",
+  url: baseUrl,
   applicationCategory: "DeveloperApplication",
   operatingSystem: "Web Browser",
   offers: {
@@ -130,8 +157,10 @@ const jsonLd = {
     "Éditeur Markdown",
     "Éditeur de Motifs",
     "Effet de Trame",
+    "Extracteur de Couleurs",
+    "Synthèse Vocale",
   ],
-  screenshot: "https://just-tools.vercel.app/assets/images/icon-512.png",
+  screenshot: `${baseUrl}/assets/images/icon-512.png`,
   softwareVersion: "1.0.0",
   datePublished: "2024-12-19",
   dateModified: "2024-12-19",

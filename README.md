@@ -245,6 +245,26 @@ Le projet est optimisé pour le déploiement sur Vercel :
 2. Les paramètres de build sont automatiquement détectés
 3. Déploiement automatique à chaque push
 
+### Variables d'Environnement
+
+Le projet utilise des variables d'environnement pour configurer les métadonnées et URLs :
+
+```bash
+# URL de base du site (utilisée pour les métadonnées Open Graph, etc.)
+NEXT_PUBLIC_SITE_URL=https://just-tools.ascencia.re
+
+# URL de fallback si la variable d'environnement n'est pas définie
+NEXT_PUBLIC_FALLBACK_URL=https://just-tools.ascencia.re
+
+# Nom du site
+NEXT_PUBLIC_SITE_NAME=Just Tools
+
+# Description du site
+NEXT_PUBLIC_SITE_DESCRIPTION=Suite d'outils de développement gratuits
+```
+
+**Fallback automatique** : Si les variables d'environnement ne sont pas définies, le projet utilise automatiquement `https://just-tools.ascencia.re` comme URL de base.
+
 ## 🤝 Contribution
 
 Les contributions sont les bienvenues ! N'hésitez pas à :

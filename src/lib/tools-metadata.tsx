@@ -215,3 +215,42 @@ export const getLatestTool = (): ToolMetadata | undefined => {
     return current.createdAt > latest.createdAt ? current : latest;
   });
 };
+
+// Fonction pour obtenir le nombre d'outils
+export const getToolsCount = (): number => {
+  return toolsMetadata.length;
+};
+
+// Catégories disponibles
+export const categories = [
+  "Tous",
+  "Développement",
+  "Design",
+  "Utilitaires",
+  "Sécurité",
+  "Édition",
+];
+
+// Fonction pour obtenir les outils par catégorie
+export const getToolsByCategory = (category: string): ToolMetadata[] => {
+  if (category === "Tous") {
+    return toolsMetadata;
+  }
+  return toolsMetadata.filter((tool) => tool.category === category);
+};
+
+// Fonction pour obtenir les outils prêts
+export const getReadyTools = (): ToolMetadata[] => {
+  return toolsMetadata.filter((tool) => tool.status === "ready");
+};
+
+// Fonction pour obtenir les statistiques
+export const getStats = () => [
+  { number: getToolsCount().toString(), label: "Outils disponibles" },
+  { number: "100%", label: "Gratuit" },
+  { number: "Open", label: "Source" },
+  { number: "24/7", label: "Disponible" },
+];
+
+// Alias pour compatibilité avec l'ancien code
+export const tools = toolsMetadata;

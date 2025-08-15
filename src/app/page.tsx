@@ -46,8 +46,9 @@ import {
   CheckCircle,
   Play,
 } from "lucide-react";
-import { tools, categories, getStats } from "@/lib/tools-data";
+import { tools, categories, getStats } from "@/lib/tools-metadata";
 import { getLatestTool } from "@/lib/tools-metadata";
+import { ContributionModal } from "@/components/contribution-modal";
 
 const features = [
   {
@@ -76,6 +77,7 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [mounted, setMounted] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showContributionModal, setShowContributionModal] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -342,20 +344,30 @@ export default function Home() {
               améliorer Just Tools
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <RippleButton
+              <Button
                 size="lg"
-                className="bg-white text-blue-600 hover:bg-blue-50 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 text-lg px-8 py-6 font-semibold hover-lift"
-                onClick={() => setShowConfetti(true)}
+                className="bg-white text-blue-600 hover:bg-blue-50 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 text-lg font-semibold"
+                onClick={() => {
+                  setShowConfetti(true);
+                  setShowContributionModal(true);
+                }}
               >
                 Contribuer
                 <ArrowRight className="w-5 h-5 ml-2" />
-              </RippleButton>
-              <WaveButton
+              </Button>
+              <Button
                 size="lg"
-                className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 text-lg px-8 py-6 hover-lift transition-all duration-300"
+                variant="outline"
+                className="bg-transparent border-white text-white hover:bg-white hover:text-blue-600 text-lg font-semibold transition-all duration-300"
+                onClick={() => {
+                  window.open(
+                    "https://github.com/pedrokarim/just-tools",
+                    "_blank"
+                  );
+                }}
               >
                 Voir le code source
-              </WaveButton>
+              </Button>
             </div>
           </div>
         </div>
@@ -382,6 +394,12 @@ export default function Home() {
           </FadeElement>
         </div>
       </footer>
+
+      {/* Modale de contribution */}
+      <ContributionModal
+        isOpen={showContributionModal}
+        onClose={() => setShowContributionModal(false)}
+      />
 
       <style jsx>{`
         @keyframes blob {
