@@ -33,6 +33,9 @@ RUN echo "=== DEBUG: Variables d'environnement ===" && \
 # Générer le client Prisma
 RUN bunx prisma generate
 
+# Initialiser la base de données (dans l'étape de build)
+RUN bunx prisma db push
+
 # Build de l'application
 RUN bun run build
 
@@ -59,7 +62,7 @@ COPY --from=builder --chown=nextjs:bunjs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:bunjs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:bunjs /app/node_modules/@prisma ./node_modules/@prisma
 
-# Copie le dossier prisma complet avec le schema
+# Copie la base de données initialisée
 COPY --from=builder --chown=nextjs:bunjs /app/prisma ./prisma
 
 # Change vers l'utilisateur non-root
@@ -74,4 +77,4 @@ ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=production
 
 # Script de démarrage simplifié
-CMD bunx prisma db push && bun server.js 
+CMD bun server.js 
