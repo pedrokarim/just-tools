@@ -14,6 +14,9 @@ RUN bun install --frozen-lockfile
 # Copie le code source
 COPY . .
 
+# Copie le fichier .env pour le build (si il existe)
+COPY .env* ./
+
 # Générer le client Prisma
 RUN bunx prisma generate
 

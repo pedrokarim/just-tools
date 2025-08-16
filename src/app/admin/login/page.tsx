@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
 import { DiscordIcon } from "@/components/icons";
 import { toast } from "sonner";
 
-export default function AdminLoginPage() {
+function AdminLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -103,3 +103,31 @@ export default function AdminLoginPage() {
     </div>
   );
 }
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold">Admin Panel</CardTitle>
+              <CardDescription>Chargement...</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button disabled className="w-full" size="lg">
+                <DiscordIcon className="mr-2 h-5 w-5" />
+                Chargement...
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <AdminLoginContent />
+    </Suspense>
+  );
+}
+
+// Désactiver le SSG pour cette page
+export const dynamic = "force-dynamic";
