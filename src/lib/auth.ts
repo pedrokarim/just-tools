@@ -1,9 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "./prisma";
 import { createAuthMiddleware, APIError } from "better-auth/api";
-
-const prisma = new PrismaClient();
 
 // Fonction pour obtenir la géolocalisation (DÉSACTIVÉE TEMPORAIREMENT)
 async function getLocationData(
@@ -165,8 +163,3 @@ export const auth = betterAuth({
   },
   secret: process.env.BETTER_AUTH_SECRET,
 });
-
-export function initAuthDatabase() {
-  console.log("✅ Base de données Prisma initialisée avec succès");
-  return prisma;
-}

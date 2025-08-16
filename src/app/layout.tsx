@@ -7,9 +7,11 @@ import { ThemeProvider } from "next-themes";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import Script from "next/script";
 import { PROJECT_CONFIG } from "@/lib/constants";
-import { initializeDatabases } from "@/lib/init-db";
 import { getToolsCount } from "@/lib/tools-metadata";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+
+// Import d'initialisation Prisma (s'exécute automatiquement côté serveur)
+import "@/lib/prisma";
 
 // Fonction pour enregistrer le service worker (production uniquement)
 function registerServiceWorker() {
@@ -173,10 +175,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Initialiser les bases de données au démarrage
-  if (typeof window === "undefined") {
-    initializeDatabases();
-  }
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
