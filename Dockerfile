@@ -33,6 +33,9 @@ RUN echo "=== DEBUG: Variables d'environnement ===" && \
 # Générer le client Prisma
 RUN bunx prisma generate
 
+# Créer le dossier data avec les bonnes permissions
+RUN mkdir -p prisma/data && chmod 777 prisma/data
+
 # Initialiser la base de données (dans l'étape de build)
 RUN bunx prisma db push
 
@@ -64,6 +67,9 @@ COPY --from=builder --chown=nextjs:bunjs /app/node_modules/@prisma ./node_module
 
 # Copie la base de données initialisée
 COPY --from=builder --chown=nextjs:bunjs /app/prisma ./prisma
+
+# Créer le dossier data avec les bonnes permissions pour l'utilisateur nextjs
+RUN mkdir -p prisma/data && chown -R nextjs:bunjs prisma/data && chmod 777 prisma/data
 
 # Change vers l'utilisateur non-root
 USER nextjs
