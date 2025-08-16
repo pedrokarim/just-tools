@@ -73,19 +73,5 @@ ENV PORT=${PORT:-3000}
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=production
 
-# Script de démarrage pour initialiser la base de données avec logs de debug
-CMD ["sh", "-c", "echo '=== DEBUG: Variables d\\'environnement au démarrage ===' && \
-     echo 'DATABASE_URL: $DATABASE_URL' && \
-     echo 'BETTER_AUTH_SECRET: $BETTER_AUTH_SECRET' && \
-     echo 'DISCORD_CLIENT_ID: $DISCORD_CLIENT_ID' && \
-     echo 'DISCORD_CLIENT_SECRET: $DISCORD_CLIENT_SECRET' && \
-     echo '=== DEBUG: Structure des fichiers au démarrage ===' && \
-     ls -la && \
-     echo '=== DEBUG: Contenu du dossier prisma ===' && \
-     ls -la prisma/ && \
-     echo '=== DEBUG: Contenu du schema.prisma ===' && \
-     cat prisma/schema.prisma && \
-     echo '=== DEBUG: Exécution de prisma db push ===' && \
-     bunx prisma db push && \
-     echo '=== DEBUG: Démarrage du serveur ===' && \
-     bun server.js"] 
+# Script de démarrage simplifié
+CMD bunx prisma db push && bun server.js 
