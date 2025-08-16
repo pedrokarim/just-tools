@@ -34,10 +34,9 @@ services:
         reservations:
           memory: 256M
           cpus: '0.25'
-    # Volumes pour les logs et la base de données
+    # Volumes pour les logs uniquement
     volumes:
       - ./logs:/app/logs
-      - ./data:/app/prisma/data
     # Réseau
     networks:
       - just-tools-network
