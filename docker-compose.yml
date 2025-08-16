@@ -12,6 +12,10 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=${PORT:-3000}
+      - DATABASE_URL=${DATABASE_URL}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
     env_file:
       - .env
     # Configuration pour la santé de l'application

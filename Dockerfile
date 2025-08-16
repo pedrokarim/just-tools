@@ -17,6 +17,19 @@ COPY . .
 # Copie le fichier .env pour le build (si il existe)
 COPY .env* ./
 
+# Debug: Afficher les variables d'environnement et la structure des fichiers
+RUN echo "=== DEBUG: Variables d'environnement ===" && \
+    echo "DATABASE_URL: $DATABASE_URL" && \
+    echo "BETTER_AUTH_SECRET: $BETTER_AUTH_SECRET" && \
+    echo "DISCORD_CLIENT_ID: $DISCORD_CLIENT_ID" && \
+    echo "DISCORD_CLIENT_SECRET: $DISCORD_CLIENT_SECRET" && \
+    echo "=== DEBUG: Structure des fichiers ===" && \
+    ls -la && \
+    echo "=== DEBUG: Contenu du dossier prisma ===" && \
+    ls -la prisma/ || echo "Dossier prisma non trouvé" && \
+    echo "=== DEBUG: Contenu du fichier .env ===" && \
+    cat .env 2>/dev/null || echo "Fichier .env non trouvé"
+
 # Générer le client Prisma
 RUN bunx prisma generate
 
@@ -46,6 +59,9 @@ COPY --from=builder --chown=nextjs:bunjs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:bunjs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:bunjs /app/node_modules/@prisma ./node_modules/@prisma
 
+# Copie le dossier prisma complet avec le schema
+COPY --from=builder --chown=nextjs:bunjs /app/prisma ./prisma
+
 # Change vers l'utilisateur non-root
 USER nextjs
 
@@ -57,9 +73,19 @@ ENV PORT=${PORT:-3000}
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=production
 
-# Script de démarrage pour initialiser la base de données
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/package*.json ./
-
-# Commande de démarrage avec initialisation de la DB
-CMD ["sh", "-c", "bunx prisma db push && bun server.js"] 
+# Script de démarrage pour initialiser la base de données avec logs de debug
+CMD ["sh", "-c", "echo '=== DEBUG: Variables d\\'environnement au démarrage ===' && \
+     echo 'DATABASE_URL: $DATABASE_URL' && \
+     echo 'BETTER_AUTH_SECRET: $BETTER_AUTH_SECRET' && \
+     echo 'DISCORD_CLIENT_ID: $DISCORD_CLIENT_ID' && \
+     echo 'DISCORD_CLIENT_SECRET: $DISCORD_CLIENT_SECRET' && \
+     echo '=== DEBUG: Structure des fichiers au démarrage ===' && \
+     ls -la && \
+     echo '=== DEBUG: Contenu du dossier prisma ===' && \
+     ls -la prisma/ && \
+     echo '=== DEBUG: Contenu du schema.prisma ===' && \
+     cat prisma/schema.prisma && \
+     echo '=== DEBUG: Exécution de prisma db push ===' && \
+     bunx prisma db push && \
+     echo '=== DEBUG: Démarrage du serveur ===' && \
+     bun server.js"] 
