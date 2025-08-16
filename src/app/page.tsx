@@ -410,6 +410,12 @@ export default function Home() {
                 Conditions d'Utilisation
               </a>
               <a
+                href="/legal/privacy"
+                className="text-slate-400 hover:text-white transition-colors text-sm"
+              >
+                Politique de Confidentialité
+              </a>
+              <a
                 href={PROJECT_CONFIG.project.github}
                 target="_blank"
                 rel="noopener noreferrer"

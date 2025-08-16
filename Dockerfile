@@ -14,6 +14,9 @@ RUN bun install --frozen-lockfile
 # Copie le code source
 COPY . .
 
+# Générer le client Prisma
+RUN bunx prisma generate
+
 # Build de l'application
 RUN bun run build
 
@@ -36,6 +39,10 @@ COPY --from=builder /app/bun.lock ./
 COPY --from=builder --chown=nextjs:bunjs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:bunjs /app/.next/static ./.next/static
 
+# Copie le client Prisma généré
+COPY --from=builder --chown=nextjs:bunjs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:bunjs /app/node_modules/@prisma ./node_modules/@prisma
+
 # Change vers l'utilisateur non-root
 USER nextjs
 
@@ -47,5 +54,9 @@ ENV PORT=${PORT:-3000}
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=production
 
-# Commande de démarrage avec Bun
-CMD ["bun", "server.js"] 
+# Script de démarrage pour initialiser la base de données
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/package*.json ./
+
+# Commande de démarrage avec initialisation de la DB
+CMD ["sh", "-c", "bunx prisma db push && bun server.js"] 

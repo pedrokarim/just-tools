@@ -8,6 +8,7 @@ import { Moon, Sun, Menu, X, Sparkles } from "lucide-react";
 import { useTheme } from "next-themes";
 import { MorphingLogo } from "./morphing-logo";
 import { ToolsDropdown } from "./tools-dropdown";
+import { getLatestTool } from "@/lib/constants";
 
 export function Navbar() {
   const [mounted, setMounted] = useState(false);
@@ -82,9 +83,11 @@ export function Navbar() {
             </Button>
 
             {/* CTA Button */}
-            <Button className="hidden md:inline-flex bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105">
-              Commencer
-            </Button>
+            <Link href={getLatestTool().route}>
+              <Button className="hidden md:inline-flex bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105">
+                Commencer
+              </Button>
+            </Link>
 
             {/* Mobile Menu Button */}
             <Button
@@ -121,9 +124,14 @@ export function Navbar() {
               >
                 À propos
               </Link>
-              <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0">
-                Commencer
-              </Button>
+              <Link
+                href={getLatestTool().route}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0">
+                  Commencer
+                </Button>
+              </Link>
             </div>
           </div>
         )}

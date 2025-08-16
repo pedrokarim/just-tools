@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Tables BetterAuth (selon la documentation officielle)
+model user {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified Boolean?
+  image         String?
+  accounts      account[]
+  sessions      session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model account {
+  id                    String  @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  user                  user    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model session {
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  expiresAt  DateTime
+  ipAddress  String?
+  userAgent  String?
+  user       user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// Tables Analytics
+model pageView {
+  id          Int      @id @default(autoincrement())
+  pagePath    String
+  userAgent   String?
+  ipAddress   String?
+  fingerprint String?
+  country     String?
+  city        String?
+  timestamp   DateTime @default(now())
+}
+
+model uniqueVisitor {
+  id          Int      @id @default(autoincrement())
+  fingerprint String   @unique
+  firstVisit  DateTime @default(now())
+  lastVisit   DateTime @default(now())
+  visitCount  Int      @default(1)
+}
+
+// Table pour tracker les tentatives de connexion Discord
+model loginAttempt {
+  id          Int      @id @default(autoincrement())
+  discordId   String?  // ID Discord de l'utilisateur
+  username    String?  // Nom d'utilisateur Discord
+  email       String?  // Email Discord
+  avatar      String?  // Avatar Discord
+  ipAddress   String?
+  userAgent   String?
+  country     String?
+  city        String?
+  success     Boolean  // Si la connexion a réussi ou échoué
+  reason      String?  // Raison de l'échec (ex: "Non autorisé")
+  timestamp   DateTime @default(now())
+}

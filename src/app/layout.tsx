@@ -4,13 +4,20 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
 import { ThemeProvider } from "next-themes";
+import { AnalyticsTracker } from "@/components/analytics-tracker";
 import Script from "next/script";
 import { PROJECT_CONFIG } from "@/lib/constants";
+import { initializeDatabases } from "@/lib/init-db";
 import { getToolsCount } from "@/lib/tools-metadata";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-// Fonction pour enregistrer le service worker
+// Fonction pour enregistrer le service worker (production uniquement)
 function registerServiceWorker() {
-  if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  if (
+    typeof window !== "undefined" &&
+    "serviceWorker" in navigator &&
+    window.location.hostname !== "localhost"
+  ) {
     window.addEventListener("load", () => {
       navigator.serviceWorker
         .register("/sw.js")
@@ -166,6 +173,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Initialiser les bases de données au démarrage
+  if (typeof window === "undefined") {
+    initializeDatabases();
+  }
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
@@ -207,17 +218,20 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Providers>{children}</Providers>
-          <Toaster />
+          <NuqsAdapter>
+            <Providers>{children}</Providers>
+            <AnalyticsTracker />
+            <Toaster richColors position="top-right" />
+          </NuqsAdapter>
         </ThemeProvider>
 
-        {/* Script pour enregistrer le service worker */}
+        {/* Script pour enregistrer le service worker (production uniquement) */}
         <Script
           id="service-worker"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html:
-              "if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').then(function(registration){console.log('Service Worker enregistré avec succès:',registration);}).catch(function(error){console.log('Échec de l\\'enregistrement du Service Worker:',error);});});}",
+              "if('serviceWorker' in navigator && window.location.hostname !== 'localhost'){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').then(function(registration){console.log('Service Worker enregistré avec succès:',registration);}).catch(function(error){console.log('Échec de l\\'enregistrement du Service Worker:',error);});});}",
           }}
         />
       </body>
