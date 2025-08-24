@@ -119,7 +119,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "2-p3UQrkPwh08LfsqZCGJUKsJpAJ5Mdu8NfRkNDBMlk",
+    google: "i_GLyVEAubN9keZoMX6Kk8-T8XyldPJ8zXc1atDYv-k",
     yandex: "your-yandex-verification-code",
     yahoo: "your-yahoo-verification-code",
   },
