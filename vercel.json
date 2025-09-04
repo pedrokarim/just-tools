@@ -23,11 +23,5 @@
   "buildCommand": "bun run build",
   "devCommand": "bun run dev",
   "framework": "nextjs",
-  "regions": ["cdg1"],
-  "crons": [
-    {
-      "path": "/api/analytics/cleanup",
-      "schedule": "0 2 * * *"
-    }
-  ]
+  "regions": ["cdg1"]
 }
