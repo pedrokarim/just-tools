@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import { createAuthMiddleware, APIError } from "better-auth/api";
+import { getBetterAuthDatabaseConfig } from "./database-config";
 
 // Fonction pour obtenir la géolocalisation (DÉSACTIVÉE TEMPORAIREMENT)
 async function getLocationData(
@@ -53,9 +54,7 @@ async function recordLoginAttempt(data: {
 }
 
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
-    provider: "sqlite",
-  }),
+  database: prismaAdapter(prisma, getBetterAuthDatabaseConfig()),
   socialProviders: {
     discord: {
       clientId: process.env.DISCORD_CLIENT_ID!,

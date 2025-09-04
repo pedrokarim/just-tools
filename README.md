@@ -11,6 +11,16 @@
   [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 </div>
 
+## 📚 Documentation
+
+Toute la documentation du projet est disponible dans le dossier [`docs/`](./docs/) :
+
+- **[Configuration Admin](./docs/ADMIN_SETUP.md)** - Setup du panel d'administration
+- **[Migration Base de Données](./docs/DATABASE_MIGRATION.md)** - Guide SQLite → PostgreSQL
+- **[Déploiement Docker](./docs/DOCKER_DEPLOYMENT.md)** - Configuration Docker
+- **[SEO](./docs/SEO.md)** - Optimisations SEO
+- **[Tests](./docs/TEST_README.md)** - Documentation des tests
+
 ## 🚀 Technologies Utilisées
 
 - **Next.js 15** - Framework React moderne avec App Router et Turbopack

@@ -4,10 +4,11 @@ const nextConfig: NextConfig = {
   // Configuration pour Docker
   output: "standalone",
 
-  // Configuration webpack pour SQLite
+  // Configuration webpack pour les bases de données
   webpack: (config, { isServer }) => {
     if (isServer) {
-      config.externals = [...config.externals, "bun:sqlite"];
+      // Exclure les modules de base de données natifs pour éviter les erreurs de build
+      config.externals = [...config.externals, "bun:sqlite", "pg-native"];
     }
     return config;
   },

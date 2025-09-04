@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -23,6 +23,15 @@ import { toast } from "sonner";
 export default function SettingsPage() {
   const [isClearing, setIsClearing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [databaseType, setDatabaseType] = useState<string>("Chargement...");
+
+  useEffect(() => {
+    // Récupérer le type de base de données depuis l'API
+    fetch("/api/admin/database-info")
+      .then((res) => res.json())
+      .then((data) => setDatabaseType(data.type))
+      .catch(() => setDatabaseType("Inconnu"));
+  }, []);
 
   const handleClearAnalytics = async () => {
     if (
@@ -123,7 +132,7 @@ export default function SettingsPage() {
             <div>
               <h4 className="font-medium">Base de données</h4>
               <p className="text-sm text-muted-foreground">
-                SQLite avec Prisma
+                {databaseType} avec Prisma
               </p>
             </div>
             <div>
