@@ -11,7 +11,7 @@
     "test:ui": "vitest --config vitest.config.test.ts --ui",
     "test:run": "vitest --config vitest.config.test.ts run",
     "test:coverage": "vitest --config vitest.config.test.ts run --coverage",
-    "postinstall": "bun --bun prisma generate",
+    "postinstall": "bun --bun prisma generate && bun --bun prisma db push",
     "db:generate": "bun --bun prisma generate",
     "db:migrate": "bun --bun prisma migrate dev",
     "db:studio": "bun --bun prisma studio",
