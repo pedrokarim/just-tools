@@ -30,11 +30,20 @@ export async function initializeDatabase() {
     return;
   }
 
+  // Éviter les connexions pendant le build
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return;
+  }
+
   try {
     await prisma.$connect();
     console.log("✅ Base de données Prisma initialisée avec succès");
     isInitialized = true;
   } catch (error) {
+    // Mode silencieux pendant le build
+    if (process.env.NEXT_PHASE === "phase-production-build") {
+      return;
+    }
     console.error(
       "❌ Erreur lors de l'initialisation de la base de données:",
       error
@@ -58,7 +67,11 @@ process.on("SIGTERM", async () => {
   process.exit(0);
 });
 
-// Initialisation automatique côté serveur
-if (typeof window === "undefined") {
+// Initialisation automatique côté serveur (sauf pendant le build)
+if (
+  typeof window === "undefined" &&
+  process.env.NODE_ENV !== "production" &&
+  !process.env.NEXT_PHASE
+) {
   initializeDatabase().catch(console.error);
 }
