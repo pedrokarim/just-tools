@@ -6,29 +6,6 @@ const path = require('path');
 
 console.log('🚀 Démarrage de la migration de production...');
 
-// Fonction pour vérifier si la base de données est accessible
-function isDatabaseAccessible() {
-    try {
-        // Vérifier si DATABASE_URL est définie
-        if (!process.env.DATABASE_URL) {
-            console.log('⚠️  DATABASE_URL non définie - Skip de la migration');
-            return false;
-        }
-
-        // Test de connexion simple avec timeout
-        console.log('🔍 Test de connexion à la base de données...');
-        execSync('bun --bun prisma db execute --stdin', {
-            input: 'SELECT 1;',
-            stdio: 'pipe',
-            timeout: 10000 // 10 secondes de timeout
-        });
-        return true;
-    } catch (error) {
-        console.log('⚠️  Base de données non accessible - Skip de la migration:', error.message);
-        return false;
-    }
-}
-
 try {
     // 1. Générer le client Prisma (toujours nécessaire)
     console.log('📦 Génération du client Prisma...');
@@ -37,9 +14,9 @@ try {
     // 2. Vérifier si on est en production
     const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
 
-    // 3. Vérifier si la base de données est accessible
-    if (!isDatabaseAccessible()) {
-        console.log('⏭️  Migration ignorée - Base de données non accessible');
+    // 3. Vérifier si DATABASE_URL est définie
+    if (!process.env.DATABASE_URL) {
+        console.log('⚠️  DATABASE_URL non définie - Skip de la migration');
         console.log('✅ Build peut continuer sans migration');
         process.exit(0);
     }
