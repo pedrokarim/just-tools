@@ -1,4 +1,5 @@
 // genshin-db supprimé - utilisation uniquement de la base de données
+import { prisma } from "../prisma";
 import {
   getCachedArtifactSets,
   getCachedArtifactSetDetails,
@@ -50,14 +51,9 @@ const DEFAULT_ARTIFACT_SETS = [
  */
 async function fetchArtifactSetsFromDatabase(): Promise<ArtifactSetData[]> {
   try {
-    const { PrismaClient } = await import("@prisma/client");
-    const prisma = new PrismaClient();
-
     const artifactSets = await prisma.artifactSet.findMany({
       orderBy: { name: "asc" },
     });
-
-    await prisma.$disconnect();
 
     return artifactSets.map((set) => ({
       name: set.name,
@@ -141,16 +137,17 @@ export async function getArtifactSetDetails(setName: string): Promise<any> {
       `Set ${setName} non trouvé en cache, récupération depuis la base de données...`
     );
     try {
-      const { PrismaClient } = await import("@prisma/client");
-      const prisma = new PrismaClient();
-
       const dbDetails = await prisma.artifactSet.findUnique({
         where: { name: setName },
       });
 
-      await prisma.$disconnect();
-
       if (dbDetails) {
+        console.log(`📊 Détails trouvés en base pour ${setName}:`, {
+          name: dbDetails.name,
+          description: dbDetails.description,
+          images: dbDetails.images,
+        });
+
         // Sauvegarder en cache pour la prochaine fois
         const artifactSetData: ArtifactSetData = {
           name: setName,
@@ -176,9 +173,44 @@ export async function getArtifactSetDetails(setName: string): Promise<any> {
       console.warn(`Erreur base de données pour le set ${setName}:`, dbError);
     }
 
-    // 3. Si la base de données échoue, retourner null
-    console.warn(`Impossible de récupérer le set ${setName}`);
-    return null;
+    // 3. Fallback avec des données par défaut si la base de données est vide
+    console.log(`Création de données de fallback pour le set ${setName}`);
+    const fallbackData = {
+      name: setName,
+      description: `Set d'artefacts ${setName}`,
+      images: {
+        flower: `https://via.placeholder.com/64x64/4A90E2/FFFFFF?text=🌸`,
+        plume: `https://via.placeholder.com/64x64/4A90E2/FFFFFF?text=🪶`,
+        sands: `https://via.placeholder.com/64x64/4A90E2/FFFFFF?text=⏳`,
+        goblet: `https://via.placeholder.com/64x64/4A90E2/FFFFFF?text=🏺`,
+        circlet: `https://via.placeholder.com/64x64/4A90E2/FFFFFF?text=👑`,
+      },
+    };
+
+    // Essayer de sauvegarder en base de données pour la prochaine fois
+    try {
+      await prisma.artifactSet.upsert({
+        where: { name: setName },
+        update: {
+          description: fallbackData.description,
+          images: fallbackData.images,
+          updatedAt: new Date(),
+        },
+        create: {
+          name: setName,
+          description: fallbackData.description,
+          images: fallbackData.images,
+        },
+      });
+      console.log(`Set ${setName} sauvegardé en base avec données de fallback`);
+    } catch (saveError) {
+      console.warn(
+        `Erreur lors de la sauvegarde du fallback pour ${setName}:`,
+        saveError
+      );
+    }
+
+    return fallbackData;
   } catch (error) {
     console.warn(
       `Erreur lors de la récupération des détails du set ${setName}:`,
@@ -268,14 +300,9 @@ export async function getCacheStats(): Promise<{
     const cacheValid = await isCacheValid(CACHE_KEYS.ARTIFACT_SETS);
 
     // Récupérer la date de dernière mise à jour
-    const { PrismaClient } = await import("@prisma/client");
-    const prisma = new PrismaClient();
-
     const metadata = await prisma.cacheMetadata.findUnique({
       where: { key: CACHE_KEYS.ARTIFACT_SETS },
     });
-
-    await prisma.$disconnect();
 
     return {
       artifactSetsCount: sets.length,

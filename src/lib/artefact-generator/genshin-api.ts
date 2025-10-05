@@ -1,5 +1,24 @@
 // genshin-db supprimé - utilisation uniquement de la base de données
 import { prisma } from "../prisma";
+import { LRUCache } from "../lru-cache";
+
+// Cache LRU pour les sets d'artefacts (cache de 1h)
+const artifactSetsCache = new LRUCache<any[]>(100, 60 * 60 * 1000);
+const artifactImagesCache = new LRUCache<string>(500, 60 * 60 * 1000);
+
+// Fonction pour obtenir les statistiques du cache
+export function getCacheStats() {
+  return {
+    artifactSets: artifactSetsCache.getStats(),
+    artifactImages: artifactImagesCache.getStats(),
+  };
+}
+
+// Fonction pour nettoyer les caches
+export function clearCaches() {
+  artifactSetsCache.clear();
+  artifactImagesCache.clear();
+}
 
 export interface GenshinArtefact {
   type: string;
@@ -139,16 +158,34 @@ export async function getArtifactImage(
   setName: string,
   artifactType: string
 ): Promise<string | null> {
+  console.log(`🚀 getArtifactImage appelée pour ${setName} ${artifactType}`);
+
   try {
     const artifactSet = await prisma.artifactSet.findUnique({
       where: { name: setName },
     });
 
+    console.log(`🔍 Recherche image pour ${setName} ${artifactType}:`, {
+      found: !!artifactSet,
+      hasImages: !!(artifactSet && artifactSet.images),
+      images: artifactSet?.images,
+      setName: setName,
+      artifactType: artifactType,
+      rawData: artifactSet,
+    });
+
     if (artifactSet && artifactSet.images) {
       const images = artifactSet.images as any;
       if (images[artifactType]) {
+        console.log(`✅ Image trouvée: ${images[artifactType]}`);
         return images[artifactType];
+      } else {
+        console.log(
+          `❌ Pas d'image pour le type ${artifactType} dans ${setName}`
+        );
       }
+    } else {
+      console.log(`❌ Pas d'images stockées pour ${setName}`);
     }
     return null;
   } catch (error) {
@@ -164,6 +201,14 @@ export async function getArtifactImage(
 export async function getArtifactSetImage(
   setName: string
 ): Promise<string | null> {
+  const cacheKey = `${setName}-set`;
+
+  // Vérifier le cache d'abord
+  const cachedImage = artifactImagesCache.get(cacheKey);
+  if (cachedImage) {
+    return cachedImage;
+  }
+
   try {
     const artifactSet = await prisma.artifactSet.findUnique({
       where: { name: setName },
@@ -173,6 +218,7 @@ export async function getArtifactSetImage(
       const images = artifactSet.images as any;
       if (images.flower) {
         // Utiliser l'image de la fleur comme image représentative du set
+        artifactImagesCache.set(cacheKey, images.flower);
         return images.flower;
       }
     }
@@ -187,9 +233,9 @@ export async function getArtifactSetImage(
 }
 
 // Fonction principale de génération d'un artefact
-export function generateGenshinArtefact(
+export async function generateGenshinArtefact(
   options: Partial<GenshinArtefactGenerationOptions> = {}
-): GenshinArtefact {
+): Promise<GenshinArtefact> {
   // Déterminer le type d'artefact
   let artefactType: string;
   if (options.specificType && ARTEFACT_TYPES.includes(options.specificType)) {
@@ -253,24 +299,55 @@ export function generateGenshinArtefact(
   // Obtenir un set d'artefacts aléatoire si non spécifié
   let setName = options.setName;
   if (!setName) {
-    // Utiliser les sets par défaut pour éviter les appels async dans une fonction sync
-    const defaultSets = [
-      "Gladiator's Finale",
-      "Wanderer's Troupe",
-      "Noblesse Oblige",
-      "Bloodstained Chivalry",
-      "Viridescent Venerer",
-      "Crimson Witch of Flames",
-      "Thundering Fury",
-      "Blizzard Strayer",
-      "Heart of Depth",
-      "Pale Flame",
-    ];
-    setName = getRandomElement(defaultSets);
+    // Récupérer les sets depuis la base de données
+    try {
+      const availableSets = await prisma.artifactSet.findMany({
+        orderBy: { name: "asc" },
+      });
+
+      if (availableSets.length > 0) {
+        const setNames = availableSets.map((set) => set.name);
+        setName = getRandomElement(setNames);
+        console.log(
+          `🎲 Set aléatoire sélectionné: ${setName} (${availableSets.length} sets disponibles)`
+        );
+      } else {
+        // Fallback vers les sets par défaut si la base est vide
+        const defaultSets = [
+          "Gladiator's Finale",
+          "Wanderer's Troupe",
+          "Noblesse Oblige",
+          "Bloodstained Chivalry",
+          "Viridescent Venerer",
+          "Crimson Witch of Flames",
+          "Thundering Fury",
+          "Blizzard Strayer",
+          "Heart of Depth",
+          "Pale Flame",
+        ];
+        setName = getRandomElement(defaultSets);
+        console.log(`⚠️ Base vide, utilisation du set par défaut: ${setName}`);
+      }
+    } catch (error) {
+      console.warn("Erreur lors de la récupération des sets:", error);
+      // Fallback vers les sets par défaut
+      const defaultSets = [
+        "Gladiator's Finale",
+        "Wanderer's Troupe",
+        "Noblesse Oblige",
+        "Bloodstained Chivalry",
+        "Viridescent Venerer",
+        "Crimson Witch of Flames",
+        "Thundering Fury",
+        "Blizzard Strayer",
+        "Heart of Depth",
+        "Pale Flame",
+      ];
+      setName = getRandomElement(defaultSets);
+    }
   }
 
-  // Les images seront chargées de manière asynchrone si nécessaire
-  // Pour éviter de bloquer le build avec genshin-db
+  // Les images seront gérées par generateGenshinArtefactWithSet
 
   return {
     type: TYPE_NAMES[artefactType as keyof typeof TYPE_NAMES] || artefactType,
@@ -281,55 +358,56 @@ export function generateGenshinArtefact(
       .substr(2, 9)}`,
     setName,
     rarity: 5, // Tous les artefacts générés sont de rareté 5 étoiles
-    // Les images seront chargées de manière asynchrone
   };
 }
 
 // Fonction pour générer plusieurs artefacts
-export function generateMultipleGenshinArtefacts(
+export async function generateMultipleGenshinArtefacts(
   options: GenshinArtefactGenerationOptions
-): GenshinArtefact[] {
+): Promise<GenshinArtefact[]> {
   const artefacts: GenshinArtefact[] = [];
 
   for (let i = 0; i < options.count; i++) {
-    artefacts.push(generateGenshinArtefact(options));
+    const artefact = await generateGenshinArtefact(options);
+    artefacts.push(artefact);
   }
 
   return artefacts;
 }
 
-// Fonction pour générer un artefact avec un set spécifique (utilise le cache)
+// Fonction pour générer un artefact avec un set spécifique (utilise les données pré-chargées)
 export async function generateGenshinArtefactWithSet(
-  options: Partial<GenshinArtefactGenerationOptions> = {}
+  options: Partial<GenshinArtefactGenerationOptions> = {},
+  availableArtifacts?: any[] // Les données pré-chargées
 ): Promise<GenshinArtefact> {
-  // Si un set spécifique est demandé, récupérer ses détails depuis le cache/API
-  if (options.setName) {
-    const setDetails = await getArtifactSetDetails(options.setName);
-    if (setDetails) {
-      // Générer l'artefact avec les informations du set
-      const artefact = generateGenshinArtefact(options);
+  console.log(`🚀 generateGenshinArtefactWithSet appelée avec:`, {
+    options,
+    availableArtifactsCount: availableArtifacts?.length,
+    firstArtifact: availableArtifacts?.[0],
+  });
 
-      // Mettre à jour les URLs d'images si disponibles
-      if (setDetails.images) {
-        const artefactType = Object.keys(TYPE_NAMES).find(
-          (key) => TYPE_NAMES[key as keyof typeof TYPE_NAMES] === artefact.type
-        );
+  // Générer l'artefact de base
+  const artefact = await generateGenshinArtefact(options);
 
-        if (
-          artefactType &&
-          setDetails.images[artefactType as keyof typeof setDetails.images]
-        ) {
-          artefact.imageUrl =
-            setDetails.images[artefactType as keyof typeof setDetails.images];
-        }
+  // Utiliser les données pré-chargées pour assigner l'image
+  if (availableArtifacts && artefact.setName) {
+    const setData = availableArtifacts.find(
+      (artifact) => artifact.name === artefact.setName
+    );
+
+    if (setData && setData.images) {
+      // Récupérer l'image pour le type d'artefact généré
+      const artifactType = Object.keys(TYPE_NAMES).find(
+        (key) => TYPE_NAMES[key as keyof typeof TYPE_NAMES] === artefact.type
+      );
+
+      if (artifactType && setData.images[artifactType]) {
+        artefact.imageUrl = setData.images[artifactType];
       }
-
-      return artefact;
     }
   }
 
-  // Fallback vers la génération normale
-  return generateGenshinArtefact(options);
+  return artefact;
 }
 
 // Fonction pour calculer la probabilité d'obtenir un artefact spécifique

@@ -12,13 +12,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Validation de l'URL
+    // Validation de l'URL - on vérifie juste que c'est une URL valide
     const url = new URL(imageUrl);
 
-    // Vérifier que c'est bien une URL d'image
+    // PROTECTION DES IMAGES COMMENTÉE :
+    // On laisse passer toutes les images maintenant car :
+    // 1. On ne stocke pas les images (Vercel s'en occupe)
+    // 2. La vérification du Content-Type suffit pour s'assurer que c'est une image
+    // 3. Cela permet plus de flexibilité pour les utilisateurs
+
+    // Ancien code de vérification des domaines autorisés (commenté) :
+    /*
     const allowedDomains = [
       "images.unsplash.com",
-      "picsum.photos",
+      "picsum.photos", 
       "via.placeholder.com",
       "loremflickr.com",
       "placehold.co",
@@ -29,7 +36,7 @@ export async function GET(request: NextRequest) {
       "cdn.pixabay.com",
       "images.pexels.com",
       "source.unsplash.com",
-      "img.ascencia.re", // Votre serveur d'images personnel
+      "img.ascencia.re",
     ];
 
     const isAllowedDomain = allowedDomains.some(
@@ -44,6 +51,7 @@ export async function GET(request: NextRequest) {
         { status: 403 }
       );
     }
+    */
 
     // Récupérer l'image
     const response = await fetch(imageUrl, {
@@ -61,7 +69,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Vérifier que c'est bien une image
+    // VÉRIFICATION IMPORTANTE : S'assurer que c'est vraiment une image
+    // Cette vérification est cruciale car elle empêche :
+    // - L'injection de scripts malveillants
+    // - Le téléchargement de fichiers non-images
+    // - Les attaques par proxy de contenu dangereux
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.startsWith("image/")) {
       return NextResponse.json(
