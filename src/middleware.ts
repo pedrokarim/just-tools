@@ -11,8 +11,8 @@ export function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // Pour toutes les autres routes admin, vérifier l'autorisation
-    // Cette vérification sera faite côté client dans AuthGuard
+    // Pour toutes les autres routes admin, laisser passer
+    // La vérification d'autorisation se fait dans AuthGuard côté client
     return NextResponse.next();
   }
 

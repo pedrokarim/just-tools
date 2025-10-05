@@ -79,9 +79,9 @@ export async function getAnalyticsStats() {
 
     // Vues par page (top 10)
     const viewsByPage = (await prisma.$queryRaw`
-      SELECT pagePath, CAST(COUNT(*) AS INTEGER) as count
-      FROM pageView
-      GROUP BY pagePath
+      SELECT "pagePath", COUNT(*)::integer as count
+      FROM "pageView"
+      GROUP BY "pagePath"
       ORDER BY count DESC
       LIMIT 10
     `) as Array<{ pagePath: string; count: number }>;
@@ -89,19 +89,19 @@ export async function getAnalyticsStats() {
     // Vues par heure des dernières 24h
     const viewsByHour = (await prisma.$queryRaw`
       WITH hours AS (
-        SELECT 0 as hour UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14 UNION ALL SELECT 15 UNION ALL SELECT 16 UNION ALL SELECT 17 UNION ALL SELECT 18 UNION ALL SELECT 19 UNION ALL SELECT 20 UNION ALL SELECT 21 UNION ALL SELECT 22 UNION ALL SELECT 23
+        SELECT generate_series(0, 23) as hour
       ),
       views_by_hour AS (
         SELECT 
-          CAST(strftime('%H', datetime(timestamp)) AS INTEGER) as hour,
-          CAST(COUNT(*) AS INTEGER) as count
-        FROM pageView
-        WHERE datetime(timestamp) >= datetime('now', '-24 hours')
-        GROUP BY strftime('%H', datetime(timestamp))
+          EXTRACT(hour FROM timestamp) as hour,
+          COUNT(*) as count
+        FROM "pageView"
+        WHERE timestamp >= NOW() - INTERVAL '24 hours'
+        GROUP BY EXTRACT(hour FROM timestamp)
       )
       SELECT 
-        CAST(hours.hour AS TEXT) as hour,
-        CAST(COALESCE(views_by_hour.count, 0) AS INTEGER) as count
+        hours.hour::text as hour,
+        COALESCE(views_by_hour.count, 0)::integer as count
       FROM hours
       LEFT JOIN views_by_hour ON hours.hour = views_by_hour.hour
       ORDER BY hours.hour
@@ -162,7 +162,10 @@ export async function clearAnalytics() {
     return { success: true };
   } catch (error) {
     console.error("Erreur lors du nettoyage des analytics:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur inconnue",
+    };
   }
 }
 

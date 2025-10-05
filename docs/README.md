@@ -48,7 +48,7 @@ just-tools/
 
 - [Documentation Next.js](https://nextjs.org/docs)
 - [Documentation Prisma](https://www.prisma.io/docs)
-- [Documentation BetterAuth](https://www.better-auth.com/docs)
+- [Documentation Auth.js](https://authjs.dev/)
 - [Documentation Vercel](https://vercel.com/docs)
 
 ---

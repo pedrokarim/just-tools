@@ -9,6 +9,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { Shield } from "lucide-react";
 
 export default function AdminLayout({
   children,
@@ -34,21 +35,28 @@ export default function AdminLayout({
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
-              <div className="text-sm font-medium">
-                {pathname === "/admin" && "Dashboard"}
-                {pathname === "/admin/visitors" && "Visiteurs"}
-                {pathname === "/admin/pages" && "Pages"}
-                {pathname === "/admin/logins" && "Connexions"}
-                {pathname === "/admin/settings" && "Paramètres"}
-                {pathname.startsWith("/admin/") &&
-                  ![
-                    "/admin",
-                    "/admin/visitors",
-                    "/admin/pages",
-                    "/admin/logins",
-                    "/admin/settings",
-                  ].includes(pathname) &&
-                  "Admin"}
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                <div className="text-sm font-medium">
+                  {pathname === "/admin" && "Dashboard"}
+                  {pathname === "/admin/visitors" && "Visiteurs"}
+                  {pathname === "/admin/pages" && "Pages"}
+                  {pathname === "/admin/logins" && "Connexions"}
+                  {pathname === "/admin/database" && "Base de données"}
+                  {pathname === "/admin/artifacts" && "Artefacts"}
+                  {pathname === "/admin/settings" && "Paramètres"}
+                  {pathname.startsWith("/admin/") &&
+                    ![
+                      "/admin",
+                      "/admin/visitors",
+                      "/admin/pages",
+                      "/admin/logins",
+                      "/admin/database",
+                      "/admin/artifacts",
+                      "/admin/settings",
+                    ].includes(pathname) &&
+                    "Admin"}
+                </div>
               </div>
             </div>
           </header>

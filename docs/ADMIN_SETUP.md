@@ -5,8 +5,8 @@
 Créez un fichier `.env.local` à la racine du projet avec les variables suivantes :
 
 ```env
-# BetterAuth Configuration
-BETTER_AUTH_SECRET=your-super-secret-key-here-change-this-in-production
+# Auth.js Configuration
+AUTH_SECRET=your-super-secret-key-here-change-this-in-production
 
 # Discord OAuth Configuration
 DISCORD_CLIENT_ID=your-discord-client-id
@@ -62,13 +62,13 @@ src/
 │   │   ├── layout.tsx              # Layout admin avec protection
 │   │   └── page.tsx                # Dashboard principal
 │   └── api/
-│       ├── auth/[...better-auth]/  # Routes BetterAuth
+│       ├── auth/[...nextauth]/     # Routes Auth.js
 │       └── analytics/              # API Analytics
 ├── components/
 │   ├── admin/                      # Composants admin
 │   └── analytics-tracker.tsx       # Tracker automatique
 └── lib/
-    ├── auth.ts                     # Configuration BetterAuth
+    ├── auth.ts                     # Configuration Auth.js
     └── database.ts                 # Base de données SQLite
 ```
 

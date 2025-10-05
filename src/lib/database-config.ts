@@ -41,8 +41,8 @@ export function isSQLite(): boolean {
   return getDatabaseType() === "sqlite";
 }
 
-// Configuration pour BetterAuth
-export function getBetterAuthDatabaseConfig() {
+// Configuration pour Auth.js (plus nécessaire avec PrismaAdapter)
+export function getAuthDatabaseConfig() {
   const dbType = getDatabaseType();
 
   return {

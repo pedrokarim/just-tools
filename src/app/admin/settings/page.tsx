@@ -137,9 +137,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <h4 className="font-medium">Authentification</h4>
-              <p className="text-sm text-muted-foreground">
-                BetterAuth + Discord
-              </p>
+              <p className="text-sm text-muted-foreground">Auth.js + Discord</p>
             </div>
             <div>
               <h4 className="font-medium">Framework</h4>

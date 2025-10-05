@@ -9,6 +9,7 @@ import {
   Grid3X3,
   Image,
   Volume2,
+  Sparkles,
 } from "lucide-react";
 
 export interface ToolMetadata {
@@ -174,6 +175,21 @@ export const toolsMetadata: ToolMetadata[] = [
     headerIconBg: "bg-gradient-to-br from-emerald-500 to-teal-500",
     createdAt: new Date("2025-08-15"), // Aujourd'hui
   },
+  {
+    id: "artefact-generator",
+    name: "Simulateur d'Artefacts Genshin",
+    description:
+      "Générez des artefacts aléatoires avec les vraies probabilités du jeu Genshin Impact",
+    category: "Gaming",
+    status: "ready",
+    icon: <Sparkles className="w-6 h-6" />,
+    color: "from-purple-500 to-pink-500",
+    gradient: "bg-gradient-to-br from-purple-500 to-pink-500",
+    route: "/tools/artefact-generator",
+    headerGradient: "from-purple-600 to-pink-600",
+    headerIconBg: "bg-gradient-to-br from-purple-500 to-pink-500",
+    createdAt: new Date("2025-01-10"),
+  },
 ];
 
 // Fonction pour obtenir les métadonnées d'un outil par son ID
@@ -230,6 +246,7 @@ export const categories = [
   "Utilitaires",
   "Sécurité",
   "Édition",
+  "Gaming",
 ];
 
 // Fonction pour obtenir les outils par catégorie

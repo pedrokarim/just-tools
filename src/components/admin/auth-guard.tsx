@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { useSession, signOut } from "next-auth/react";
 import { toast } from "sonner";
 
 interface AuthGuardProps {
@@ -13,18 +13,17 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Vérifier d'abord si on a une session côté client
-        const clientSession = await authClient.getSession();
+        // Vérifier d'abord si on a une session
+        if (status === "loading") {
+          return; // Attendre que la session soit chargée
+        }
 
-        if (
-          !clientSession ||
-          !("data" in clientSession) ||
-          !clientSession.data?.user
-        ) {
+        if (status === "unauthenticated" || !session?.user) {
           router.replace("/admin/login");
           return;
         }
@@ -43,7 +42,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
           } else {
             // Utilisateur connecté mais non autorisé - VIDER LA SESSION
             try {
-              await authClient.signOut();
+              await signOut({ redirect: false });
               toast.error("Accès refusé", {
                 description:
                   "Vous n'êtes pas autorisé à accéder au panel d'administration. Session déconnectée.",
@@ -71,9 +70,9 @@ export function AuthGuard({ children }: AuthGuardProps) {
     };
 
     checkAuth();
-  }, [router]);
+  }, [router, session, status]);
 
-  if (isLoading) {
+  if (isLoading || status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <div className="text-center">

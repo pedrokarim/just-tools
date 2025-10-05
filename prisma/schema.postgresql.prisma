@@ -11,7 +11,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Tables BetterAuth (selon la documentation officielle)
+// Tables Auth.js (selon la documentation officielle)
 model user {
   id            String    @id @default(cuid())
   name          String?

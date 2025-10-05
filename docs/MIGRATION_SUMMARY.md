@@ -46,7 +46,7 @@ DATABASE_URL="file:./data/auth.db"  # SQLite
 # DATABASE_URL="postgresql://..."   # PostgreSQL
 
 # Authentification
-BETTER_AUTH_SECRET=your-secret
+AUTH_SECRET=your-secret
 DISCORD_CLIENT_ID=your-client-id
 DISCORD_CLIENT_SECRET=your-client-secret
 AUTHORIZED_USERS=123456789012345678
@@ -64,7 +64,7 @@ AUTHORIZED_USERS=123456789012345678
 ```env
 DATABASE_URL=postgresql://username:password@host:port/database?schema=public
 DIRECT_URL=postgresql://username:password@host:port/database?schema=public
-BETTER_AUTH_SECRET=your-secret
+AUTH_SECRET=your-secret
 DISCORD_CLIENT_ID=your-client-id
 DISCORD_CLIENT_SECRET=your-client-secret
 AUTHORIZED_USERS=123456789012345678
@@ -77,7 +77,7 @@ AUTHORIZED_USERS=123456789012345678
 - ✅ Création des schémas SQLite et PostgreSQL
 - ✅ Script de basculement fonctionnel
 - ✅ Détection automatique du type de base de données
-- ✅ Configuration dynamique de BetterAuth
+- ✅ Configuration dynamique d'Auth.js
 - ✅ Interface admin mise à jour
 - ✅ Configuration Vercel optimisée
 

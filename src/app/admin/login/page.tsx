@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { DiscordIcon } from "@/components/icons";
 import { toast } from "sonner";
+import Image from "next/image";
 
 function AdminLoginContent() {
   const router = useRouter();
@@ -22,7 +23,7 @@ function AdminLoginContent() {
   // Vérifier s'il y a une erreur dans l'URL
   useEffect(() => {
     const error = searchParams.get("error");
-    if (error === "ACCESS_DENIED") {
+    if (error === "AccessDenied") {
       toast.error("Accès refusé", {
         description:
           "Vous n'êtes pas autorisé à accéder au panel d'administration.",
@@ -45,9 +46,8 @@ function AdminLoginContent() {
         description: "Redirection vers Discord...",
       });
 
-      await authClient.signIn.social({
-        provider: "discord",
-        callbackURL: "/admin", // Rediriger directement vers admin
+      await signIn("discord", {
+        callbackUrl: "/admin", // Rediriger directement vers admin
       });
 
       // Dismiss le toast de chargement
@@ -76,6 +76,14 @@ function AdminLoginContent() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <Card className="w-full max-w-md mx-4">
         <CardHeader className="text-center">
+          <div className="flex justify-center mb-6">
+            <Image
+              src="/assets/images/icon-origin.png"
+              alt="Just Tools Logo"
+              width={120}
+              height={120}
+            />
+          </div>
           <CardTitle className="text-2xl font-bold">Admin Panel</CardTitle>
           <CardDescription>
             Connectez-vous avec Discord pour accéder au panel d'administration
@@ -111,6 +119,14 @@ export default function AdminLoginPage() {
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
           <Card className="w-full max-w-md mx-4">
             <CardHeader className="text-center">
+              <div className="flex justify-center mb-6">
+                <Image
+                  src="/assets/images/icon-origin.png"
+                  alt="Just Tools Logo"
+                  width={120}
+                  height={120}
+                />
+              </div>
               <CardTitle className="text-2xl font-bold">Admin Panel</CardTitle>
               <CardDescription>Chargement...</CardDescription>
             </CardHeader>

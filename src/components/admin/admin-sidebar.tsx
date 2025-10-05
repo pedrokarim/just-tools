@@ -11,6 +11,7 @@ import {
   FileText,
   Database,
   Shield,
+  Sparkles,
 } from "lucide-react";
 
 import { NavMain } from "./nav-main";
@@ -33,25 +34,6 @@ const navData = {
       isActive: true,
     },
     {
-      title: "Analytics",
-      url: "/admin/analytics",
-      icon: BarChart3,
-      items: [
-        {
-          title: "Vue d'ensemble",
-          url: "/admin",
-        },
-        {
-          title: "Visiteurs",
-          url: "/admin/visitors",
-        },
-        {
-          title: "Pages",
-          url: "/admin/pages",
-        },
-      ],
-    },
-    {
       title: "Visiteurs",
       url: "/admin/visitors",
       icon: Users,
@@ -72,6 +54,11 @@ const navData = {
       icon: Database,
     },
     {
+      title: "Artefacts",
+      url: "/admin/artifacts",
+      icon: Sparkles,
+    },
+    {
       title: "Paramètres",
       url: "/admin/settings",
       icon: Settings,
@@ -85,11 +72,11 @@ export function AdminSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-4 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+        <div className="flex items-center gap-2 px-4 py-2 group-data-[collapsible=icon]:justify-center">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary aspect-square">
             <BarChart3 className="h-4 w-4 text-primary-foreground" />
           </div>
-          <div className="grid flex-1 text-left text-sm leading-tight">
+          <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
             <span className="truncate font-semibold">Admin Panel</span>
             <span className="truncate text-xs">Just Tools</span>
           </div>

@@ -63,7 +63,7 @@ DATABASE_URL="file:./data/auth.db"
 # DIRECT_URL="postgresql://username:password@host:port/database?schema=public"
 
 # Autres variables...
-BETTER_AUTH_SECRET=your-secret
+AUTH_SECRET=your-secret
 DISCORD_CLIENT_ID=your-client-id
 DISCORD_CLIENT_SECRET=your-client-secret
 AUTHORIZED_USERS=123456789012345678
@@ -98,7 +98,7 @@ Dans Vercel :
 ```env
 DATABASE_URL=postgresql://username:password@host:port/database?schema=public
 DIRECT_URL=postgresql://username:password@host:port/database?schema=public
-BETTER_AUTH_SECRET=your-secret
+AUTH_SECRET=your-secret
 DISCORD_CLIENT_ID=your-client-id
 DISCORD_CLIENT_SECRET=your-client-secret
 AUTHORIZED_USERS=123456789012345678
@@ -170,7 +170,7 @@ Cette détection est utilisée dans :
 ## 🔒 Sécurité
 
 - Ne jamais commiter les fichiers `.env`
-- Utiliser des secrets forts pour `BETTER_AUTH_SECRET`
+- Utiliser des secrets forts pour `AUTH_SECRET`
 - Limiter l'accès aux utilisateurs autorisés via `AUTHORIZED_USERS`
 - Utiliser HTTPS en production
 

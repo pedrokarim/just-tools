@@ -1,8 +1,8 @@
 "use client";
 
 import { ChevronsUpDown, LogOut, Settings, User } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -20,44 +20,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
-
-interface UserData {
-  name: string;
-  email: string;
-  avatar: string;
-}
 
 export function NavUser() {
   const { isMobile } = useSidebar();
   const router = useRouter();
-  const [user, setUser] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const session = await authClient.getSession();
-        if (session && "data" in session && session.data?.user) {
-          setUser({
-            name: session.data.user.name || "Utilisateur",
-            email: session.data.user.email || "user@example.com",
-            avatar: session.data.user.image || "",
-          });
-        }
-      } catch (error) {
-        console.error(
-          "Erreur lors de la récupération des données utilisateur:",
-          error
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, []);
+  const { data: session, status } = useSession();
 
   const handleSignOut = async () => {
     try {
@@ -66,7 +34,7 @@ export function NavUser() {
         description: "Redirection vers la page de connexion...",
       });
 
-      await authClient.signOut();
+      await signOut({ redirect: false });
 
       // Dismiss le toast de chargement
       toast.dismiss(loadingToast);
@@ -90,7 +58,7 @@ export function NavUser() {
     }
   };
 
-  if (loading) {
+  if (status === "loading") {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
@@ -108,7 +76,7 @@ export function NavUser() {
     );
   }
 
-  if (!user) {
+  if (!session?.user) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
@@ -126,6 +94,8 @@ export function NavUser() {
     );
   }
 
+  const user = session.user;
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -136,14 +106,18 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarImage src={user.image || ""} alt={user.name || ""} />
                 <AvatarFallback className="rounded-lg">
-                  {user.name.charAt(0).toUpperCase()}
+                  {(user.name || "U").charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate font-semibold">
+                  {user.name || "Utilisateur"}
+                </span>
+                <span className="truncate text-xs">
+                  {user.email || "user@example.com"}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -157,14 +131,18 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarImage src={user.image || ""} alt={user.name || ""} />
                   <AvatarFallback className="rounded-lg">
-                    {user.name.charAt(0).toUpperCase()}
+                    {(user.name || "U").charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-semibold">
+                    {user.name || "Utilisateur"}
+                  </span>
+                  <span className="truncate text-xs">
+                    {user.email || "user@example.com"}
+                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>

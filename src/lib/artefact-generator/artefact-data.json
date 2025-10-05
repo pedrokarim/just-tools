@@ -1,0 +1,133 @@
+{
+  "artefactTypes": [
+    {
+      "id": "fleur",
+      "name": "Fleur",
+      "mainStats": ["PV"],
+      "description": "Fleur de vie - Augmente les PV"
+    },
+    {
+      "id": "plume",
+      "name": "Plume",
+      "mainStats": ["ATQ"],
+      "description": "Plume de la mort - Augmente l'attaque"
+    },
+    {
+      "id": "sablier",
+      "name": "Sablier",
+      "mainStats": ["ATQ %", "PV %", "DEF %", "RE", "ME"],
+      "description": "Sablier de l'éternité - Augmente les stats principales"
+    },
+    {
+      "id": "coupe",
+      "name": "Coupe",
+      "mainStats": [
+        "ATQ %",
+        "PV %",
+        "DEF %",
+        "ME",
+        "Pyro",
+        "Hydro",
+        "Cryo",
+        "Électro",
+        "Anémo",
+        "Géo",
+        "Physique"
+      ],
+      "description": "Coupe d'Eonothem - Augmente les stats ou les dégâts élémentaires"
+    },
+    {
+      "id": "couronne",
+      "name": "Couronne",
+      "mainStats": ["TC", "DC", "ATQ %", "PV %", "DEF %", "ME", "Soins"],
+      "description": "Couronne de Logos - Augmente les stats critiques et de soins"
+    }
+  ],
+  "subStats": [
+    {
+      "name": "ATQ %",
+      "weight": 10,
+      "type": "percentage"
+    },
+    {
+      "name": "PV %",
+      "weight": 10,
+      "type": "percentage"
+    },
+    {
+      "name": "DEF %",
+      "weight": 10,
+      "type": "percentage"
+    },
+    {
+      "name": "ATQ",
+      "weight": 8,
+      "type": "flat"
+    },
+    {
+      "name": "PV",
+      "weight": 8,
+      "type": "flat"
+    },
+    {
+      "name": "DEF",
+      "weight": 8,
+      "type": "flat"
+    },
+    {
+      "name": "TC",
+      "weight": 6,
+      "type": "percentage"
+    },
+    {
+      "name": "DC",
+      "weight": 6,
+      "type": "percentage"
+    },
+    {
+      "name": "RE",
+      "weight": 6,
+      "type": "percentage"
+    },
+    {
+      "name": "ME",
+      "weight": 6,
+      "type": "percentage"
+    }
+  ],
+  "probabilities": {
+    "fourSubStats": 0.25,
+    "threeSubStats": 0.75
+  },
+  "mainStatWeights": {
+    "sablier": {
+      "ATQ %": 26.7,
+      "PV %": 26.7,
+      "DEF %": 26.7,
+      "RE": 10.0,
+      "ME": 10.0
+    },
+    "coupe": {
+      "ATQ %": 20.0,
+      "PV %": 20.0,
+      "DEF %": 20.0,
+      "ME": 5.0,
+      "Pyro": 5.0,
+      "Hydro": 5.0,
+      "Cryo": 5.0,
+      "Électro": 5.0,
+      "Anémo": 5.0,
+      "Géo": 5.0,
+      "Physique": 5.0
+    },
+    "couronne": {
+      "TC": 22.0,
+      "DC": 22.0,
+      "ATQ %": 10.0,
+      "PV %": 10.0,
+      "DEF %": 10.0,
+      "ME": 10.0,
+      "Soins": 16.0
+    }
+  }
+}

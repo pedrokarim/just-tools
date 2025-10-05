@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
-    // Utiliser la vraie session côté serveur avec BetterAuth
-    const session = await auth.api.getSession({ headers: request.headers });
+    // Utiliser la session Auth.js
+    const session = await auth();
 
     if (!session || !session.user) {
       return NextResponse.json({ authorized: false, reason: "Non connecté" });
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const account = await (prisma as any).account.findFirst({
       where: {
         userId: session.user.id,
-        providerId: "discord",
+        provider: "discord",
       },
     });
 
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const discordId = account.accountId;
+    const discordId = account.providerAccountId;
 
     // Vérifier si l'utilisateur est autorisé
     const authorizedUsers = process.env.AUTHORIZED_USERS?.split(",") || [];

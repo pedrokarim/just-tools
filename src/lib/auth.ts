@@ -1,8 +1,7 @@
-import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
+import NextAuth from "next-auth";
+import Discord from "next-auth/providers/discord";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
-import { createAuthMiddleware, APIError } from "better-auth/api";
-import { getBetterAuthDatabaseConfig } from "./database-config";
 
 // Fonction pour obtenir la géolocalisation (DÉSACTIVÉE TEMPORAIREMENT)
 async function getLocationData(
@@ -53,112 +52,70 @@ async function recordLoginAttempt(data: {
   }
 }
 
-export const auth = betterAuth({
-  database: prismaAdapter(prisma, getBetterAuthDatabaseConfig()),
-  socialProviders: {
-    discord: {
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    Discord({
       clientId: process.env.DISCORD_CLIENT_ID!,
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-    },
-  },
-  hooks: {
-    before: createAuthMiddleware(async (ctx) => {
-      // Ne traiter que les connexions sociales
-      if (!ctx.path.startsWith("/sign-in/social")) return;
-
-      // Récupérer l'IP et l'User-Agent
-      const forwarded = ctx.request?.headers.get("x-forwarded-for");
-      const realIp = ctx.request?.headers.get("x-real-ip");
-      const ipAddress = forwarded?.split(",")[0] || realIp || "unknown";
-      const userAgent = ctx.request?.headers.get("user-agent") || "unknown";
-
-      // Pour Discord, on ne peut pas vérifier l'autorisation ici car on n'a pas encore l'ID Discord
-      // On va juste enregistrer la tentative et laisser passer
-      await recordLoginAttempt({
-        ipAddress,
-        userAgent,
-        success: true, // On laisse passer pour l'instant
-        reason: "Tentative de connexion Discord",
-      });
     }),
-  },
-  databaseHooks: {
-    session: {
-      create: {
-        after: async (session) => {
-          // Récupérer l'account Discord associé à cette session
-          try {
-            const account = await (prisma as any).account.findFirst({
-              where: {
-                userId: session.userId,
-                providerId: "discord",
-              },
-            });
-
-            if (account) {
-              const discordId = account.accountId;
-
-              // Récupérer les données utilisateur
-              const user = await (prisma as any).user.findUnique({
-                where: { id: session.userId },
-              });
-
-              // Vérifier si l'utilisateur est autorisé
-              const authorizedUsers =
-                process.env.AUTHORIZED_USERS?.split(",") || [];
-              const isAuthorized = authorizedUsers.includes(discordId);
-
-              if (!isAuthorized) {
-                // Supprimer la session non autorisée
-                await (prisma as any).session.delete({
-                  where: { id: session.id },
-                });
-
-                // Enregistrer la tentative échouée
-                await recordLoginAttempt({
-                  discordId,
-                  username: user?.name,
-                  email: user?.email,
-                  avatar: user?.image,
-                  ipAddress: session.ipAddress || undefined,
-                  userAgent: session.userAgent || undefined,
-                  success: false,
-                  reason: "Utilisateur non autorisé",
-                });
-
-                // Lever une erreur pour informer le client
-                throw new APIError("UNAUTHORIZED", {
-                  message:
-                    "Vous n'êtes pas autorisé à accéder au panel d'administration.",
-                });
-              } else {
-                // Enregistrer la tentative réussie
-                await recordLoginAttempt({
-                  discordId,
-                  username: user?.name,
-                  email: user?.email,
-                  avatar: user?.image,
-                  ipAddress: session.ipAddress || undefined,
-                  userAgent: session.userAgent || undefined,
-                  success: true,
-                  reason: "Connexion autorisée",
-                });
-              }
-            }
-          } catch (error) {
-            console.error(
-              "Erreur lors de la vérification d'autorisation:",
-              error
-            );
-            throw error;
-          }
-        },
-      },
-    },
-  },
+  ],
   pages: {
     signIn: "/admin/login",
     error: "/admin/access-denied",
   },
-  secret: process.env.BETTER_AUTH_SECRET,
+  secret: process.env.AUTH_SECRET,
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      // Vérifier l'autorisation pour Discord
+      if (account?.provider === "discord") {
+        const discordId = account.providerAccountId;
+
+        // Vérifier si l'utilisateur est autorisé
+        const authorizedUsers = process.env.AUTHORIZED_USERS?.split(",") || [];
+        const isAuthorized = authorizedUsers.includes(discordId);
+
+        if (!isAuthorized) {
+          // Enregistrer la tentative échouée
+          await recordLoginAttempt({
+            discordId,
+            username: user.name || undefined,
+            email: user.email || undefined,
+            avatar: user.image || undefined,
+            success: false,
+            reason: "Utilisateur non autorisé",
+          });
+
+          return false; // Refuser la connexion
+        } else {
+          // Enregistrer la tentative réussie
+          await recordLoginAttempt({
+            discordId,
+            username: user.name || undefined,
+            email: user.email || undefined,
+            avatar: user.image || undefined,
+            success: true,
+            reason: "Connexion autorisée",
+          });
+        }
+      }
+
+      return true;
+    },
+    async session({ session, user }) {
+      // Ajouter l'ID utilisateur à la session
+      if (session.user) {
+        session.user.id = user.id;
+      }
+      return session;
+    },
+  },
+  events: {
+    async signIn({ user, account, isNewUser }) {
+      // Log des connexions pour debugging
+      console.log(
+        `Connexion: ${user.name} (${user.email}) via ${account?.provider}`
+      );
+    },
+  },
 });

@@ -11,21 +11,21 @@ export async function GET(request: NextRequest) {
     // Récupérer les statistiques des pages
     const totalPages = Number(await prisma.pageView.count());
     const uniquePages = (await prisma.$queryRaw`
-      SELECT COUNT(DISTINCT pagePath) as count
-      FROM pageView
+      SELECT COUNT(DISTINCT "pagePath") as count
+      FROM "pageView"
     `) as Array<{ count: number }>;
     const uniquePagesCount = Number(uniquePages[0]?.count || 0);
 
     // Récupérer les pages les plus visitées avec pagination
     const pagesWithStats = (await prisma.$queryRaw`
       SELECT 
-        pagePath,
-        CAST(COUNT(*) AS INTEGER) as viewCount,
-        CAST(COUNT(DISTINCT fingerprint) AS INTEGER) as uniqueVisitors,
-        MAX(timestamp) as lastVisit
-      FROM pageView
-      GROUP BY pagePath
-      ORDER BY viewCount DESC
+        "pagePath",
+        COUNT(*)::integer as "viewCount",
+        COUNT(DISTINCT fingerprint)::integer as "uniqueVisitors",
+        MAX(timestamp) as "lastVisit"
+      FROM "pageView"
+      GROUP BY "pagePath"
+      ORDER BY "viewCount" DESC
       LIMIT ${pageSize}
       OFFSET ${offset}
     `) as Array<{

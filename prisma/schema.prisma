@@ -11,7 +11,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Tables BetterAuth (selon la documentation officielle)
+// Tables Auth.js (selon la documentation officielle)
 model user {
   id            String    @id @default(cuid())
   name          String?
@@ -27,30 +27,31 @@ model user {
 model account {
   id                    String  @id @default(cuid())
   userId                String
-  accountId             String
-  providerId            String
-  accessToken           String?
-  refreshToken          String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
+  type                  String
+  provider              String
+  providerAccountId     String
+  refresh_token         String? @db.Text
+  access_token          String? @db.Text
+  expires_at            Int?
+  token_type            String?
   scope                 String?
-  idToken               String?
-  password              String?
+  id_token              String? @db.Text
+  session_state         String?
   user                  user    @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
 }
 
 model session {
-  id         String   @id @default(cuid())
-  userId     String
-  token      String   @unique
-  expiresAt  DateTime
-  ipAddress  String?
-  userAgent  String?
-  user       user     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model verification {
@@ -96,4 +97,46 @@ model loginAttempt {
   success     Boolean  // Si la connexion a réussi ou échoué
   reason      String?  // Raison de l'échec (ex: "Non autorisé")
   timestamp   DateTime @default(now())
+}
+
+// Tables pour le cache des artefacts Genshin Impact
+model ArtifactSet {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  images      Json?    // Stockage des URLs d'images pour chaque type d'artefact
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("artifact_sets")
+}
+
+model ArtifactType {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  mainStats Json     // Array des stats principales possibles
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("artifact_types")
+}
+
+model SubStat {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("sub_stats")
+}
+
+model CacheMetadata {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  lastUpdated  DateTime
+  version      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@map("cache_metadata")
 }
