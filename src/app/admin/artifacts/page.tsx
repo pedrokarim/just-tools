@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { RefreshCw, Database, Clock, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { AdminLoading, LoadingButton } from "@/components/ui/loading";
 
 interface CacheStats {
   artifactSetsCount: number;
@@ -127,8 +128,12 @@ export default function AdminArtifactsPage() {
           </p>
         </div>
 
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Chargement des statistiques...</div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <AdminLoading
+            mode="full"
+            message="Chargement des statistiques..."
+            submessage="Vérification du cache des artefacts"
+          />
         </div>
       </div>
     );
@@ -151,10 +156,13 @@ export default function AdminArtifactsPage() {
             variant="outline"
             size="sm"
             onClick={fetchCacheStats}
+            disabled={refreshing}
             className="flex items-center gap-2"
           >
-            <RefreshCw className="h-4 w-4" />
-            Actualiser
+            <RefreshCw
+              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            {refreshing ? "Actualisation..." : "Actualiser"}
           </Button>
 
           <Separator orientation="vertical" className="h-6 bg-border" />
@@ -167,9 +175,7 @@ export default function AdminArtifactsPage() {
             className="flex items-center gap-2"
           >
             <RefreshCw
-              className={`h-4 w-4 transition-colors ${
-                refreshing ? "animate-spin text-blue-500" : ""
-              }`}
+              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
             />
             {refreshing ? "Mise à jour..." : "Actualiser le cache"}
           </Button>
@@ -182,9 +188,7 @@ export default function AdminArtifactsPage() {
             className="flex items-center gap-2"
           >
             <Database
-              className={`h-4 w-4 transition-colors ${
-                initializing ? "animate-pulse" : ""
-              }`}
+              className={`h-4 w-4 ${initializing ? "animate-pulse" : ""}`}
             />
             {initializing ? "Initialisation..." : "Initialiser le service"}
           </Button>

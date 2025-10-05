@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 
         const uniquePages = (await prisma.$queryRaw`
           SELECT COUNT(DISTINCT "pagePath") as count
-          FROM "pageView"
+          FROM "page_views"
           WHERE fingerprint = ${visitor.fingerprint}
         `) as Array<{ count: number }>;
 

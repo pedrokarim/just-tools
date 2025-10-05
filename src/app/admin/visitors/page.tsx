@@ -23,6 +23,8 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePagination } from "@/hooks/use-pagination";
 import { PaginationControls } from "@/components/admin/pagination-controls";
+import { AdminLoading, LoadingButton } from "@/components/ui/loading";
+import { Button } from "@/components/ui/button";
 
 interface PageView {
   id: number;
@@ -94,8 +96,23 @@ export default function VisitorsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Chargement des visiteurs...</div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Visiteurs</h1>
+            <p className="text-muted-foreground">
+              Analyse des visiteurs uniques
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center min-h-[400px]">
+          <AdminLoading
+            mode="full"
+            message="Chargement des visiteurs..."
+            submessage="Récupération des données d'analytics"
+          />
+        </div>
       </div>
     );
   }
@@ -108,20 +125,18 @@ export default function VisitorsPage() {
           <p className="text-muted-foreground">Analyse des visiteurs uniques</p>
         </div>
 
-        <button
+        <Button
           onClick={fetchVisitors}
           disabled={refreshing}
-          className="flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent disabled:opacity-50"
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
         >
           <RefreshCw
-            className={`h-4 w-4 transition-colors ${
-              refreshing
-                ? "animate-spin text-blue-500"
-                : "text-muted-foreground"
-            }`}
+            className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
           />
           {refreshing ? "Actualisation..." : "Actualiser"}
-        </button>
+        </Button>
       </div>
 
       {/* Statistiques générales */}

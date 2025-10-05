@@ -64,7 +64,7 @@ model verification {
 }
 
 // Tables Analytics
-model PageView {
+model pageView {
   id          Int      @id @default(autoincrement())
   pagePath    String
   userAgent   String?
@@ -73,22 +73,18 @@ model PageView {
   country     String?
   city        String?
   timestamp   DateTime @default(now())
-
-  @@map("page_views")
 }
 
-model UniqueVisitor {
+model uniqueVisitor {
   id          Int      @id @default(autoincrement())
   fingerprint String   @unique
   firstVisit  DateTime @default(now())
   lastVisit   DateTime @default(now())
   visitCount  Int      @default(1)
-
-  @@map("unique_visitors")
 }
 
 // Table pour tracker les tentatives de connexion Discord
-model LoginAttempt {
+model loginAttempt {
   id          Int      @id @default(autoincrement())
   discordId   String?  // ID Discord de l'utilisateur
   username    String?  // Nom d'utilisateur Discord
@@ -101,8 +97,6 @@ model LoginAttempt {
   success     Boolean  // Si la connexion a réussi ou échoué
   reason      String?  // Raison de l'échec (ex: "Non autorisé")
   timestamp   DateTime @default(now())
-
-  @@map("login_attempts")
 }
 
 // Tables pour le cache des artefacts Genshin Impact

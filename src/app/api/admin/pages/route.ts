@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const totalPages = Number(await prisma.pageView.count());
     const uniquePages = (await prisma.$queryRaw`
       SELECT COUNT(DISTINCT "pagePath") as count
-      FROM "pageView"
+      FROM "page_views"
     `) as Array<{ count: number }>;
     const uniquePagesCount = Number(uniquePages[0]?.count || 0);
 
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         COUNT(*)::integer as "viewCount",
         COUNT(DISTINCT fingerprint)::integer as "uniqueVisitors",
         MAX(timestamp) as "lastVisit"
-      FROM "pageView"
+      FROM "page_views"
       GROUP BY "pagePath"
       ORDER BY "viewCount" DESC
       LIMIT ${pageSize}

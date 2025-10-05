@@ -11,7 +11,7 @@
     "test:ui": "vitest --config vitest.config.test.ts --ui",
     "test:run": "vitest --config vitest.config.test.ts run",
     "test:coverage": "vitest --config vitest.config.test.ts run --coverage",
-    "postinstall": "bun --bun prisma generate && bun --bun prisma db push",
+    "postinstall": "node scripts/migrate-production.js",
     "db:generate": "bun --bun prisma generate",
     "db:migrate": "bun --bun prisma migrate dev",
     "db:studio": "bun --bun prisma studio",
@@ -19,7 +19,8 @@
     "db:switch:sqlite": "node scripts/switch-database.js sqlite",
     "db:switch:postgresql": "node scripts/switch-database.js postgresql",
     "db:setup:sqlite": "bun run db:switch:sqlite && bun run db:generate && bun run db:push",
-    "db:setup:postgresql": "bun run db:switch:postgresql && bun run db:generate && bun run db:migrate"
+    "db:setup:postgresql": "bun run db:switch:postgresql && bun run db:generate && bun run db:migrate",
+    "db:create-migration": "node scripts/create-migration.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",

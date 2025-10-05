@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { AdminLoading, LoadingButton } from "@/components/ui/loading";
 
 interface DatabaseStats {
   totalPageViews: number;
@@ -222,8 +223,25 @@ export default function DatabasePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Chargement de la base de données...</div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Base de données
+            </h1>
+            <p className="text-muted-foreground">
+              Gestion et visualisation des données
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center min-h-[400px]">
+          <AdminLoading
+            mode="full"
+            message="Chargement de la base de données..."
+            submessage="Analyse des tables et statistiques"
+          />
+        </div>
       </div>
     );
   }
@@ -247,7 +265,7 @@ export default function DatabasePage() {
             <RefreshCw
               className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
             />
-            Actualiser
+            {refreshing ? "Actualisation..." : "Actualiser"}
           </Button>
           <Button onClick={exportData} variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
@@ -326,11 +344,11 @@ export default function DatabasePage() {
                           </DialogHeader>
                           <ScrollArea className="h-[70vh] w-full">
                             {detailsLoading ? (
-                              <div className="flex items-center justify-center h-32">
-                                <div className="text-lg">
-                                  Chargement des détails...
-                                </div>
-                              </div>
+                              <AdminLoading
+                                mode="compact"
+                                message="Chargement des détails..."
+                                submessage="Récupération des enregistrements"
+                              />
                             ) : (
                               <div className="space-y-4">
                                 {tableDetails.length === 0 ? (

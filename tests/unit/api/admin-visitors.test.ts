@@ -171,7 +171,7 @@ describe("Admin Visitors API", () => {
       expect.stringContaining('SELECT COUNT(DISTINCT "pagePath") as count')
     );
     expect(mockPrisma.$queryRaw).toHaveBeenCalledWith(
-      expect.stringContaining('FROM "pageView"')
+      expect.stringContaining('FROM "page_views"')
     );
   });
 

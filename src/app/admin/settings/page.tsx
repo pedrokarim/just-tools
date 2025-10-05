@@ -19,6 +19,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { LoadingButton } from "@/components/ui/loading";
 
 export default function SettingsPage() {
   const [isClearing, setIsClearing] = useState(false);

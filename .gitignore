@@ -43,3 +43,13 @@ next-env.d.ts
 
 /src/generated/prisma
 /data/*
+
+# Fichiers de sauvegarde et migration
+scripts/backup-*.json
+
+# Fichiers temporaires de migration
+scripts/*-backup-*
+scripts/temp-*
+
+# Scripts de migration ponctuels (contiennent des données sensibles)
+# (Scripts supprimés après migration)

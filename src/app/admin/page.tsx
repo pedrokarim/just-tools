@@ -37,6 +37,9 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { AdminLoading, LoadingButton } from "@/components/ui/loading";
+import { StatCard, LoadingCard } from "@/components/ui/loading-card";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 
 interface AnalyticsStats {
   totalViews: number;
@@ -141,45 +144,9 @@ export default function AdminDashboard() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Vue d'ensemble de l'activité de votre site
-            </p>
-          </div>
-        </div>
+  // Plus de loading full, on affiche toujours la structure
 
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Chargement des statistiques...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!stats) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Vue d'ensemble de l'activité de votre site
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-red-600">
-            Erreur lors du chargement des données
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Plus de gestion d'erreur séparée, on affiche toujours la structure
 
   return (
     <div className="space-y-6">
@@ -212,203 +179,162 @@ export default function AdminDashboard() {
 
           <Separator orientation="vertical" className="h-6 bg-border" />
 
-          <Button
+          <LoadingButton
             variant="outline"
             size="sm"
             onClick={() => fetchStats(false)}
-            disabled={refreshing}
+            loading={refreshing}
+            loadingText="Actualisation..."
             className="flex items-center gap-2"
           >
-            <RefreshCw
-              className={`h-4 w-4 transition-colors ${
-                refreshing
-                  ? "animate-spin text-blue-500"
-                  : "text-muted-foreground"
-              }`}
-            />
-          </Button>
+            <RefreshCw className="h-4 w-4" />
+            Actualiser
+          </LoadingButton>
 
           <Separator orientation="vertical" className="h-6 bg-border" />
 
-          <Button
+          <LoadingButton
             variant="destructive"
             size="sm"
             onClick={clearAdminData}
-            disabled={clearing}
+            loading={clearing}
+            loadingText="Nettoyage..."
             className="flex items-center gap-2"
           >
-            <RefreshCw
-              className={`h-4 w-4 transition-colors ${
-                clearing ? "animate-spin" : ""
-              }`}
-            />
-            {clearing ? "Nettoyage..." : "Nettoyer données admin"}
-          </Button>
+            <RefreshCw className="h-4 w-4" />
+            Nettoyer données admin
+          </LoadingButton>
         </div>
       </div>
 
       {/* Cartes de statistiques */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total des vues
-            </CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.totalViews?.toLocaleString() || "0"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              +{stats.last24hViews || 0} ces dernières 24h
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Total des vues"
+          value={stats?.totalViews || 0}
+          description={`+${stats?.last24hViews || 0} ces dernières 24h`}
+          icon={<Eye className="h-4 w-4 text-muted-foreground" />}
+          isLoading={loading}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Visiteurs uniques
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.uniqueVisitors?.toLocaleString() || "0"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              +{stats.last24hNewVisitors || 0} nouveaux aujourd'hui
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Visiteurs uniques"
+          value={stats?.uniqueVisitors || 0}
+          description={`+${
+            stats?.last24hNewVisitors || 0
+          } nouveaux aujourd'hui`}
+          icon={<Users className="h-4 w-4 text-muted-foreground" />}
+          isLoading={loading}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vues 24h</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.last24hViews?.toLocaleString() || "0"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Vues des dernières 24 heures
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Vues 24h"
+          value={stats?.last24hViews || 0}
+          description="Vues des dernières 24 heures"
+          icon={<Activity className="h-4 w-4 text-muted-foreground" />}
+          isLoading={loading}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Nouveaux visiteurs
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.last24hNewVisitors?.toLocaleString() || "0"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Nouveaux visiteurs aujourd'hui
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Nouveaux visiteurs"
+          value={stats?.last24hNewVisitors || 0}
+          description="Nouveaux visiteurs aujourd'hui"
+          icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+          isLoading={loading}
+        />
       </div>
 
       {/* Graphiques */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* Vues par heure */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Vues par heure (24h)</CardTitle>
-            <CardDescription>Activité des dernières 24 heures</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer
-              config={viewsByHourConfig}
-              className="min-h-[300px] w-full"
-            >
-              <LineChart data={stats.viewsByHour || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Line
-                  type="monotone"
-                  dataKey="count"
-                  stroke="var(--color-count)"
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+        <LoadingCard
+          title="Vues par heure (24h)"
+          description="Activité des dernières 24 heures"
+          isLoading={loading}
+        >
+          <ChartContainer
+            config={viewsByHourConfig}
+            className="min-h-[300px] w-full"
+          >
+            <LineChart data={stats?.viewsByHour || []}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="hour" />
+              <YAxis />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Line
+                type="monotone"
+                dataKey="count"
+                stroke="var(--color-count)"
+                strokeWidth={2}
+              />
+            </LineChart>
+          </ChartContainer>
+        </LoadingCard>
 
         {/* Vues par page */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Pages les plus visitées</CardTitle>
-            <CardDescription>
-              Top 5 des pages les plus populaires
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer
-              config={viewsByPageConfig}
-              className="min-h-[300px] w-full"
-            >
-              <BarChart data={stats.viewsByPage?.slice(0, 5) || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="pagePath" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="count" fill="var(--color-count)" radius={4} />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+        <LoadingCard
+          title="Pages les plus visitées"
+          description="Top 5 des pages les plus populaires"
+          isLoading={loading}
+        >
+          <ChartContainer
+            config={viewsByPageConfig}
+            className="min-h-[300px] w-full"
+          >
+            <BarChart data={stats?.viewsByPage?.slice(0, 5) || []}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="pagePath" />
+              <YAxis />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="count" fill="var(--color-count)" radius={4} />
+            </BarChart>
+          </ChartContainer>
+        </LoadingCard>
       </div>
 
       {/* Tableau des pages */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Détail des pages</CardTitle>
-          <CardDescription>Statistiques détaillées par page</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {stats.viewsByPage?.map((page, index) => (
-              <div
-                key={page.pagePath}
-                className="flex items-center justify-between p-4 border rounded-lg"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-blue-600">
-                      {index + 1}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="font-medium">{page.pagePath}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {page.count} vues
-                    </p>
-                  </div>
+      <LoadingCard
+        title="Détail des pages"
+        description="Statistiques détaillées par page"
+        isLoading={loading}
+      >
+        <div className="space-y-4">
+          {stats?.viewsByPage?.map((page, index) => (
+            <div
+              key={page.pagePath}
+              className="flex items-center justify-between p-4 border rounded-lg"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-blue-600">
+                    {index + 1}
+                  </span>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">
-                    {stats.totalViews
-                      ? ((page.count / stats.totalViews) * 100).toFixed(1)
-                      : "0"}
-                    %
+                <div>
+                  <p className="font-medium">{page.pagePath}</p>
+                  <p className="text-sm text-muted-foreground">
+                    <AnimatedCounter value={page.count} duration={1000} /> vues
                   </p>
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              <div className="text-right">
+                <p className="text-sm font-medium">
+                  <AnimatedCounter
+                    value={
+                      stats?.totalViews
+                        ? (page.count / stats.totalViews) * 100
+                        : 0
+                    }
+                    duration={1200}
+                    decimals={1}
+                    suffix="%"
+                  />
+                </p>
+              </div>
+            </div>
+          )) || []}
+        </div>
+      </LoadingCard>
     </div>
   );
 }

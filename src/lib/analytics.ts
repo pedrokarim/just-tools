@@ -80,7 +80,7 @@ export async function getAnalyticsStats() {
     // Vues par page (top 10)
     const viewsByPage = (await prisma.$queryRaw`
       SELECT "pagePath", COUNT(*)::integer as count
-      FROM "pageView"
+      FROM "page_views"
       GROUP BY "pagePath"
       ORDER BY count DESC
       LIMIT 10
@@ -95,7 +95,7 @@ export async function getAnalyticsStats() {
         SELECT 
           EXTRACT(hour FROM timestamp) as hour,
           COUNT(*) as count
-        FROM "pageView"
+        FROM "page_views"
         WHERE timestamp >= NOW() - INTERVAL '24 hours'
         GROUP BY EXTRACT(hour FROM timestamp)
       )
