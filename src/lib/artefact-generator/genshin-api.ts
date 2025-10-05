@@ -1,4 +1,18 @@
-import GenshinDB from "genshin-db";
+// Import dynamique pour éviter de charger 158 MB au build
+let GenshinDB: any = null;
+
+// Fonction pour charger genshin-db dynamiquement
+async function loadGenshinDB() {
+  if (!GenshinDB) {
+    try {
+      GenshinDB = (await import("genshin-db")).default;
+    } catch (error) {
+      console.warn("Impossible de charger genshin-db:", error);
+      return null;
+    }
+  }
+  return GenshinDB;
+}
 
 export interface GenshinArtefact {
   type: string;
@@ -134,12 +148,15 @@ export async function getArtifactSetDetails(setName: string) {
 }
 
 // Fonction pour obtenir l'image d'un artefact spécifique
-export function getArtifactImage(
+export async function getArtifactImage(
   setName: string,
   artifactType: string
-): string | null {
+): Promise<string | null> {
   try {
-    const artifactData = GenshinDB.artifacts(setName, {
+    const db = await loadGenshinDB();
+    if (!db) return null;
+
+    const artifactData = db.artifacts(setName, {
       matchCategories: true,
     });
     if (
@@ -163,9 +180,14 @@ export function getArtifactImage(
 }
 
 // Fonction pour obtenir l'image du set d'artefacts
-export function getArtifactSetImage(setName: string): string | null {
+export async function getArtifactSetImage(
+  setName: string
+): Promise<string | null> {
   try {
-    const artifactData = GenshinDB.artifacts(setName, {
+    const db = await loadGenshinDB();
+    if (!db) return null;
+
+    const artifactData = db.artifacts(setName, {
       matchCategories: true,
     });
     if (
@@ -272,9 +294,8 @@ export function generateGenshinArtefact(
     setName = getRandomElement(defaultSets);
   }
 
-  // Récupérer les images de l'artefact
-  const imageUrl = getArtifactImage(setName, artefactType);
-  const setImageUrl = getArtifactSetImage(setName);
+  // Les images seront chargées de manière asynchrone si nécessaire
+  // Pour éviter de bloquer le build avec genshin-db
 
   return {
     type: TYPE_NAMES[artefactType as keyof typeof TYPE_NAMES] || artefactType,
@@ -285,8 +306,7 @@ export function generateGenshinArtefact(
       .substr(2, 9)}`,
     setName,
     rarity: 5, // Tous les artefacts générés sont de rareté 5 étoiles
-    imageUrl: imageUrl || undefined,
-    setImageUrl: setImageUrl || undefined,
+    // Les images seront chargées de manière asynchrone
   };
 }
 

@@ -74,7 +74,12 @@ const nextConfig: NextConfig = {
   // Optimisations de performance
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion"],
+    // Optimisations pour réduire l'utilisation mémoire
+    memoryBasedWorkersCount: true,
   },
+
+  // Éviter de charger genshin-db au build (nouvelle syntaxe Next.js 15.6+)
+  serverExternalPackages: ["genshin-db"],
 
   // Redirection pour SEO
   async redirects() {
