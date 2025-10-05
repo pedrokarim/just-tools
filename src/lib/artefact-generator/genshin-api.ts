@@ -1,18 +1,5 @@
-// Import dynamique pour éviter de charger 158 MB au build
-let GenshinDB: any = null;
-
-// Fonction pour charger genshin-db dynamiquement
-async function loadGenshinDB() {
-  if (!GenshinDB) {
-    try {
-      GenshinDB = (await import("genshin-db")).default;
-    } catch (error) {
-      console.warn("Impossible de charger genshin-db:", error);
-      return null;
-    }
-  }
-  return GenshinDB;
-}
+// genshin-db supprimé - utilisation uniquement de la base de données
+import { prisma } from "../prisma";
 
 export interface GenshinArtefact {
   type: string;
@@ -153,19 +140,13 @@ export async function getArtifactImage(
   artifactType: string
 ): Promise<string | null> {
   try {
-    const db = await loadGenshinDB();
-    if (!db) return null;
-
-    const artifactData = db.artifacts(setName, {
-      matchCategories: true,
+    const artifactSet = await prisma.artifactSet.findUnique({
+      where: { name: setName },
     });
-    if (
-      artifactData &&
-      typeof artifactData === "object" &&
-      "images" in artifactData
-    ) {
-      const images = (artifactData as any).images;
-      if (images && images[artifactType]) {
+
+    if (artifactSet && artifactSet.images) {
+      const images = artifactSet.images as any;
+      if (images[artifactType]) {
         return images[artifactType];
       }
     }
@@ -184,19 +165,13 @@ export async function getArtifactSetImage(
   setName: string
 ): Promise<string | null> {
   try {
-    const db = await loadGenshinDB();
-    if (!db) return null;
-
-    const artifactData = db.artifacts(setName, {
-      matchCategories: true,
+    const artifactSet = await prisma.artifactSet.findUnique({
+      where: { name: setName },
     });
-    if (
-      artifactData &&
-      typeof artifactData === "object" &&
-      "images" in artifactData
-    ) {
-      const images = (artifactData as any).images;
-      if (images && images.flower) {
+
+    if (artifactSet && artifactSet.images) {
+      const images = artifactSet.images as any;
+      if (images.flower) {
         // Utiliser l'image de la fleur comme image représentative du set
         return images.flower;
       }

@@ -78,8 +78,7 @@ const nextConfig: NextConfig = {
     memoryBasedWorkersCount: true,
   },
 
-  // Éviter de charger genshin-db au build (nouvelle syntaxe Next.js 15.6+)
-  serverExternalPackages: ["genshin-db"],
+  // Plus besoin d'externaliser genshin-db (supprimé du projet)
 
   // Redirection pour SEO
   async redirects() {

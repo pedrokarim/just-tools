@@ -1,4 +1,4 @@
-import GenshinDB from "genshin-db";
+// genshin-db supprimé - utilisation uniquement de la base de données
 import {
   getCachedArtifactSets,
   getCachedArtifactSetDetails,
@@ -45,59 +45,36 @@ const DEFAULT_ARTIFACT_SETS = [
 ];
 
 /**
- * Récupère les sets d'artefacts depuis l'API Genshin DB
+ * Récupère les sets d'artefacts depuis la base de données
+ * (genshin-db n'est plus utilisé - données extraites via le script)
  */
-async function fetchArtifactSetsFromAPI(): Promise<ArtifactSetData[]> {
+async function fetchArtifactSetsFromDatabase(): Promise<ArtifactSetData[]> {
   try {
-    const artifacts = GenshinDB.artifacts("", { matchCategories: true });
+    const { PrismaClient } = await import("@prisma/client");
+    const prisma = new PrismaClient();
 
-    if (!Array.isArray(artifacts)) {
-      throw new Error("Format de données inattendu de l'API");
-    }
+    const artifactSets = await prisma.artifactSet.findMany({
+      orderBy: { name: "asc" },
+    });
 
-    const artifactSets: ArtifactSetData[] = [];
+    await prisma.$disconnect();
 
-    for (const artifact of artifacts) {
-      try {
-        // L'API genshin-db retourne des strings, pas des objets
-        const setName =
-          typeof artifact === "string"
-            ? artifact
-            : (artifact as any).name || artifact;
-        const details = GenshinDB.artifacts(setName, { matchCategories: true });
-
-        if (details && typeof details === "object" && "images" in details) {
-          const images = (details as any).images;
-
-          artifactSets.push({
-            name: setName,
-            description: (details as any).description || undefined,
-            images: {
-              flower: images?.flower || undefined,
-              plume: images?.plume || undefined,
-              sands: images?.sands || undefined,
-              goblet: images?.goblet || undefined,
-              circlet: images?.circlet || undefined,
-            },
-          });
-        }
-      } catch (error) {
-        console.warn(`Erreur lors du traitement du set ${artifact}:`, error);
-        // Ajouter quand même le set avec les données de base
-        const setName =
-          typeof artifact === "string"
-            ? artifact
-            : (artifact as any).name || artifact;
-        artifactSets.push({
-          name: setName,
-        });
-      }
-    }
-
-    return artifactSets;
+    return artifactSets.map((set) => ({
+      name: set.name,
+      description: set.description || undefined,
+      images: set.images
+        ? {
+            flower: set.images.flower || undefined,
+            plume: set.images.plume || undefined,
+            sands: set.images.sands || undefined,
+            goblet: set.images.goblet || undefined,
+            circlet: set.images.circlet || undefined,
+          }
+        : undefined,
+    }));
   } catch (error) {
     console.warn(
-      "Erreur lors de la récupération des sets depuis l'API:",
+      "Erreur lors de la récupération des sets depuis la base de données:",
       error
     );
     throw error;
@@ -116,21 +93,26 @@ export async function getAvailableArtifactSets(): Promise<string[]> {
       return cachedSets;
     }
 
-    // 2. Si pas en cache, récupérer depuis l'API et sauvegarder
-    console.log("Aucun set en cache, récupération depuis l'API...");
+    // 2. Si pas en cache, récupérer depuis la base de données
+    console.log(
+      "Aucun set en cache, récupération depuis la base de données..."
+    );
     try {
-      const apiSets = await fetchArtifactSetsFromAPI();
+      const dbSets = await fetchArtifactSetsFromDatabase();
 
-      if (apiSets.length > 0) {
+      if (dbSets.length > 0) {
         // Sauvegarder en cache
-        await saveArtifactSets(apiSets);
+        await saveArtifactSets(dbSets);
         await updateCacheMetadata(CACHE_KEYS.ARTIFACT_SETS, "1.0");
 
-        console.log(`${apiSets.length} sets sauvegardés en cache`);
-        return apiSets.map((set) => set.name);
+        console.log(`${dbSets.length} sets sauvegardés en cache`);
+        return dbSets.map((set) => set.name);
       }
-    } catch (apiError) {
-      console.warn("Erreur API, utilisation des sets par défaut:", apiError);
+    } catch (dbError) {
+      console.warn(
+        "Erreur base de données, utilisation des sets par défaut:",
+        dbError
+      );
     }
 
     // 3. Dernier recours : sets par défaut
@@ -154,34 +136,47 @@ export async function getArtifactSetDetails(setName: string): Promise<any> {
       return cachedDetails;
     }
 
-    // 2. Si pas en cache, récupérer depuis l'API et sauvegarder
+    // 2. Si pas en cache, récupérer depuis la base de données
     console.log(
-      `Set ${setName} non trouvé en cache, récupération depuis l'API...`
+      `Set ${setName} non trouvé en cache, récupération depuis la base de données...`
     );
     try {
-      const apiDetails = GenshinDB.artifacts(setName, {
-        matchCategories: true,
+      const { PrismaClient } = await import("@prisma/client");
+      const prisma = new PrismaClient();
+
+      const dbDetails = await prisma.artifactSet.findUnique({
+        where: { name: setName },
       });
 
-      if (apiDetails) {
+      await prisma.$disconnect();
+
+      if (dbDetails) {
         // Sauvegarder en cache pour la prochaine fois
         const artifactSetData: ArtifactSetData = {
           name: setName,
-          description: (apiDetails as any).description || undefined,
-          images: (apiDetails as any).images || undefined,
+          description: dbDetails.description || undefined,
+          images: dbDetails.images
+            ? {
+                flower: dbDetails.images.flower || undefined,
+                plume: dbDetails.images.plume || undefined,
+                sands: dbDetails.images.sands || undefined,
+                goblet: dbDetails.images.goblet || undefined,
+                circlet: dbDetails.images.circlet || undefined,
+              }
+            : undefined,
         };
 
         await saveArtifactSets([artifactSetData]);
         await updateCacheMetadata(CACHE_KEYS.ARTIFACT_SETS, "1.0");
 
         console.log(`Set ${setName} sauvegardé en cache`);
-        return apiDetails;
+        return dbDetails;
       }
-    } catch (apiError) {
-      console.warn(`Erreur API pour le set ${setName}:`, apiError);
+    } catch (dbError) {
+      console.warn(`Erreur base de données pour le set ${setName}:`, dbError);
     }
 
-    // 3. Si l'API échoue, retourner null
+    // 3. Si la base de données échoue, retourner null
     console.warn(`Impossible de récupérer le set ${setName}`);
     return null;
   } catch (error) {
@@ -194,7 +189,7 @@ export async function getArtifactSetDetails(setName: string): Promise<any> {
 }
 
 /**
- * Force la mise à jour du cache depuis l'API
+ * Force la mise à jour du cache depuis la base de données
  */
 export async function refreshArtifactCache(): Promise<{
   success: boolean;
@@ -204,20 +199,20 @@ export async function refreshArtifactCache(): Promise<{
   try {
     console.log("Mise à jour forcée du cache des artefacts...");
 
-    const apiSets = await fetchArtifactSetsFromAPI();
+    const dbSets = await fetchArtifactSetsFromDatabase();
 
-    if (apiSets.length > 0) {
-      await saveArtifactSets(apiSets);
+    if (dbSets.length > 0) {
+      await saveArtifactSets(dbSets);
       await updateCacheMetadata(CACHE_KEYS.ARTIFACT_SETS, "1.0");
 
-      console.log(`Cache mis à jour avec ${apiSets.length} sets`);
-      return { success: true, count: apiSets.length };
+      console.log(`Cache mis à jour avec ${dbSets.length} sets`);
+      return { success: true, count: dbSets.length };
     }
 
     return {
       success: false,
       count: 0,
-      error: "Aucun set récupéré depuis l'API",
+      error: "Aucun set récupéré depuis la base de données",
     };
   } catch (error) {
     console.warn("Erreur lors de la mise à jour du cache:", error);
@@ -239,11 +234,13 @@ export async function initializeArtifactService(): Promise<void> {
     // Initialiser les données par défaut
     await initializeDefaultData();
 
-    // Vérifier si on a besoin de récupérer les données depuis l'API
+    // Vérifier si on a besoin de récupérer les données depuis la base de données
     const cacheValid = await isCacheValid(CACHE_KEYS.ARTIFACT_SETS);
 
     if (!cacheValid) {
-      console.log("Cache invalide, récupération initiale depuis l'API...");
+      console.log(
+        "Cache invalide, récupération initiale depuis la base de données..."
+      );
       await refreshArtifactCache();
     } else {
       console.log("Cache valide, utilisation des données en cache");

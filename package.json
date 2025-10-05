@@ -20,7 +20,8 @@
     "db:switch:postgresql": "node scripts/switch-database.js postgresql",
     "db:setup:sqlite": "bun run db:switch:sqlite && bun run db:generate && bun run db:push",
     "db:setup:postgresql": "bun run db:switch:postgresql && bun run db:generate && bun run db:migrate",
-    "db:create-migration": "node scripts/create-migration.js"
+    "db:create-migration": "node scripts/create-migration.js",
+    "extract:genshin": "node scripts/extract-genshin-data.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
@@ -45,7 +46,6 @@
     "colorthief": "^2.6.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.0.0",
-    "genshin-db": "^5.0.0",
     "jotai": "^2.12.5",
     "lucide-react": "^0.539.0",
     "next": "^15.6.0-canary.44",

@@ -270,7 +270,7 @@ export default function AdminArtifactsPage() {
             <div>
               <h4 className="font-semibold mb-2">Fonctionnement</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Les données sont récupérées depuis l'API genshin-db</li>
+                <li>• Les données sont récupérées depuis la base de données</li>
                 <li>• Stockage en base de données PostgreSQL</li>
                 <li>• Cache valide pendant 24 heures</li>
                 <li>• Fallback automatique vers les sets par défaut</li>
