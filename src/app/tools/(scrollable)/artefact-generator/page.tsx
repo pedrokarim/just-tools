@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import ArtefactGeneratorClient from "./page.client";
+import { Suspense } from "react";
 
 // Fonction pour récupérer les données côté serveur
 async function getArtifactsData() {
@@ -25,9 +26,22 @@ export default async function ArtefactGenerator() {
   const availableSetNames = serverArtifacts.map((artifact) => artifact.name);
 
   return (
-    <ArtefactGeneratorClient
-      initialArtifacts={serverArtifacts}
-      initialAvailableSets={availableSetNames}
-    />
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-slate-600 dark:text-slate-300">
+              Chargement du générateur d'artefacts...
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <ArtefactGeneratorClient
+        initialArtifacts={serverArtifacts}
+        initialAvailableSets={availableSetNames}
+      />
+    </Suspense>
   );
 }
