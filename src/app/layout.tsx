@@ -228,8 +228,46 @@ export default function RootLayout({
           id="service-worker"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
-            __html:
-              "if('serviceWorker' in navigator && window.location.hostname !== 'localhost'){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').then(function(registration){console.log('Service Worker enregistré avec succès:',registration);}).catch(function(error){console.log('Échec de l\\'enregistrement du Service Worker:',error);});});}",
+            __html: `
+              if('serviceWorker' in navigator && window.location.hostname !== 'localhost'){
+                window.addEventListener('load', function(){
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration){
+                      console.log('Service Worker enregistré avec succès:', registration);
+
+                      // Vérifier les mises à jour toutes les 5 minutes
+                      setInterval(function(){
+                        registration.update();
+                      }, 5 * 60 * 1000);
+
+                      // Écouter les mises à jour du service worker
+                      registration.addEventListener('updatefound', function(){
+                        console.log('Nouvelle version du Service Worker trouvée');
+                        const newWorker = registration.installing;
+
+                        if (newWorker) {
+                          newWorker.addEventListener('statechange', function(){
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                              console.log('Nouvelle version installée, rechargement automatique...');
+                              // Recharger automatiquement la page pour la nouvelle version
+                              window.location.reload();
+                            }
+                          });
+                        }
+                      });
+
+                      // Si le service worker est déjà contrôlant et qu'il y a une attente
+                      if (registration.waiting) {
+                        console.log('Service Worker en attente, activation forcée');
+                        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                      }
+                    })
+                    .catch(function(error){
+                      console.log('Échec de l\\'enregistrement du Service Worker:', error);
+                    });
+                });
+              }
+            `,
           }}
         />
       </body>

@@ -49,12 +49,20 @@ import {
   FileText,
   Image,
   Download,
+  Plus,
+  Languages,
+  ArrowRightLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { LANGUAGES, getLanguageDisplayName } from "@/lib/language-data";
+import {
+  LANGUAGES,
+  getLanguageDisplayName,
+  TRANSLATION_LANGUAGES,
+} from "@/lib/language-data";
 import ReactCountryFlag from "react-country-flag";
 import { cleanTextForTTS } from "@/lib/text-processing";
+import { translateText, detectLanguage } from "@/lib/translation";
 import {
   importTextFile,
   extractTextFromImage,
@@ -132,8 +140,17 @@ export default function TextToSpeech() {
   const [selectedLanguage, setSelectedLanguage] = useState("all");
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [showImageUrlInput, setShowImageUrlInput] = useState(false);
+  const [currentImageUrl, setCurrentImageUrl] = useState("");
+
+  // États pour la traduction
+  const [sourceLanguage, setSourceLanguage] = useState("auto");
+  const [targetLanguage, setTargetLanguage] = useState("fr");
+  const [originalText, setOriginalText] = useState("");
+  const [showOriginalText, setShowOriginalText] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   // États de chargement pour les différentes opérations
   const [isClipboardLoading, setIsClipboardLoading] = useState(false);
@@ -356,24 +373,321 @@ export default function TextToSpeech() {
     []
   );
 
-  // Fonction pour traiter une URL d'image
+  // Fonction pour ajouter des fichiers images à la liste
+  const handleAddImageFiles = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+      if (files.length === 0) return;
+
+      // Vérifier que tous les fichiers sont des images
+      const invalidFiles = files.filter(
+        (file) => !file.type.startsWith("image/")
+      );
+      if (invalidFiles.length > 0) {
+        toast.error("Tous les fichiers doivent être des images");
+        return;
+      }
+
+      // Vérifier les doublons par nom
+      const newFiles = files.filter((file) => {
+        const isDuplicate = imageFiles.some(
+          (existingFile) =>
+            existingFile.name === file.name && existingFile.size === file.size
+        );
+        return !isDuplicate;
+      });
+
+      if (newFiles.length < files.length) {
+        toast.warning(
+          "Certains fichiers étaient déjà dans la liste et ont été ignorés"
+        );
+      }
+
+      if (newFiles.length > 0) {
+        setImageFiles((prev) => [...prev, ...newFiles]);
+        toast.success(`${newFiles.length} image(s) ajoutée(s) à la liste`);
+      }
+
+      // Réinitialiser l'input
+      event.target.value = "";
+    },
+    [imageFiles]
+  );
+
+  // Fonction pour ajouter une URL d'image à la liste
+  const handleAddImageUrl = useCallback(() => {
+    if (!currentImageUrl.trim()) {
+      toast.error("Veuillez entrer une URL d'image");
+      return;
+    }
+
+    // Vérifier si l'URL est déjà dans la liste
+    if (imageUrls.includes(currentImageUrl.trim())) {
+      toast.warning("Cette URL est déjà dans la liste");
+      return;
+    }
+
+    // Vérifier si c'est une URL valide (basique)
+    try {
+      new URL(currentImageUrl.trim());
+    } catch {
+      toast.error("Veuillez entrer une URL valide");
+      return;
+    }
+
+    setImageUrls((prev) => [...prev, currentImageUrl.trim()]);
+    setCurrentImageUrl("");
+    toast.success("URL ajoutée à la liste");
+  }, [currentImageUrl, imageUrls]);
+
+  // Fonction pour supprimer une URL d'image de la liste
+  const handleRemoveImageUrl = useCallback((index: number) => {
+    setImageUrls((prev) => prev.filter((_, i) => i !== index));
+    toast.success("URL supprimée de la liste");
+  }, []);
+
+  // Fonction pour supprimer un fichier image de la liste
+  const handleRemoveImageFile = useCallback((index: number) => {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    toast.success("Fichier supprimé de la liste");
+  }, []);
+
+  // Fonctions d'extraction silencieuses pour le traitement en batch
+  const extractTextFromImageSilent = useCallback(
+    async (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        if (!file.type.startsWith("image/")) {
+          reject(new Error("Fichier non valide"));
+          return;
+        }
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const img = document.createElement("img") as HTMLImageElement;
+
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx?.drawImage(img, 0, 0);
+
+          import("tesseract.js")
+            .then(({ createWorker }) => {
+              createWorker("fra+eng", 1, { logger: () => {} })
+                .then((worker) => {
+                  return worker.recognize(canvas).then(({ data: { text } }) => {
+                    worker.terminate();
+                    resolve(text);
+                  });
+                })
+                .catch((error) => {
+                  reject(error);
+                });
+            })
+            .catch(reject);
+        };
+
+        img.onerror = () => reject(new Error("Erreur de chargement"));
+        img.src = URL.createObjectURL(file);
+      });
+    },
+    []
+  );
+
+  const extractTextFromImageURLSilent = useCallback(
+    async (imageUrl: string): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        try {
+          new URL(imageUrl.trim());
+        } catch {
+          reject(new Error("URL invalide"));
+          return;
+        }
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const img = document.createElement("img") as HTMLImageElement;
+
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx?.drawImage(img, 0, 0);
+
+          import("tesseract.js")
+            .then(({ createWorker }) => {
+              createWorker("fra+eng", 1, { logger: () => {} })
+                .then((worker) => {
+                  return worker.recognize(canvas).then(({ data: { text } }) => {
+                    worker.terminate();
+                    resolve(text);
+                  });
+                })
+                .catch((error) => {
+                  reject(error);
+                });
+            })
+            .catch(reject);
+        };
+
+        img.onerror = () =>
+          reject(new Error("Erreur de chargement de l'image"));
+
+        // Utiliser le proxy pour éviter les problèmes CORS
+        const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(
+          imageUrl.trim()
+        )}`;
+        img.src = proxyUrl;
+      });
+    },
+    []
+  );
+
+  // Fonction pour extraire le texte de tous les éléments en attente
+  const handleBatchExtract = useCallback(async () => {
+    const totalItems = imageUrls.length + imageFiles.length;
+    if (totalItems === 0) {
+      toast.error("Aucun élément dans la liste d'attente");
+      return;
+    }
+
+    let extractedTexts: string[] = [];
+    let successCount = 0;
+    let errorCount = 0;
+
+    toast.info("Extraction en cours...");
+
+    // Traiter les URLs d'images
+    for (const url of imageUrls) {
+      try {
+        const text = await extractTextFromImageURLSilent(url);
+        if (text.trim()) {
+          extractedTexts.push(text);
+          successCount++;
+        } else {
+          errorCount++;
+        }
+      } catch (error) {
+        console.error(`Erreur extraction URL ${url}:`, error);
+        // Pour les erreurs CORS, on peut donner un message plus spécifique
+        if (error instanceof Error && error.message.includes("CORS")) {
+          console.warn(`Image externe non accessible (CORS): ${url}`);
+        }
+        errorCount++;
+      }
+    }
+
+    // Traiter les fichiers images
+    for (const file of imageFiles) {
+      try {
+        const text = await extractTextFromImageSilent(file);
+        if (text.trim()) {
+          extractedTexts.push(text);
+          successCount++;
+        } else {
+          errorCount++;
+        }
+      } catch (error) {
+        console.error(`Erreur extraction fichier ${file.name}:`, error);
+        errorCount++;
+      }
+    }
+
+    // Combiner tous les textes extraits
+    if (extractedTexts.length > 0) {
+      const combinedText = extractedTexts.join("\n\n---\n\n");
+      setText((prev) => (prev ? `${prev}\n\n${combinedText}` : combinedText));
+
+      // Vider les listes après extraction
+      setImageUrls([]);
+      setImageFiles([]);
+
+      toast.success(
+        `${successCount} élément(s) traité(s) avec succès${
+          errorCount > 0 ? `, ${errorCount} erreur(s)` : ""
+        }`
+      );
+    } else {
+      toast.error("Aucun texte n'a pu être extrait");
+    }
+  }, [
+    imageUrls,
+    imageFiles,
+    setText,
+    extractTextFromImageSilent,
+    extractTextFromImageURLSilent,
+  ]);
+
+  // Fonction pour traduire le texte
+  const handleTranslate = useCallback(async () => {
+    if (!text.trim()) {
+      toast.error("Aucun texte à traduire");
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      let actualSourceLang = sourceLanguage;
+
+      // Détection automatique de la langue si demandé
+      if (sourceLanguage === "auto") {
+        actualSourceLang = await detectLanguage(text);
+        toast.info(
+          `Langue détectée: ${
+            TRANSLATION_LANGUAGES.find((l) => l.code === actualSourceLang)
+              ?.name || actualSourceLang
+          }`
+        );
+      }
+
+      const translatedText = await translateText(
+        text,
+        actualSourceLang,
+        targetLanguage
+      );
+
+      if (translatedText && translatedText !== text) {
+        setOriginalText(text); // Sauvegarder le texte original
+        setText(translatedText); // Remplacer par la traduction
+        setShowOriginalText(true); // Afficher la zone du texte original
+        toast.success("Texte traduit avec succès");
+      } else {
+        toast.warning("Le texte semble déjà être dans la langue cible");
+      }
+    } catch (error) {
+      console.error("Erreur de traduction:", error);
+      toast.error(
+        "Erreur lors de la traduction. Les services de traduction peuvent être indisponibles."
+      );
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [text, sourceLanguage, targetLanguage, setText]);
+
+  // Fonction pour échanger les langues
+  const swapLanguages = useCallback(() => {
+    if (sourceLanguage !== "auto") {
+      setSourceLanguage(targetLanguage);
+      setTargetLanguage(sourceLanguage);
+    }
+  }, [sourceLanguage, targetLanguage]);
+
+  // Fonction pour traiter une URL d'image (pour compatibilité)
   const handleImageUrlSubmit = useCallback(async () => {
-    if (!imageUrl.trim()) {
+    if (!currentImageUrl.trim()) {
       toast.error("Veuillez entrer une URL d'image");
       return;
     }
 
     setIsImageUrlLoading(true);
     try {
-      await extractTextFromImageURL(imageUrl, setText);
+      await extractTextFromImageURL(currentImageUrl, setText);
       setShowImageUrlInput(false);
-      setImageUrl("");
+      setCurrentImageUrl("");
     } catch (error) {
       console.error("Erreur URL image:", error);
     } finally {
       setIsImageUrlLoading(false);
     }
-  }, [imageUrl, setText]);
+  }, [currentImageUrl, setText]);
 
   // Écouter les changements du presse-papiers si l'option est activée
   useEffect(() => {
@@ -728,6 +1042,74 @@ export default function TextToSpeech() {
                       <Trash2 className="w-4 h-4 mr-2" />
                       Effacer
                     </Button>
+
+                    {/* Contrôles de traduction */}
+                    <div className="flex items-center space-x-2 ml-4 pl-4 border-l border-slate-200 dark:border-slate-700">
+                      <Select
+                        value={sourceLanguage}
+                        onValueChange={setSourceLanguage}
+                      >
+                        <SelectTrigger className="w-32 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="auto">🔍 Auto</SelectItem>
+                          {TRANSLATION_LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.code} value={lang.code}>
+                              <div className="flex items-center space-x-1">
+                                <span>{lang.flag}</span>
+                                <span className="text-xs">
+                                  {lang.code.toUpperCase()}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={swapLanguages}
+                        disabled={sourceLanguage === "auto"}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ArrowRightLeft className="w-3 h-3" />
+                      </Button>
+
+                      <Select
+                        value={targetLanguage}
+                        onValueChange={setTargetLanguage}
+                      >
+                        <SelectTrigger className="w-32 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TRANSLATION_LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.code} value={lang.code}>
+                              <div className="flex items-center space-x-1">
+                                <span>{lang.flag}</span>
+                                <span className="text-xs">
+                                  {lang.code.toUpperCase()}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Button
+                        onClick={handleTranslate}
+                        disabled={!text.trim() || isTranslating}
+                        className="h-8 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                      >
+                        {isTranslating ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Languages className="w-3 h-3" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </CardTitle>
               </CardHeader>
@@ -748,6 +1130,31 @@ export default function TextToSpeech() {
                     placeholder="Entrez votre texte ici, glissez-déposez un fichier, ou utilisez un exemple ci-dessous..."
                     className="min-h-[200px] resize-none border-0 bg-transparent focus:ring-0"
                   />
+
+                  {/* Zone du texte original (après traduction) */}
+                  {showOriginalText && originalText && (
+                    <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <Languages className="w-4 h-4 text-amber-600" />
+                          <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                            Texte original
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowOriginalText(false)}
+                          className="h-6 w-6 p-0 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                      <div className="text-sm text-amber-700 dark:text-amber-300 max-h-32 overflow-y-auto">
+                        {originalText}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Backdrop de drop */}
                   {isDragOver && (
@@ -1208,27 +1615,17 @@ export default function TextToSpeech() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleImageOCR}
+                    multiple
+                    onChange={handleAddImageFiles}
                     className="hidden"
                     id="image-ocr"
-                    disabled={isImageOCRLoading}
                   />
                   <label
                     htmlFor="image-ocr"
-                    className={`w-full inline-flex items-center justify-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
-                      isImageOCRLoading
-                        ? "cursor-not-allowed opacity-50"
-                        : "cursor-pointer"
-                    }`}
+                    className="w-full inline-flex items-center justify-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                   >
-                    {isImageOCRLoading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Image className="w-4 h-4 mr-2" />
-                    )}
-                    {isImageOCRLoading
-                      ? "Extraction en cours..."
-                      : "Extraire le texte d'une image (OCR)"}
+                    <Image className="w-4 h-4 mr-2" />
+                    Sélectionner des images
                   </label>
                 </div>
 
@@ -1240,7 +1637,7 @@ export default function TextToSpeech() {
                     onClick={() => setShowImageUrlInput(!showImageUrlInput)}
                   >
                     <Image className="w-4 h-4 mr-2" />
-                    Extraire le texte depuis une URL d'image
+                    Ajouter des URLs d'images
                   </Button>
 
                   {/* Input pour l'URL d'image */}
@@ -1256,27 +1653,24 @@ export default function TextToSpeech() {
                         <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border dark:border-slate-700">
                           <div className="flex space-x-2">
                             <Input
-                              value={imageUrl}
-                              onChange={(e) => setImageUrl(e.target.value)}
+                              value={currentImageUrl}
+                              onChange={(e) =>
+                                setCurrentImageUrl(e.target.value)
+                              }
                               placeholder="https://example.com/image.jpg"
                               onKeyDown={(e) =>
-                                e.key === "Enter" && handleImageUrlSubmit()
+                                e.key === "Enter" && handleAddImageUrl()
                               }
                               className="flex-1"
                               autoFocus
-                              disabled={isImageUrlLoading}
                             />
                             <Button
-                              onClick={handleImageUrlSubmit}
-                              disabled={!imageUrl.trim() || isImageUrlLoading}
-                              className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                              onClick={handleAddImageUrl}
+                              disabled={!currentImageUrl.trim()}
+                              variant="outline"
                             >
-                              {isImageUrlLoading ? (
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              ) : (
-                                <Image className="w-4 h-4 mr-2" />
-                              )}
-                              {isImageUrlLoading ? "Extraction..." : "Extraire"}
+                              <Plus className="w-4 h-4 mr-2" />
+                              Ajouter
                             </Button>
                           </div>
                         </div>
@@ -1284,6 +1678,81 @@ export default function TextToSpeech() {
                     )}
                   </AnimatePresence>
                 </div>
+
+                {/* Liste d'attente pour l'extraction */}
+                {(imageUrls.length > 0 || imageFiles.length > 0) && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                        Éléments en attente d'extraction (
+                        {imageUrls.length + imageFiles.length})
+                      </h4>
+                      <Button
+                        onClick={handleBatchExtract}
+                        disabled={isImageUrlLoading || isImageOCRLoading}
+                        className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                      >
+                        {isImageUrlLoading || isImageOCRLoading ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Play className="w-4 h-4 mr-2" />
+                        )}
+                        Lancer l'extraction du texte
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {/* URLs d'images */}
+                      {imageUrls.map((url, index) => (
+                        <div
+                          key={`url-${index}`}
+                          className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border dark:border-slate-700"
+                        >
+                          <div className="flex items-center space-x-2 flex-1 min-w-0">
+                            <Image className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                            <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
+                              {url}
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveImageUrl(index)}
+                            className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+
+                      {/* Fichiers images */}
+                      {imageFiles.map((file, index) => (
+                        <div
+                          key={`file-${index}`}
+                          className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border dark:border-slate-700"
+                        >
+                          <div className="flex items-center space-x-2 flex-1 min-w-0">
+                            <Image className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                            <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
+                              {file.name}
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0">
+                              ({(file.size / 1024 / 1024).toFixed(1)} MB)
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveImageFile(index)}
+                            className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <Button
                   variant="outline"

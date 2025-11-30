@@ -1,6 +1,8 @@
-const CACHE_NAME = 'just-tools-v1';
+// Version dynamique - sera remplacée lors du build
+const CACHE_NAME = 'just-tools-v1.0.0';
 const urlsToCache = [
   '/',
+  '/tools/artefact-generator',
   '/tools/base64-converter',
   '/tools/code-formatter',
   '/tools/color-palette',
@@ -52,7 +54,7 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        
+
         // Sinon, faire la requête réseau
         return fetch(event.request)
           .then((response) => {
@@ -79,4 +81,17 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+});
+
+// Gestion des mises à jour - forcer l'activation immédiate
+self.addEventListener('install', (event) => {
+  console.log('Service Worker installé, cache:', CACHE_NAME);
+  // Forcer l'activation immédiate pour remplacer l'ancien SW
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  console.log('Service Worker activé, cache:', CACHE_NAME);
+  // Prendre le contrôle de tous les clients immédiatement
+  event.waitUntil(self.clients.claim());
 });

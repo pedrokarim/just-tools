@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "bun --bun next dev --turbopack",
-    "build": "bun --bun next build --webpack",
+    "build": "node scripts/update-version.js && node scripts/build-sw.js && bun --bun next build --webpack",
     "start": "bun --bun next start",
     "lint": "bun --bun next lint",
     "test": "vitest --config vitest.config.test.ts",

@@ -6,6 +6,49 @@ export interface LanguageInfo {
   nativeName?: string;
 }
 
+// Langues supportées par LibreTranslate pour la traduction
+export const TRANSLATION_LANGUAGES = [
+  { code: "en", name: "English", flag: "🇬🇧" },
+  { code: "es", name: "Spanish", flag: "🇪🇸", nativeName: "Español" },
+  { code: "fr", name: "French", flag: "🇫🇷", nativeName: "Français" },
+  { code: "de", name: "German", flag: "🇩🇪", nativeName: "Deutsch" },
+  { code: "it", name: "Italian", flag: "🇮🇹", nativeName: "Italiano" },
+  { code: "pt", name: "Portuguese", flag: "🇵🇹", nativeName: "Português" },
+  { code: "ru", name: "Russian", flag: "🇷🇺", nativeName: "Русский" },
+  { code: "ja", name: "Japanese", flag: "🇯🇵", nativeName: "日本語" },
+  { code: "ko", name: "Korean", flag: "🇰🇷", nativeName: "한국어" },
+  { code: "zh", name: "Chinese", flag: "🇨🇳", nativeName: "中文" },
+  { code: "ar", name: "Arabic", flag: "🇸🇦", nativeName: "العربية" },
+  { code: "hi", name: "Hindi", flag: "🇮🇳", nativeName: "हिन्दी" },
+  { code: "nl", name: "Dutch", flag: "🇳🇱", nativeName: "Nederlands" },
+  { code: "sv", name: "Swedish", flag: "🇸🇪", nativeName: "Svenska" },
+  { code: "da", name: "Danish", flag: "🇩🇰", nativeName: "Dansk" },
+  { code: "no", name: "Norwegian", flag: "🇳🇴", nativeName: "Norsk" },
+  { code: "fi", name: "Finnish", flag: "🇫🇮", nativeName: "Suomi" },
+  { code: "pl", name: "Polish", flag: "🇵🇱", nativeName: "Polski" },
+  { code: "tr", name: "Turkish", flag: "🇹🇷", nativeName: "Türkçe" },
+  { code: "cs", name: "Czech", flag: "🇨🇿", nativeName: "Čeština" },
+  { code: "sk", name: "Slovak", flag: "🇸🇰", nativeName: "Slovenčina" },
+  { code: "bg", name: "Bulgarian", flag: "🇧🇬", nativeName: "Български" },
+  { code: "hr", name: "Croatian", flag: "🇭🇷", nativeName: "Hrvatski" },
+  { code: "sl", name: "Slovenian", flag: "🇸🇮", nativeName: "Slovenščina" },
+  { code: "et", name: "Estonian", flag: "🇪🇪", nativeName: "Eesti" },
+  { code: "lv", name: "Latvian", flag: "🇱🇻", nativeName: "Latviešu" },
+  { code: "lt", name: "Lithuanian", flag: "🇱🇹", nativeName: "Lietuvių" },
+  { code: "el", name: "Greek", flag: "🇬🇷", nativeName: "Ελληνικά" },
+  { code: "he", name: "Hebrew", flag: "🇮🇱", nativeName: "עברית" },
+  {
+    code: "id",
+    name: "Indonesian",
+    flag: "🇮🇩",
+    nativeName: "Bahasa Indonesia",
+  },
+  { code: "ms", name: "Malay", flag: "🇲🇾", nativeName: "Bahasa Melayu" },
+  { code: "th", name: "Thai", flag: "🇹🇭", nativeName: "ไทย" },
+  { code: "vi", name: "Vietnamese", flag: "🇻🇳", nativeName: "Tiếng Việt" },
+  { code: "uk", name: "Ukrainian", flag: "🇺🇦", nativeName: "Українська" },
+];
+
 export const LANGUAGES: LanguageInfo[] = [
   { code: "af", name: "Afrikaans", flag: "🇿🇦" },
   { code: "sq", name: "Albanais", flag: "🇦🇱", nativeName: "Shqip" },
