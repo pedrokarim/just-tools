@@ -13,26 +13,6 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 // Import d'initialisation Prisma (s'exécute automatiquement côté serveur)
 import "@/lib/prisma";
 
-// Fonction pour enregistrer le service worker (production uniquement)
-function registerServiceWorker() {
-  if (
-    typeof window !== "undefined" &&
-    "serviceWorker" in navigator &&
-    window.location.hostname !== "localhost"
-  ) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) => {
-          console.log("Service Worker enregistré avec succès:", registration);
-        })
-        .catch((error) => {
-          console.log("Échec de l'enregistrement du Service Worker:", error);
-        });
-    });
-  }
-}
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -193,8 +173,8 @@ export default function RootLayout({
         />
         <link rel="apple-touch-icon" href="/assets/images/icon-192.png" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#3b82f6" />
-        <meta name="msapplication-TileColor" content="#3b82f6" />
+        <meta name="theme-color" content="#2563eb" />
+        <meta name="msapplication-TileColor" content="#2563eb" />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=5"
@@ -231,16 +211,44 @@ export default function RootLayout({
             __html: `
               if('serviceWorker' in navigator && window.location.hostname !== 'localhost'){
                 window.addEventListener('load', function(){
-                  navigator.serviceWorker.register('/sw.js')
+                  let hasRefreshed = false;
+
+                  navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
                     .then(function(registration){
                       console.log('Service Worker enregistré avec succès:', registration);
 
-                      // Vérifier les mises à jour toutes les 5 minutes
+                      const checkForUpdate = function() {
+                        registration.update().catch(function(error){
+                          console.log('Vérification de mise à jour SW échouée:', error);
+                        });
+                      };
+
                       setInterval(function(){
-                        registration.update();
+                        checkForUpdate();
                       }, 5 * 60 * 1000);
 
-                      // Écouter les mises à jour du service worker
+                      document.addEventListener('visibilitychange', function(){
+                        if (document.visibilityState === 'visible') {
+                          checkForUpdate();
+                        }
+                      });
+
+                      window.addEventListener('online', function(){
+                        checkForUpdate();
+                      });
+
+                      navigator.serviceWorker.addEventListener('controllerchange', function(){
+                        if (hasRefreshed) return;
+                        hasRefreshed = true;
+                        window.location.reload();
+                      });
+
+                      const activateWaitingWorker = function(){
+                        if (registration.waiting) {
+                          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                        }
+                      };
+
                       registration.addEventListener('updatefound', function(){
                         console.log('Nouvelle version du Service Worker trouvée');
                         const newWorker = registration.installing;
@@ -248,19 +256,15 @@ export default function RootLayout({
                         if (newWorker) {
                           newWorker.addEventListener('statechange', function(){
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                              console.log('Nouvelle version installée, rechargement automatique...');
-                              // Recharger automatiquement la page pour la nouvelle version
-                              window.location.reload();
+                              console.log('Nouvelle version installée, activation...');
+                              activateWaitingWorker();
                             }
                           });
                         }
                       });
 
-                      // Si le service worker est déjà contrôlant et qu'il y a une attente
-                      if (registration.waiting) {
-                        console.log('Service Worker en attente, activation forcée');
-                        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-                      }
+                      activateWaitingWorker();
+                      checkForUpdate();
                     })
                     .catch(function(error){
                       console.log('Échec de l\\'enregistrement du Service Worker:', error);

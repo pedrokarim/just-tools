@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -19,7 +18,6 @@ interface ToolsDropdownProps {
   isMobile?: boolean;
 }
 
-// Composant ListItem avec icône pour les outils
 function ToolListItem({ tool, isNew }: { tool: any; isNew: boolean }) {
   return (
     <li>
@@ -27,7 +25,7 @@ function ToolListItem({ tool, isNew }: { tool: any; isNew: boolean }) {
         <Link href={tool.route}>
           <div className="flex items-center space-x-3">
             <div
-              className={`w-6 h-6 rounded-md ${tool.gradient} flex items-center justify-center text-white flex-shrink-0`}
+              className={`w-6 h-6 rounded-md ${tool.iconBg} ${tool.iconColor} flex items-center justify-center flex-shrink-0`}
             >
               {tool.icon}
             </div>
@@ -51,19 +49,17 @@ export function ToolsDropdown({
   className = "",
   isMobile = false,
 }: ToolsDropdownProps) {
-  // Version mobile : lien simple vers la page des outils
   if (isMobile) {
     return (
       <Link
         href="/tools"
-        className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium"
+        className="text-muted-foreground hover:text-foreground transition-colors duration-200 font-medium"
       >
         Outils
       </Link>
     );
   }
 
-  // Version desktop : Navigation Menu avec modifications demandées
   return (
     <NavigationMenu className={className}>
       <NavigationMenuList>
@@ -73,7 +69,7 @@ export function ToolsDropdown({
           </NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="grid gap-2 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-              {/* Colonne de gauche - Présentation */}
+              {/* Left column */}
               <li className="row-span-3">
                 <NavigationMenuLink asChild>
                   <Link
@@ -81,8 +77,20 @@ export function ToolsDropdown({
                     href="/tools"
                   >
                     <div className="flex items-center space-x-2 mb-4">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white">
-                        <Sparkles className="w-4 h-4" />
+                      <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-foreground">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 6h16M4 12h16M4 18h16"
+                          />
+                        </svg>
                       </div>
                       <div className="text-lg font-medium">
                         {PROJECT_CONFIG.name}
@@ -103,7 +111,7 @@ export function ToolsDropdown({
                 </NavigationMenuLink>
               </li>
 
-              {/* Colonne de droite - Outils populaires avec icônes */}
+              {/* Right column - Popular tools */}
               {PROJECT_CONFIG.tools.slice(0, 3).map((tool) => {
                 const isNew = isToolNew(tool);
                 return <ToolListItem key={tool.id} tool={tool} isNew={isNew} />;

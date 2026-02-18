@@ -1,7 +1,11 @@
-// Version dynamique - sera remplacée lors du build
-const CACHE_NAME = 'just-tools-v1.0.0';
-const urlsToCache = [
+// Dynamic values replaced at build time by scripts/build-sw.js
+const CACHE_NAME = 'just-tools-1.0.0-none-unknown-dev';
+const APP_VERSION = 'dev';
+
+const PRECACHE_URLS = [
   '/',
+  '/manifest.json',
+  '/version.json',
   '/tools/artefact-generator',
   '/tools/base64-converter',
   '/tools/code-formatter',
@@ -15,83 +19,163 @@ const urlsToCache = [
   '/tools/text-to-speech',
   '/assets/images/icon-192.png',
   '/assets/images/icon-512.png',
-  '/assets/images/icon-origin.png'
+  '/assets/images/icon-origin.png',
 ];
 
-// Installation du service worker
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Cache ouvert');
-        return cache.addAll(urlsToCache);
-      })
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.addAll(PRECACHE_URLS);
+      await self.skipWaiting();
+    })()
   );
 });
 
-// Activation et nettoyage des anciens caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
+    (async () => {
+      const cacheNames = await caches.keys();
+      await Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Suppression de l\'ancien cache:', cacheName);
             return caches.delete(cacheName);
           }
+          return Promise.resolve();
         })
       );
-    })
+      await self.clients.claim();
+    })()
   );
 });
 
-// Interception des requêtes réseau
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Retourner la réponse du cache si elle existe
-        if (response) {
-          return response;
-        }
-
-        // Sinon, faire la requête réseau
-        return fetch(event.request)
-          .then((response) => {
-            // Vérifier si la réponse est valide
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Cloner la réponse pour la mettre en cache
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          });
-      })
-  );
-});
-
-// Gestion des messages du client
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  if (!event.data || typeof event.data !== 'object') {
+    return;
+  }
+
+  if (event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+    return;
+  }
+
+  if (event.data.type === 'GET_VERSION' && event.ports && event.ports[0]) {
+    event.ports[0].postMessage({ version: APP_VERSION, cacheName: CACHE_NAME });
   }
 });
 
-// Gestion des mises à jour - forcer l'activation immédiate
-self.addEventListener('install', (event) => {
-  console.log('Service Worker installé, cache:', CACHE_NAME);
-  // Forcer l'activation immédiate pour remplacer l'ancien SW
-  self.skipWaiting();
+self.addEventListener('fetch', (event) => {
+  const request = event.request;
+
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/')) {
+    return;
+  }
+
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirst(request, '/'));
+    return;
+  }
+
+  if (isStaticAssetRequest(request, url)) {
+    event.respondWith(staleWhileRevalidate(request));
+    return;
+  }
+
+  event.respondWith(cacheFirst(request));
 });
 
-self.addEventListener('activate', (event) => {
-  console.log('Service Worker activé, cache:', CACHE_NAME);
-  // Prendre le contrôle de tous les clients immédiatement
-  event.waitUntil(self.clients.claim());
-});
+function isStaticAssetRequest(request, url) {
+  return (
+    request.destination === 'style' ||
+    request.destination === 'script' ||
+    request.destination === 'font' ||
+    request.destination === 'image' ||
+    url.pathname.startsWith('/_next/static/')
+  );
+}
+
+function isCacheableResponse(response) {
+  return Boolean(response && response.ok);
+}
+
+async function networkFirst(request, fallbackPath) {
+  const cache = await caches.open(CACHE_NAME);
+
+  try {
+    const networkResponse = await fetch(request, { cache: 'no-store' });
+    if (isCacheableResponse(networkResponse)) {
+      await cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch {
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
+    if (fallbackPath) {
+      const fallbackResponse = await cache.match(fallbackPath);
+      if (fallbackResponse) {
+        return fallbackResponse;
+      }
+    }
+
+    return new Response('Offline', {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cachedResponse = await cache.match(request);
+
+  const networkPromise = fetch(request)
+    .then(async (networkResponse) => {
+      if (isCacheableResponse(networkResponse)) {
+        await cache.put(request, networkResponse.clone());
+      }
+      return networkResponse;
+    })
+    .catch(() => null);
+
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  const networkResponse = await networkPromise;
+  if (networkResponse) {
+    return networkResponse;
+  }
+
+  return new Response('Offline', {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+  });
+}
+
+async function cacheFirst(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cachedResponse = await cache.match(request);
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  const networkResponse = await fetch(request);
+  if (isCacheableResponse(networkResponse)) {
+    await cache.put(request, networkResponse.clone());
+  }
+  return networkResponse;
+}

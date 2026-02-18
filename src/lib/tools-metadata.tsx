@@ -19,11 +19,9 @@ export interface ToolMetadata {
   category: string;
   status: "coming-soon" | "in-progress" | "ready";
   icon: React.ReactNode;
-  color: string;
-  gradient: string;
+  iconBg: string;
+  iconColor: string;
   route: string;
-  headerGradient: string;
-  headerIconBg: string;
   createdAt: Date;
 }
 
@@ -36,11 +34,9 @@ export const toolsMetadata: ToolMetadata[] = [
     category: "Développement",
     status: "ready",
     icon: <Code className="w-6 h-6" />,
-    color: "from-blue-500 to-cyan-500",
-    gradient: "bg-gradient-to-br from-blue-500 to-cyan-500",
+    iconBg: "bg-blue-100 dark:bg-blue-950",
+    iconColor: "text-blue-600 dark:text-blue-400",
     route: "/tools/code-formatter",
-    headerGradient: "from-blue-600 to-cyan-600",
-    headerIconBg: "bg-gradient-to-br from-blue-500 to-cyan-500",
     createdAt: new Date("2025-05-15"),
   },
   {
@@ -51,11 +47,9 @@ export const toolsMetadata: ToolMetadata[] = [
     category: "Design",
     status: "ready",
     icon: <Palette className="w-6 h-6" />,
-    color: "from-purple-500 to-pink-500",
-    gradient: "bg-gradient-to-br from-purple-500 to-pink-500",
+    iconBg: "bg-violet-100 dark:bg-violet-950",
+    iconColor: "text-violet-600 dark:text-violet-400",
     route: "/tools/color-palette",
-    headerGradient: "from-purple-600 to-pink-600",
-    headerIconBg: "bg-gradient-to-br from-purple-500 to-pink-500",
     createdAt: new Date("2025-05-25"),
   },
   {
@@ -66,11 +60,9 @@ export const toolsMetadata: ToolMetadata[] = [
     category: "Développement",
     status: "ready",
     icon: <Search className="w-6 h-6" />,
-    color: "from-green-500 to-emerald-500",
-    gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
+    iconBg: "bg-emerald-100 dark:bg-emerald-950",
+    iconColor: "text-emerald-600 dark:text-emerald-400",
     route: "/tools/json-validator",
-    headerGradient: "from-green-600 to-emerald-600",
-    headerIconBg: "bg-gradient-to-br from-green-500 to-emerald-500",
     createdAt: new Date("2025-06-05"),
   },
   {
@@ -80,11 +72,9 @@ export const toolsMetadata: ToolMetadata[] = [
     category: "Utilitaires",
     status: "ready",
     icon: <RefreshCw className="w-6 h-6" />,
-    color: "from-orange-500 to-red-500",
-    gradient: "bg-gradient-to-br from-orange-500 to-red-500",
+    iconBg: "bg-orange-100 dark:bg-orange-950",
+    iconColor: "text-orange-600 dark:text-orange-400",
     route: "/tools/base64-converter",
-    headerGradient: "from-orange-600 to-red-600",
-    headerIconBg: "bg-gradient-to-br from-orange-500 to-red-500",
     createdAt: new Date("2025-06-15"),
   },
   {
@@ -94,11 +84,9 @@ export const toolsMetadata: ToolMetadata[] = [
     category: "Sécurité",
     status: "ready",
     icon: <Lock className="w-6 h-6" />,
-    color: "from-indigo-500 to-purple-500",
-    gradient: "bg-gradient-to-br from-indigo-500 to-purple-500",
+    iconBg: "bg-indigo-100 dark:bg-indigo-950",
+    iconColor: "text-indigo-600 dark:text-indigo-400",
     route: "/tools/password-generator",
-    headerGradient: "from-indigo-600 to-purple-600",
-    headerIconBg: "bg-gradient-to-br from-indigo-500 to-purple-500",
     createdAt: new Date("2025-06-25"),
   },
   {
@@ -108,11 +96,9 @@ export const toolsMetadata: ToolMetadata[] = [
     category: "Édition",
     status: "ready",
     icon: <FileText className="w-6 h-6" />,
-    color: "from-teal-500 to-cyan-500",
-    gradient: "bg-gradient-to-br from-teal-500 to-cyan-500",
+    iconBg: "bg-teal-100 dark:bg-teal-950",
+    iconColor: "text-teal-600 dark:text-teal-400",
     route: "/tools/markdown-editor",
-    headerGradient: "from-teal-600 to-cyan-600",
-    headerIconBg: "bg-gradient-to-br from-teal-500 to-cyan-500",
     createdAt: new Date("2025-07-05"),
   },
   {
@@ -123,11 +109,9 @@ export const toolsMetadata: ToolMetadata[] = [
     category: "Design",
     status: "ready",
     icon: <Grid3X3 className="w-6 h-6" />,
-    color: "from-rose-500 to-pink-500",
-    gradient: "bg-gradient-to-br from-rose-500 to-pink-500",
+    iconBg: "bg-rose-100 dark:bg-rose-950",
+    iconColor: "text-rose-600 dark:text-rose-400",
     route: "/tools/pattern-editor",
-    headerGradient: "from-rose-600 to-pink-600",
-    headerIconBg: "bg-gradient-to-br from-rose-500 to-pink-500",
     createdAt: new Date("2025-07-15"),
   },
   {
@@ -138,11 +122,9 @@ export const toolsMetadata: ToolMetadata[] = [
     category: "Design",
     status: "ready",
     icon: <Image className="w-6 h-6" />,
-    color: "from-violet-500 to-purple-500",
-    gradient: "bg-gradient-to-br from-violet-500 to-purple-500",
+    iconBg: "bg-purple-100 dark:bg-purple-950",
+    iconColor: "text-purple-600 dark:text-purple-400",
     route: "/tools/halftone",
-    headerGradient: "from-violet-600 to-purple-600",
-    headerIconBg: "bg-gradient-to-br from-violet-500 to-purple-500",
     createdAt: new Date("2025-07-25"),
   },
   {
@@ -153,11 +135,9 @@ export const toolsMetadata: ToolMetadata[] = [
     category: "Design",
     status: "ready",
     icon: <Palette className="w-6 h-6" />,
-    color: "from-amber-500 to-orange-500",
-    gradient: "bg-gradient-to-br from-amber-500 to-orange-500",
+    iconBg: "bg-amber-100 dark:bg-amber-950",
+    iconColor: "text-amber-600 dark:text-amber-400",
     route: "/tools/color-extractor",
-    headerGradient: "from-amber-600 to-orange-600",
-    headerIconBg: "bg-gradient-to-br from-amber-500 to-orange-500",
     createdAt: new Date("2025-08-05"),
   },
   {
@@ -168,12 +148,10 @@ export const toolsMetadata: ToolMetadata[] = [
     category: "Utilitaires",
     status: "ready",
     icon: <Volume2 className="w-6 h-6" />,
-    color: "from-emerald-500 to-teal-500",
-    gradient: "bg-gradient-to-br from-emerald-500 to-teal-500",
+    iconBg: "bg-cyan-100 dark:bg-cyan-950",
+    iconColor: "text-cyan-600 dark:text-cyan-400",
     route: "/tools/text-to-speech",
-    headerGradient: "from-emerald-600 to-teal-600",
-    headerIconBg: "bg-gradient-to-br from-emerald-500 to-teal-500",
-    createdAt: new Date("2025-08-15"), // Aujourd'hui
+    createdAt: new Date("2025-08-15"),
   },
   {
     id: "artefact-generator",
@@ -183,11 +161,9 @@ export const toolsMetadata: ToolMetadata[] = [
     category: "Gaming",
     status: "ready",
     icon: <Sparkles className="w-6 h-6" />,
-    color: "from-purple-500 to-pink-500",
-    gradient: "bg-gradient-to-br from-purple-500 to-pink-500",
+    iconBg: "bg-pink-100 dark:bg-pink-950",
+    iconColor: "text-pink-600 dark:text-pink-400",
     route: "/tools/artefact-generator",
-    headerGradient: "from-purple-600 to-pink-600",
-    headerIconBg: "bg-gradient-to-br from-purple-500 to-pink-500",
     createdAt: new Date("2025-01-10"),
   },
 ];
@@ -208,7 +184,6 @@ export const getToolMetadataByRoute = (
 export const getToolMetadataByPathname = (
   pathname: string
 ): ToolMetadata | undefined => {
-  // Extraire l'ID de l'outil depuis le pathname
   const pathParts = pathname.split("/");
   const toolId = pathParts[pathParts.length - 1];
   return getToolMetadata(toolId);

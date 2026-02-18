@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(powershell -Command \"\\(Get-Item ''C:\\\\Users\\\\karim\\\\Desktop\\\\programming-laboratory\\\\just-tools\\\\public\\\\assets\\\\images\\\\hero-workspace.jpg''\\).Length\")",
+      "Bash(powershell -Command \"[System.IO.File]::ReadAllBytes\\(''C:\\\\Users\\\\karim\\\\Desktop\\\\programming-laboratory\\\\just-tools\\\\public\\\\assets\\\\images\\\\hero-workspace.jpg''\\)[0..1] -join '',''\")",
+      "Bash(bun run build:*)",
+      "Bash(npx next build)",
+      "Bash(bun:*)",
+      "Bash(bunx:*)"
+    ]
+  }
+}
