@@ -35,38 +35,38 @@ export function Navbar() {
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+          {/* Logo - Left */}
           <Link href="/" className="flex items-center space-x-2">
             <Image
               src="/assets/images/icon-origin.png"
               alt="Just Tools"
-              width={32}
-              height={32}
+              width={28}
+              height={28}
             />
-            <span className="text-xl font-bold text-foreground">
+            <span className="text-lg font-bold text-foreground">
               Just Tools
             </span>
           </Link>
 
-          {/* Navigation Desktop */}
-          <div className="hidden md:flex items-center space-x-8">
+          {/* Navigation + Actions - Right */}
+          <div className="hidden md:flex items-center space-x-6">
             <Link
               href="/"
-              className="text-muted-foreground hover:text-foreground transition-colors duration-200 font-medium"
+              className="text-muted-foreground hover:text-foreground transition-colors duration-200 text-sm font-medium"
             >
               Accueil
             </Link>
             <ToolsDropdown />
             <Link
               href="/about"
-              className="text-muted-foreground hover:text-foreground transition-colors duration-200 font-medium"
+              className="text-muted-foreground hover:text-foreground transition-colors duration-200 text-sm font-medium"
             >
               À propos
             </Link>
-          </div>
 
-          {/* Actions */}
-          <div className="flex items-center space-x-4">
+            {/* Separator */}
+            <div className="h-5 w-px bg-border" />
+
             {/* Theme Toggle */}
             <Button
               variant="ghost"
@@ -78,12 +78,24 @@ export function Navbar() {
               <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               <span className="sr-only">Toggle theme</span>
             </Button>
+          </div>
 
-            {/* Mobile Menu Button */}
+          {/* Mobile: Theme Toggle + Menu Button */}
+          <div className="flex md:hidden items-center space-x-2">
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden w-9 h-9 p-0"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="w-9 h-9 p-0"
+            >
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-9 h-9 p-0"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? (

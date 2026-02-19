@@ -59,75 +59,75 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <Badge
-                variant="secondary"
-                className="text-sm font-medium px-3 py-1"
+      {/* Hero Section - Squarespace style dark hero */}
+      <section className="relative min-h-[90vh] flex items-center bg-[#0a0a0f] overflow-hidden">
+        {/* Hero image - right side, overflow */}
+        <div className="absolute right-0 top-0 bottom-0 w-[55%] hidden lg:block">
+          <Image
+            src="/assets/images/hero-workspace.jpg"
+            alt="Developer workspace"
+            fill
+            className="object-cover object-center"
+            priority
+          />
+          {/* Gradient overlay from left to blend with dark bg */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f] via-[#0a0a0f]/60 to-transparent" />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 container mx-auto px-4 lg:px-8">
+          <div className="max-w-2xl pt-24 pb-20 lg:py-0">
+            <p className="text-white/50 text-sm font-medium tracking-widest uppercase mb-8">
+              {tools.length} outils gratuits & open source
+            </p>
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-[1.05] tracking-tight mb-8">
+              Les outils
+              <br />
+              dont les devs
+              <br />
+              ont besoin.
+            </h1>
+            <p className="text-lg lg:text-xl text-white/60 max-w-lg leading-relaxed mb-10">
+              Une collection d'outils de développement pour simplifier
+              votre workflow quotidien.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button
+                size="lg"
+                className="bg-white text-black hover:bg-white/90 text-base px-8 h-12 rounded-none font-medium"
+                onClick={() => {
+                  document
+                    .getElementById("tools")
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }}
               >
-                {tools.length} outils disponibles
-              </Badge>
-              <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-foreground leading-[1.1]">
-                Les outils dont
-                <br />
-                les devs ont besoin.
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-                Une collection d'outils de développement gratuits et
-                open source pour simplifier votre workflow quotidien.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  size="lg"
-                  className="text-base px-6"
-                  onClick={() => {
-                    document
-                      .getElementById("tools")
-                      ?.scrollIntoView({ behavior: "smooth" });
-                  }}
+                Découvrir les outils
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white/30 text-white hover:bg-white/10 hover:text-white text-base px-8 h-12 rounded-none font-medium"
+                asChild
+              >
+                <Link
+                  href={PROJECT_CONFIG.project.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  Découvrir les outils
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-base px-6"
-                  asChild
-                >
-                  <Link
-                    href={PROJECT_CONFIG.project.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Github className="w-4 h-4 mr-2" />
-                    Code source
-                  </Link>
-                </Button>
-              </div>
-            </div>
-            <div className="hidden lg:block relative">
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-sm">
-                <Image
-                  src="/assets/images/hero-workspace.jpg"
-                  alt="Developer workspace"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              </div>
+                  <Github className="w-4 h-4 mr-2" />
+                  Code source
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20">
+      <section className="py-24 bg-background">
         <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-12">
+          <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-16">
             {features.map((feature, index) => (
               <div key={index} className="space-y-4">
                 <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center text-foreground">
@@ -146,10 +146,10 @@ export default function Home() {
       </section>
 
       {/* Tools Section */}
-      <section id="tools" className="py-20">
+      <section id="tools" className="py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center space-y-4 mb-12">
+            <div className="text-center space-y-4 mb-14">
               <h2 className="text-3xl md:text-4xl font-bold text-foreground">
                 Outils disponibles
               </h2>
@@ -160,7 +160,7 @@ export default function Home() {
             </div>
 
             {/* Category Filters */}
-            <div className="flex flex-wrap justify-center gap-2 mb-12">
+            <div className="flex flex-wrap justify-center gap-2 mb-14">
               {categories.map((category) => (
                 <Button
                   key={category}
@@ -214,7 +214,7 @@ export default function Home() {
       {/* Community Section */}
       <section className="border-t border-border">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center py-20 space-y-6">
+          <div className="max-w-2xl mx-auto text-center py-24 space-y-6">
             <h2 className="text-3xl font-bold text-foreground">
               Rejoignez la communauté
             </h2>
