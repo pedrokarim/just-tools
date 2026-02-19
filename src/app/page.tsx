@@ -94,7 +94,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
                 size="lg"
-                className="bg-white text-black hover:bg-white/90 text-base px-8 h-12 rounded-none font-medium"
+                className="bg-white text-black hover:bg-white/90 text-base px-8 h-12 font-medium"
                 onClick={() => {
                   document
                     .getElementById("tools")
@@ -107,7 +107,7 @@ export default function Home() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white/30 text-white hover:bg-white/10 hover:text-white text-base px-8 h-12 rounded-none font-medium"
+                className="border-white/30 text-white hover:bg-white/10 hover:text-white text-base px-8 h-12 font-medium"
                 asChild
               >
                 <Link
@@ -169,7 +169,7 @@ export default function Home() {
                   }
                   size="sm"
                   onClick={() => setSelectedCategory(category)}
-                  className="rounded-full"
+                  className=""
                 >
                   {category}
                 </Button>

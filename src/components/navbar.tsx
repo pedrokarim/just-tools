@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, Menu, X } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -13,6 +14,12 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { theme, setTheme } = useTheme();
+  const pathname = usePathname();
+
+  // On homepage, the hero is always dark, so navbar text must be white
+  // until the user scrolls and the backdrop appears
+  const isHomepage = pathname === "/";
+  const forceWhiteText = isHomepage && !scrolled;
 
   useEffect(() => {
     setMounted(true);
@@ -24,6 +31,18 @@ export function Navbar() {
   }, []);
 
   if (!mounted) return null;
+
+  // Text color classes depending on context
+  const logoTextClass = forceWhiteText
+    ? "text-white"
+    : "text-foreground";
+  const linkClass = forceWhiteText
+    ? "text-white/70 hover:text-white transition-colors duration-200 text-sm font-medium"
+    : "text-muted-foreground hover:text-foreground transition-colors duration-200 text-sm font-medium";
+  const separatorClass = forceWhiteText ? "bg-white/20" : "bg-border";
+  const iconBtnClass = forceWhiteText
+    ? "text-white/70 hover:text-white hover:bg-white/10"
+    : "";
 
   return (
     <nav
@@ -43,36 +62,30 @@ export function Navbar() {
               width={28}
               height={28}
             />
-            <span className="text-lg font-bold text-foreground">
+            <span className={`text-lg font-bold ${logoTextClass}`}>
               Just Tools
             </span>
           </Link>
 
           {/* Navigation + Actions - Right */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link
-              href="/"
-              className="text-muted-foreground hover:text-foreground transition-colors duration-200 text-sm font-medium"
-            >
+            <Link href="/" className={linkClass}>
               Accueil
             </Link>
-            <ToolsDropdown />
-            <Link
-              href="/about"
-              className="text-muted-foreground hover:text-foreground transition-colors duration-200 text-sm font-medium"
-            >
+            <ToolsDropdown forceWhiteText={forceWhiteText} />
+            <Link href="/about" className={linkClass}>
               À propos
             </Link>
 
             {/* Separator */}
-            <div className="h-5 w-px bg-border" />
+            <div className={`h-5 w-px ${separatorClass}`} />
 
             {/* Theme Toggle */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="w-9 h-9 p-0"
+              className={`w-9 h-9 p-0 ${iconBtnClass}`}
             >
               <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -86,7 +99,7 @@ export function Navbar() {
               variant="ghost"
               size="sm"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="w-9 h-9 p-0"
+              className={`w-9 h-9 p-0 ${iconBtnClass}`}
             >
               <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -95,7 +108,7 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="sm"
-              className="w-9 h-9 p-0"
+              className={`w-9 h-9 p-0 ${iconBtnClass}`}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? (
@@ -109,7 +122,7 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border">
+          <div className="md:hidden py-4 border-t border-border bg-background/95 backdrop-blur-md -mx-4 px-4">
             <div className="flex flex-col space-y-4">
               <Link
                 href="/"

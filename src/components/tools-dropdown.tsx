@@ -16,6 +16,7 @@ import { isToolNew } from "@/lib/tools-metadata";
 interface ToolsDropdownProps {
   className?: string;
   isMobile?: boolean;
+  forceWhiteText?: boolean;
 }
 
 function ToolListItem({ tool, isNew }: { tool: any; isNew: boolean }) {
@@ -48,6 +49,7 @@ function ToolListItem({ tool, isNew }: { tool: any; isNew: boolean }) {
 export function ToolsDropdown({
   className = "",
   isMobile = false,
+  forceWhiteText = false,
 }: ToolsDropdownProps) {
   if (isMobile) {
     return (
@@ -60,11 +62,15 @@ export function ToolsDropdown({
     );
   }
 
+  const triggerClass = forceWhiteText
+    ? "bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent text-white/70 hover:text-white"
+    : "bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent";
+
   return (
     <NavigationMenu className={className}>
       <NavigationMenuList>
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent">
+          <NavigationMenuTrigger className={triggerClass}>
             Outils
           </NavigationMenuTrigger>
           <NavigationMenuContent>
