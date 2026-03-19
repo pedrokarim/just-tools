@@ -72,7 +72,7 @@ export async function GET(
     });
   } catch (error) {
     console.error(
-      `Erreur lors de la récupération de la table ${params.table}:`,
+      `Erreur lors de la récupération de la table:`,
       error
     );
     return NextResponse.json(

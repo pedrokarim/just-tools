@@ -55,19 +55,22 @@ async function fetchArtifactSetsFromDatabase(): Promise<ArtifactSetData[]> {
       orderBy: { name: "asc" },
     });
 
-    return artifactSets.map((set) => ({
-      name: set.name,
-      description: set.description || undefined,
-      images: set.images
-        ? {
-            flower: set.images.flower || undefined,
-            plume: set.images.plume || undefined,
-            sands: set.images.sands || undefined,
-            goblet: set.images.goblet || undefined,
-            circlet: set.images.circlet || undefined,
-          }
-        : undefined,
-    }));
+    return artifactSets.map((set) => {
+      const images = set.images as Record<string, string> | null;
+      return {
+        name: set.name,
+        description: set.description || undefined,
+        images: images
+          ? {
+              flower: images.flower || undefined,
+              plume: images.plume || undefined,
+              sands: images.sands || undefined,
+              goblet: images.goblet || undefined,
+              circlet: images.circlet || undefined,
+            }
+          : undefined,
+      };
+    });
   } catch (error) {
     console.warn(
       "Erreur lors de la récupération des sets depuis la base de données:",
@@ -149,16 +152,17 @@ export async function getArtifactSetDetails(setName: string): Promise<any> {
         });
 
         // Sauvegarder en cache pour la prochaine fois
+        const dbImages = dbDetails.images as Record<string, string> | null;
         const artifactSetData: ArtifactSetData = {
           name: setName,
           description: dbDetails.description || undefined,
-          images: dbDetails.images
+          images: dbImages
             ? {
-                flower: dbDetails.images.flower || undefined,
-                plume: dbDetails.images.plume || undefined,
-                sands: dbDetails.images.sands || undefined,
-                goblet: dbDetails.images.goblet || undefined,
-                circlet: dbDetails.images.circlet || undefined,
+                flower: dbImages.flower || undefined,
+                plume: dbImages.plume || undefined,
+                sands: dbImages.sands || undefined,
+                goblet: dbImages.goblet || undefined,
+                circlet: dbImages.circlet || undefined,
               }
             : undefined,
         };

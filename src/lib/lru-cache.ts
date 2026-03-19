@@ -43,7 +43,7 @@ export class LRUCache<T = any> {
     }
     // Si le cache est plein, supprimer l'item le plus ancien
     else if (this.cache.size >= this.maxSize) {
-      const firstKey = this.cache.keys().next().value;
+      const firstKey = this.cache.keys().next().value!;
       this.cache.delete(firstKey);
     }
 

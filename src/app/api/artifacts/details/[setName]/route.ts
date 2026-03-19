@@ -3,11 +3,12 @@ import { getArtifactSetDetails } from "@/lib/artefact-generator/artifact-service
 
 export async function GET(
   request: Request,
-  { params }: { params: { setName: string } }
+  { params }: { params: Promise<{ setName: string }> }
 ) {
   try {
-    const setName = decodeURIComponent(params.setName);
-    const details = await getArtifactSetDetails(setName);
+    const { setName } = await params;
+    const decodedName = decodeURIComponent(setName);
+    const details = await getArtifactSetDetails(decodedName);
 
     if (!details) {
       return NextResponse.json(
@@ -19,7 +20,7 @@ export async function GET(
     return NextResponse.json({ details });
   } catch (error) {
     console.error(
-      `Erreur lors de la récupération des détails du set ${params.setName}:`,
+      "Erreur lors de la récupération des détails du set:",
       error
     );
     return NextResponse.json(

@@ -25,21 +25,23 @@ export function usePagination(
   total: number,
   defaultPageSize: number = 10
 ): UsePaginationReturn {
-  const [page, setPage] = useQueryState("page", {
-    defaultValue: "1",
-    parse: (value) => parseInt(value) || 1,
-    serialize: (value) => value.toString(),
-  });
+  const [pageStr, setPageStr] = useQueryState("page");
+  const [pageSizeStr, setPageSizeStr] = useQueryState("size");
 
-  const [pageSize, setPageSize] = useQueryState("size", {
-    defaultValue: defaultPageSize.toString(),
-    parse: (value) => parseInt(value) || defaultPageSize,
-    serialize: (value) => value.toString(),
-  });
+  const page = parseInt(pageStr || "1") || 1;
+  const pageSize = parseInt(pageSizeStr || defaultPageSize.toString()) || defaultPageSize;
 
   const totalPages = Math.ceil(total / pageSize);
   const hasNextPage = page < totalPages;
   const hasPrevPage = page > 1;
+
+  const setPage = (value: number) => {
+    setPageStr(value.toString());
+  };
+
+  const setPageSize = (value: number) => {
+    setPageSizeStr(value.toString());
+  };
 
   const nextPage = () => {
     if (hasNextPage) {

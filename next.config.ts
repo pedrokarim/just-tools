@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   },
 
   // Désactivation du linting et de la validation pour accélérer le build
+  // @ts-expect-error -- eslint config still works at runtime in Next.js canary
   eslint: {
     ignoreDuringBuilds: true,
   },

@@ -188,6 +188,8 @@ function LoadingOverlay({
 export interface LoadingButtonProps extends React.ComponentProps<"button"> {
   loading?: boolean;
   loadingText?: string;
+  variant?: string;
+  size?: string;
   children: React.ReactNode;
 }
 

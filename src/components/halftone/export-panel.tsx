@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner";
 
 interface ExportPanelProps {
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
 }
 
 export function ExportPanel({ canvasRef }: ExportPanelProps) {

@@ -36,8 +36,8 @@ export function HalftonePlayground() {
 
   const [showControls, setShowControls] = useState(true);
   const [showExport, setShowExport] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const renderTimeoutRef = useRef<NodeJS.Timeout>();
+  const canvasRef = useRef<HTMLCanvasElement>(null!);
+  const renderTimeoutRef = useRef<NodeJS.Timeout>(undefined);
 
   // Fonction de rendu avec debounce
   const renderHalftone = useCallback(async () => {

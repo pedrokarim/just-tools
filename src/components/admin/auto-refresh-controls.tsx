@@ -30,28 +30,20 @@ export function AutoRefreshControls() {
   const [, setForceRefresh] = useAtom(forceRefreshAtom);
 
   // URL state pour persister les préférences
-  const [urlAutoRefresh, setUrlAutoRefresh] = useQueryState("auto-refresh", {
-    defaultValue: "false",
-    parse: (value) => value === "true",
-    serialize: (value) => value.toString(),
-  });
+  const [urlAutoRefresh, setUrlAutoRefresh] = useQueryState("auto-refresh");
 
-  const [urlInterval, setUrlInterval] = useQueryState("interval", {
-    defaultValue: "30",
-    parse: (value) => parseInt(value) || 30,
-    serialize: (value) => value.toString(),
-  });
+  const [urlInterval, setUrlInterval] = useQueryState("interval");
 
   // Synchroniser avec l'URL state
   const handleAutoRefreshToggle = (enabled: boolean) => {
     setAutoRefreshEnabled(enabled);
-    setUrlAutoRefresh(enabled);
+    setUrlAutoRefresh(enabled.toString());
   };
 
   const handleIntervalChange = (interval: string) => {
     const intervalValue = parseInt(interval);
     setAutoRefreshInterval(intervalValue);
-    setUrlInterval(intervalValue);
+    setUrlInterval(intervalValue.toString());
   };
 
   const handleForceRefresh = () => {
@@ -64,7 +56,7 @@ export function AutoRefreshControls() {
         <Switch
           id="auto-refresh"
           checked={autoRefreshEnabled}
-          onCheckedChange={handleAutoRefreshToggle}
+          onChange={(e) => handleAutoRefreshToggle(e.target.checked)}
         />
         <Label htmlFor="auto-refresh" className="text-sm font-medium">
           Auto-refresh

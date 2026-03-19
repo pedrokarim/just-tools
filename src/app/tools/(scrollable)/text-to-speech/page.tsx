@@ -80,7 +80,7 @@ interface SavedText {
 }
 
 // Atomes Jotai pour la persistance
-export const ttsSettingsAtom = atomWithStorage("tts-settings", {
+const ttsSettingsAtom = atomWithStorage("tts-settings", {
   selectedVoice: "",
   rate: 1.0,
   pitch: 1.0,
@@ -88,14 +88,14 @@ export const ttsSettingsAtom = atomWithStorage("tts-settings", {
   clipboardAutoRead: false,
 });
 
-export const ttsTextAtom = atomWithStorage("tts-text", "");
+const ttsTextAtom = atomWithStorage("tts-text", "");
 
-export const ttsSavedTextsAtom = atomWithStorage<SavedText[]>(
+const ttsSavedTextsAtom = atomWithStorage<SavedText[]>(
   "tts-saved-texts",
   []
 );
 
-export const ttsHistoryAtom = atomWithStorage<string[]>("tts-history", []);
+const ttsHistoryAtom = atomWithStorage<string[]>("tts-history", []);
 
 const DEFAULT_SETTINGS = {
   rate: 1.0,
