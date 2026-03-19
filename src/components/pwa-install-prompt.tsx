@@ -126,7 +126,7 @@ export function PWAInstallPrompt() {
           : "translate-y-4 opacity-0 scale-95"
       }`}
     >
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-w-sm w-80 p-4">
+      <div className="bg-white dark:bg-background border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-w-sm w-80 p-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">

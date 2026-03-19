@@ -388,7 +388,7 @@ export function ContributionModal({ isOpen, onClose }: ContributionModalProps) {
             {selectedTemplate && (
               <>
                 {/* Header avec template sélectionné */}
-                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-background rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div
                       className={`w-8 h-8 ${selectedTemplate.color} rounded-lg flex items-center justify-center text-white`}

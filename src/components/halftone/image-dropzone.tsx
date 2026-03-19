@@ -139,12 +139,12 @@ export function ImageDropzone() {
       <Card className="w-full max-w-md">
         <CardContent className="p-8">
           {/* Onglets */}
-          <div className="flex space-x-1 mb-6 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+          <div className="flex space-x-1 mb-6 bg-slate-100 dark:bg-card rounded-lg p-1">
             <button
               onClick={() => setActiveTab("file")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 activeTab === "file"
-                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
+                  ? "bg-white dark:bg-muted text-slate-900 dark:text-slate-100 shadow-sm"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
               }`}
             >
@@ -157,7 +157,7 @@ export function ImageDropzone() {
               onClick={() => setActiveTab("url")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 activeTab === "url"
-                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
+                  ? "bg-white dark:bg-muted text-slate-900 dark:text-slate-100 shadow-sm"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
               }`}
             >
@@ -294,7 +294,7 @@ export function ImageDropzone() {
                   <p className="mt-1">
                     Supporte les formats : PNG, JPG, GIF, WebP
                   </p>
-                  <div className="mt-3 p-2 bg-slate-50 dark:bg-slate-800 rounded text-xs">
+                  <div className="mt-3 p-2 bg-slate-50 dark:bg-card rounded text-xs">
                     <p className="font-medium mb-1">
                       Exemples d'URLs valides :
                     </p>

@@ -335,9 +335,9 @@ export default function CodeFormatter() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-background">
       {/* Barre d'outils principale */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2">
+      <div className="bg-white dark:bg-card border-b border-slate-200 dark:border-slate-700 px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Separator orientation="vertical" className="h-6" />
@@ -394,7 +394,7 @@ export default function CodeFormatter() {
       {/* Zone principale */}
       <div className="flex-1 flex flex-col p-4 space-y-4">
         {/* Paramètres */}
-        <Card className="shadow-sm border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-sm border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center space-x-2">
               <Settings className="h-4 w-4" />
@@ -527,7 +527,7 @@ export default function CodeFormatter() {
         {/* Zone de code */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Code source */}
-          <Card className="shadow-sm border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm flex flex-col">
+          <Card className="shadow-sm border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm flex flex-col">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -552,7 +552,7 @@ export default function CodeFormatter() {
           </Card>
 
           {/* Code formaté */}
-          <Card className="shadow-sm border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm flex flex-col">
+          <Card className="shadow-sm border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm flex flex-col">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -593,7 +593,7 @@ export default function CodeFormatter() {
                 placeholder="Le code formaté apparaîtra ici..."
                 value={output}
                 readOnly
-                className="flex-1 font-mono text-sm resize-none min-h-0 bg-slate-50 dark:bg-slate-900"
+                className="flex-1 font-mono text-sm resize-none min-h-0 bg-slate-50 dark:bg-background"
               />
             </CardContent>
           </Card>

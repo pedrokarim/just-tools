@@ -168,9 +168,9 @@ export default function JsonValidator() {
   }, [input, indentSize]);
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-background">
       {/* Barre d'outils principale */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2">
+      <div className="bg-white dark:bg-card border-b border-slate-200 dark:border-slate-700 px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Separator orientation="vertical" className="h-6" />
@@ -232,7 +232,7 @@ export default function JsonValidator() {
       {/* Zone principale */}
       <div className="flex-1 flex flex-col p-4 space-y-4">
         {/* Paramètres */}
-        <Card className="shadow-sm border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-sm border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center space-x-2">
               <Settings className="h-4 w-4" />
@@ -276,7 +276,7 @@ export default function JsonValidator() {
         {/* Zone de code */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Zone de saisie */}
-          <Card className="shadow-sm border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm flex flex-col">
+          <Card className="shadow-sm border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm flex flex-col">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -301,7 +301,7 @@ export default function JsonValidator() {
           </Card>
 
           {/* Zone de résultat */}
-          <Card className="shadow-sm border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm flex flex-col">
+          <Card className="shadow-sm border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm flex flex-col">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -396,26 +396,26 @@ export default function JsonValidator() {
                       <Textarea
                         value={result.formatted}
                         readOnly
-                        className="flex-1 font-mono text-sm resize-none min-h-0 bg-slate-50 dark:bg-slate-900"
+                        className="flex-1 font-mono text-sm resize-none min-h-0 bg-slate-50 dark:bg-background"
                       />
                     </div>
                   )}
 
                   {/* Statistiques */}
                   <div className="grid grid-cols-3 gap-4 text-xs">
-                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded">
+                    <div className="bg-slate-50 dark:bg-card p-3 rounded">
                       <div className="font-medium text-slate-900 dark:text-slate-100">
                         {result.size ? (result.size / 1024).toFixed(2) : 0} KB
                       </div>
                       <div className="text-slate-500">Taille</div>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded">
+                    <div className="bg-slate-50 dark:bg-card p-3 rounded">
                       <div className="font-medium text-slate-900 dark:text-slate-100">
                         {result.depth || 0}
                       </div>
                       <div className="text-slate-500">Profondeur</div>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded">
+                    <div className="bg-slate-50 dark:bg-card p-3 rounded">
                       <div className="font-medium text-slate-900 dark:text-slate-100">
                         {result.keys || 0}
                       </div>

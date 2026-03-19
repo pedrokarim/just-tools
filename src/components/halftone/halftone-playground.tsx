@@ -110,9 +110,9 @@ export function HalftonePlayground() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-background">
       {/* En-tête avec actions */}
-      <div className="flex-shrink-0 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+      <div className="flex-shrink-0 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-card p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
@@ -213,7 +213,7 @@ export function HalftonePlayground() {
               animate={{ width: 320, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="flex-shrink-0 border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden"
+              className="flex-shrink-0 border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-card overflow-hidden"
             >
               <div className="h-full overflow-y-auto">
                 {showControls && <ControlsPanel />}

@@ -269,7 +269,7 @@ export default function ColorPalette() {
       <div className="w-full space-y-6">
 
         {/* Contrôles */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Settings className="h-5 w-5" />
@@ -310,7 +310,7 @@ export default function ColorPalette() {
                   onChange={(e) =>
                     setPaletteType(e.target.value as PaletteType)
                   }
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-sm"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-card text-sm"
                 >
                   <option value="monochromatic">Monochromatique</option>
                   <option value="analogous">Analogue</option>
@@ -367,7 +367,7 @@ export default function ColorPalette() {
         </Card>
 
         {/* Palette générée */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -492,7 +492,7 @@ export default function ColorPalette() {
 
         {/* Palettes sauvegardées */}
         {savedPalettes.length > 0 && (
-          <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+          <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Save className="h-5 w-5" />
@@ -545,7 +545,7 @@ export default function ColorPalette() {
         )}
 
         {/* Informations */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Palette className="h-5 w-5" />

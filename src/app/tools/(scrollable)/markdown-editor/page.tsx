@@ -59,7 +59,7 @@ const MarkdownToolbar = ({ onInsert, textareaRef }: MarkdownToolbarProps) => {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-1 p-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+    <div className="flex flex-wrap items-center gap-1 p-2 bg-slate-50 dark:bg-card border-b border-slate-200 dark:border-slate-700">
       <Button
         variant="ghost"
         size="sm"
@@ -209,13 +209,13 @@ const MarkdownPreview = ({ content }: { content: string }) => {
       // Code inline
       .replace(
         /`(.*?)`/g,
-        '<code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-sm font-mono">$1</code>'
+        '<code class="bg-slate-100 dark:bg-card px-1 py-0.5 rounded text-sm font-mono">$1</code>'
       )
 
       // Blocs de code
       .replace(
         /```([\s\S]*?)```/g,
-        '<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto my-4"><code class="text-sm font-mono">$1</code></pre>'
+        '<pre class="bg-slate-100 dark:bg-card p-4 rounded-lg overflow-x-auto my-4"><code class="text-sm font-mono">$1</code></pre>'
       )
 
       // Liens
@@ -390,7 +390,7 @@ export default function MarkdownEditor() {
     <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="h-screen flex flex-col">
         {/* Barre d'outils principale */}
-        <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2">
+        <div className="bg-white dark:bg-card border-b border-slate-200 dark:border-slate-700 px-4 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {/* Mode d'affichage */}
@@ -496,7 +496,7 @@ export default function MarkdownEditor() {
 
           {/* Séparateur */}
           {viewMode === "split" && (
-            <div className="w-px bg-slate-200 dark:bg-slate-700" />
+            <div className="w-px bg-slate-200 dark:bg-muted" />
           )}
 
           {/* Zone de prévisualisation */}
@@ -506,7 +506,7 @@ export default function MarkdownEditor() {
                 viewMode === "split" ? "w-1/2" : "w-full"
               }`}
             >
-              <div className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 py-2">
+              <div className="bg-slate-50 dark:bg-background border-b border-slate-200 dark:border-slate-700 px-4 py-2">
                 <div className="flex items-center space-x-2">
                   <Eye className="h-4 w-4" />
                   <span className="text-sm font-medium">Aperçu</span>
@@ -533,13 +533,13 @@ export default function MarkdownEditor() {
 
         {/* Documents sauvegardés */}
         {savedDocuments.length > 0 && (
-          <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4">
+          <div className="bg-white dark:bg-card border-t border-slate-200 dark:border-slate-700 p-4">
             <h3 className="text-sm font-medium mb-3">Documents sauvegardés</h3>
             <div className="flex space-x-2 overflow-x-auto">
               {savedDocuments.map((doc) => (
                 <div
                   key={doc.id}
-                  className="flex items-center space-x-2 p-2 bg-slate-50 dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 min-w-0"
+                  className="flex items-center space-x-2 p-2 bg-slate-50 dark:bg-muted rounded-lg border border-slate-200 dark:border-slate-600 min-w-0"
                 >
                   <FileText className="h-4 w-4 flex-shrink-0" />
                   <span className="text-sm truncate">{doc.name}</span>

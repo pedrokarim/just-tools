@@ -1235,15 +1235,15 @@ export default function TextToSpeech() {
 
                 <div className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
                   Raccourcis:{" "}
-                  <kbd className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-xs dark:text-slate-200">
+                  <kbd className="px-2 py-1 bg-slate-100 dark:bg-muted rounded text-xs dark:text-slate-200">
                     Ctrl+Enter
                   </kbd>{" "}
                   Lire •
-                  <kbd className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-xs dark:text-slate-200">
+                  <kbd className="px-2 py-1 bg-slate-100 dark:bg-muted rounded text-xs dark:text-slate-200">
                     Ctrl+Espace
                   </kbd>{" "}
                   Pause •
-                  <kbd className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-xs dark:text-slate-200">
+                  <kbd className="px-2 py-1 bg-slate-100 dark:bg-muted rounded text-xs dark:text-slate-200">
                     Ctrl+Echap
                   </kbd>{" "}
                   Arrêter
@@ -1593,7 +1593,7 @@ export default function TextToSpeech() {
                   />
                   <label
                     htmlFor="file-import"
-                    className={`w-full inline-flex items-center justify-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
+                    className={`w-full inline-flex items-center justify-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
                       isFileImportLoading
                         ? "cursor-not-allowed opacity-50"
                         : "cursor-pointer"
@@ -1622,7 +1622,7 @@ export default function TextToSpeech() {
                   />
                   <label
                     htmlFor="image-ocr"
-                    className="w-full inline-flex items-center justify-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                    className="w-full inline-flex items-center justify-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                   >
                     <Image className="w-4 h-4 mr-2" />
                     Sélectionner des images
@@ -1650,7 +1650,7 @@ export default function TextToSpeech() {
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="overflow-hidden"
                       >
-                        <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border dark:border-slate-700">
+                        <div className="mt-3 p-3 bg-slate-50 dark:bg-card rounded-lg border dark:border-slate-700">
                           <div className="flex space-x-2">
                             <Input
                               value={currentImageUrl}
@@ -1706,7 +1706,7 @@ export default function TextToSpeech() {
                       {imageUrls.map((url, index) => (
                         <div
                           key={`url-${index}`}
-                          className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border dark:border-slate-700"
+                          className="flex items-center justify-between p-2 bg-slate-50 dark:bg-card rounded-lg border dark:border-slate-700"
                         >
                           <div className="flex items-center space-x-2 flex-1 min-w-0">
                             <Image className="w-4 h-4 text-emerald-500 flex-shrink-0" />
@@ -1729,7 +1729,7 @@ export default function TextToSpeech() {
                       {imageFiles.map((file, index) => (
                         <div
                           key={`file-${index}`}
-                          className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border dark:border-slate-700"
+                          className="flex items-center justify-between p-2 bg-slate-50 dark:bg-card rounded-lg border dark:border-slate-700"
                         >
                           <div className="flex items-center space-x-2 flex-1 min-w-0">
                             <Image className="w-4 h-4 text-emerald-500 flex-shrink-0" />
@@ -1774,7 +1774,7 @@ export default function TextToSpeech() {
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                       className="overflow-hidden"
                     >
-                      <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border dark:border-slate-700">
+                      <div className="mt-3 p-3 bg-slate-50 dark:bg-card rounded-lg border dark:border-slate-700">
                         <div className="flex space-x-2">
                           <Input
                             value={saveTextName}
@@ -1853,7 +1853,7 @@ export default function TextToSpeech() {
                     {savedTexts.map((savedText) => (
                       <div
                         key={savedText.id}
-                        className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border dark:border-slate-700"
+                        className="flex items-center justify-between p-3 bg-slate-50 dark:bg-card rounded-lg border dark:border-slate-700"
                       >
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm truncate dark:text-slate-200">

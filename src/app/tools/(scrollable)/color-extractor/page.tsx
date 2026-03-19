@@ -245,7 +245,7 @@ export default function ColorExtractor() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Section Upload/URL */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Upload className="w-5 h-5" />
@@ -320,7 +320,7 @@ export default function ColorExtractor() {
         </Card>
 
         {/* Prévisualisation */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <ImageIcon className="w-5 h-5" />
@@ -357,7 +357,7 @@ export default function ColorExtractor() {
 
       {/* Résultats */}
       {dominantColors.length > 0 && (
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center space-x-2">
@@ -402,7 +402,7 @@ export default function ColorExtractor() {
                     <Label className="text-sm font-medium">
                       Prévisualisation :
                     </Label>
-                    <div className="bg-slate-50 dark:bg-slate-900 border rounded-lg p-4 max-h-32 overflow-y-auto">
+                    <div className="bg-slate-50 dark:bg-background border rounded-lg p-4 max-h-32 overflow-y-auto">
                       <pre className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-all">
                         {selectedFormat.format(dominantColors)}
                       </pre>
@@ -454,7 +454,7 @@ export default function ColorExtractor() {
 
       {/* Historique */}
       {history.length > 0 && (
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center space-x-2">

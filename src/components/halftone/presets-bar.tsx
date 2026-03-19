@@ -30,7 +30,7 @@ export function PresetsBar() {
   };
 
   return (
-    <div className="flex-shrink-0 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2">
+    <div className="flex-shrink-0 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-card p-2">
       <div className="flex items-center space-x-2 overflow-x-auto">
         <div className="flex items-center space-x-2 text-xs text-slate-500 dark:text-slate-400 px-2">
           <Star className="h-3 w-3" />

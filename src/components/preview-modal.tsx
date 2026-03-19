@@ -172,7 +172,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-[90vw] w-full max-h-[95vh] overflow-hidden py-8"
+            className="bg-white dark:bg-card rounded-lg shadow-xl max-w-[90vw] w-full max-h-[95vh] overflow-hidden py-8"
             onClick={(e) => e.stopPropagation()}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
@@ -206,7 +206,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
                 </Button>
               </div>
             </CardHeader>
-            <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+            <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-background">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <Grid className="h-4 w-4 text-slate-500" />
@@ -235,7 +235,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
             </div>
             <CardContent className="p-0">
               <div
-                className="overflow-auto max-h-[70vh] bg-slate-100 dark:bg-slate-900"
+                className="overflow-auto max-h-[70vh] bg-slate-100 dark:bg-background"
                 style={{ padding: "32px" }}
               >
                 <div className="flex justify-center items-center min-h-full">

@@ -142,7 +142,7 @@ export const PreviewCanvas = forwardRef<HTMLCanvasElement, PreviewCanvasProps>(
         <div className="flex-1 overflow-hidden p-4">
           <div
             ref={containerRef}
-            className="h-full w-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden relative"
+            className="h-full w-full flex items-center justify-center bg-slate-100 dark:bg-card rounded-lg overflow-hidden relative"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}

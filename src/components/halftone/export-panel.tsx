@@ -80,7 +80,7 @@ export function ExportPanel({ canvasRef }: ExportPanelProps) {
 
   return (
     <div className="h-full overflow-y-auto p-4 space-y-4">
-      <div className="sticky top-0 bg-white dark:bg-slate-800 pb-2 z-10">
+      <div className="sticky top-0 bg-white dark:bg-card pb-2 z-10">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center space-x-2">
           <Download className="h-5 w-5" />
           <span>Export</span>
@@ -142,7 +142,7 @@ export function ExportPanel({ canvasRef }: ExportPanelProps) {
                   resolution: Number(e.target.value) as 1 | 2 | 3,
                 }))
               }
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-sm"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-card text-sm"
             >
               <option value={1}>{resolutionLabels[1]}</option>
               <option value={2}>{resolutionLabels[2]}</option>
@@ -246,7 +246,7 @@ export function ExportPanel({ canvasRef }: ExportPanelProps) {
       </Card>
 
       {/* Bouton d'export */}
-      <div className="sticky bottom-0 bg-white dark:bg-slate-800 pt-2">
+      <div className="sticky bottom-0 bg-white dark:bg-card pt-2">
         <Button
           onClick={handleExport}
           disabled={!sourceImage || isExporting}

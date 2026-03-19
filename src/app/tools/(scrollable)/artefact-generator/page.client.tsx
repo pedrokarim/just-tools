@@ -319,7 +319,7 @@ export default function ArtefactGeneratorClient({
 
           <TabsContent value="generator" className="space-y-6">
             {/* Sélection du set d'artefacts */}
-            <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+            <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Star className="h-5 w-5" />
@@ -367,7 +367,7 @@ export default function ArtefactGeneratorClient({
                     )}
                   </div>
                   {selectedSet && selectedSet !== "all" && (
-                    <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                    <div className="p-3 bg-slate-50 dark:bg-muted rounded-lg">
                       <p className="text-sm text-slate-600 dark:text-slate-300">
                         <strong>Set sélectionné :</strong> {selectedSet}
                       </p>
@@ -381,7 +381,7 @@ export default function ArtefactGeneratorClient({
             </Card>
 
             {/* Boutons de génération */}
-            <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+            <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Zap className="h-5 w-5" />
@@ -429,7 +429,7 @@ export default function ArtefactGeneratorClient({
 
             {/* Statistiques */}
             {stats && (
-              <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+              <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <BarChart3 className="h-5 w-5" />
@@ -488,7 +488,7 @@ export default function ArtefactGeneratorClient({
                             ([setName, count]) => (
                               <div
                                 key={setName}
-                                className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-700 rounded"
+                                className="flex justify-between items-center p-2 bg-slate-50 dark:bg-muted rounded"
                               >
                                 <span className="text-sm font-medium">
                                   {setName}
@@ -507,7 +507,7 @@ export default function ArtefactGeneratorClient({
 
             {/* Liste des artefacts générés */}
             {artefacts.length > 0 && (
-              <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+              <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center space-x-2">
@@ -651,7 +651,7 @@ export default function ArtefactGeneratorClient({
           </TabsContent>
 
           <TabsContent value="calculator" className="space-y-6">
-            <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+            <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Target className="h-5 w-5" />
@@ -756,7 +756,7 @@ export default function ArtefactGeneratorClient({
 
           <TabsContent value="gallery" className="space-y-6">
             {/* Galerie de tous les artefacts */}
-            <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+            <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -940,7 +940,7 @@ export default function ArtefactGeneratorClient({
         </Tabs>
 
         {/* Informations sur les probabilités */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <BarChart3 className="h-5 w-5" />

@@ -201,24 +201,39 @@ export class HalftoneEngine {
         );
       case "diamond":
         return Math.abs(relX) + Math.abs(relY) <= 1 * directionMultiplier;
-      case "hexagon":
-        const hexDistance = Math.abs(relX) + Math.abs(relY) * 0.866;
-        return hexDistance <= 1 * directionMultiplier;
-      case "triangle":
-        const triangleY = relY + 0.5;
-        return (
-          triangleY >= 0 &&
-          Math.abs(relX) <= (1 - triangleY) * directionMultiplier
-        );
-      case "star":
-        const angle = Math.atan2(relY, relX);
-        const starDistance = 1 + 0.3 * Math.sin(5 * angle);
-        return distance <= starDistance * directionMultiplier;
-      case "heart":
-        const heartX = Math.abs(relX);
-        const heartY = relY + 0.3;
-        const heartDistance = Math.sqrt(heartX * heartX + heartY * heartY);
-        return heartDistance <= 1 * directionMultiplier;
+      case "hexagon": {
+        // Regular hexagon (vertex pointing right)
+        const absX = Math.abs(relX);
+        const absY = Math.abs(relY);
+        return absY <= 0.866 * directionMultiplier && absX + absY * 0.577 <= directionMultiplier;
+      }
+      case "triangle": {
+        // Equilateral triangle pointing up: apex at top (relY=-1), base at bottom (relY=1)
+        const triNorm = (relY + 1) / 2;
+        return triNorm >= 0 && triNorm <= directionMultiplier && Math.abs(relX) <= triNorm * directionMultiplier;
+      }
+      case "star": {
+        // 5-pointed star with proper inner/outer radii
+        const starAngle = Math.atan2(relY, relX) + Math.PI / 2;
+        const fullSlice = Math.PI / 5;
+        const normAngle = ((starAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        const slicePos = normAngle / fullSlice;
+        const fraction = slicePos - Math.floor(slicePos);
+        const outerR = 1.0;
+        const innerR = 0.382;
+        const maxR = Math.floor(slicePos) % 2 === 0
+          ? outerR + (innerR - outerR) * fraction
+          : innerR + (outerR - innerR) * fraction;
+        return distance <= maxR * directionMultiplier;
+      }
+      case "heart": {
+        // Heart shape: (x² + y² - 1)³ - x²y³ ≤ 0
+        const dm = Math.max(directionMultiplier, 0.01);
+        const hx = relX / dm;
+        const hy = -relY / dm;
+        const heartEq = Math.pow(hx * hx + hy * hy - 1, 3) - hx * hx * hy * hy * hy;
+        return heartEq <= 0;
+      }
       default:
         return true; // Pour "custom" ou autres formes
     }

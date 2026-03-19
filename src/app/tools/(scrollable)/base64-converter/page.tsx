@@ -81,7 +81,7 @@ export default function Base64Converter() {
       {/* Zone de conversion */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Entrée */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <span>
@@ -141,7 +141,7 @@ export default function Base64Converter() {
         </div>
 
         {/* Sortie */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <span>
@@ -162,7 +162,7 @@ export default function Base64Converter() {
               placeholder="Le résultat apparaîtra ici..."
               value={output}
               readOnly
-              className="min-h-[200px] resize-none bg-slate-50 dark:bg-slate-900"
+              className="min-h-[200px] resize-none bg-slate-50 dark:bg-background"
             />
             <div className="flex justify-between items-center">
               <span className="text-sm text-slate-500">
@@ -199,7 +199,7 @@ export default function Base64Converter() {
       </div>
 
       {/* Informations */}
-      <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+      <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
         <CardHeader>
           <CardTitle>À propos de Base64</CardTitle>
         </CardHeader>

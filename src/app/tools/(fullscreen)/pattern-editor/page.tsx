@@ -247,9 +247,9 @@ export default function PatternEditor() {
   ]);
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-background">
       {/* Barre d'outils principale */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2">
+      <div className="bg-white dark:bg-card border-b border-slate-200 dark:border-slate-700 px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Separator orientation="vertical" className="h-6" />
@@ -382,7 +382,7 @@ export default function PatternEditor() {
         {/* Zone de travail */}
         <div className="flex-1 flex flex-col">
           {/* Barre d'outils secondaire */}
-          <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2">
+          <div className="bg-white dark:bg-card border-b border-slate-200 dark:border-slate-700 px-4 py-2">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <Label htmlFor="grid-size" className="text-sm">
@@ -501,7 +501,7 @@ export default function PatternEditor() {
           </div>
 
           {/* Zone de dessin */}
-          <div className="flex-1 flex items-center justify-center bg-slate-100 dark:bg-slate-800 relative">
+          <div className="flex-1 flex items-center justify-center bg-slate-100 dark:bg-card relative">
             {/* Indicateur de mode */}
             <div className="absolute top-4 left-4 z-10">
               <Badge variant="secondary" className="text-xs">
@@ -519,7 +519,7 @@ export default function PatternEditor() {
               </Badge>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-lg p-2">
+            <div className="bg-white dark:bg-background rounded-lg shadow-lg p-2">
               {editorState.gridMode === "pixel" ? (
                 <div
                   className="border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden"
@@ -534,7 +534,7 @@ export default function PatternEditor() {
                           className={`w-6 h-6 cursor-pointer transition-colors ${
                             cell
                               ? "bg-slate-900 dark:bg-slate-100"
-                              : "bg-white dark:bg-slate-800"
+                              : "bg-white dark:bg-card"
                           } ${
                             editorState.showGrid
                               ? "border border-slate-200 dark:border-slate-700"
@@ -566,7 +566,7 @@ export default function PatternEditor() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 320, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 overflow-y-auto"
+              className="w-80 bg-white dark:bg-card border-l border-slate-200 dark:border-slate-700 overflow-y-auto"
             >
               <div className="p-4 space-y-4">
                 <div>

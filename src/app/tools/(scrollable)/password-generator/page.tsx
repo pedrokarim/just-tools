@@ -167,7 +167,7 @@ export default function PasswordGenerator() {
     <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6">
       <div className="w-full space-y-8">
         {/* Mot de passe généré */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Key className="h-5 w-5" />
@@ -218,7 +218,7 @@ export default function PasswordGenerator() {
                     {strength.label}
                   </Badge>
                 </div>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                <div className="w-full bg-slate-200 dark:bg-muted rounded-full h-2">
                   <div
                     className={`${strength.color} h-2 rounded-full transition-all duration-300`}
                     style={{ width: `${(strength.score / 8) * 100}%` }}
@@ -235,7 +235,7 @@ export default function PasswordGenerator() {
         {/* Options de génération */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Paramètres principaux */}
-          <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+          <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Settings className="h-5 w-5" />
@@ -353,7 +353,7 @@ export default function PasswordGenerator() {
           </Card>
 
           {/* Options avancées */}
-          <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+          <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Shield className="h-5 w-5" />
@@ -460,7 +460,7 @@ export default function PasswordGenerator() {
         </div>
 
         {/* Conseils de sécurité */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Shield className="h-5 w-5" />
