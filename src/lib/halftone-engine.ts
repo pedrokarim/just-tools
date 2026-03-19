@@ -158,59 +158,31 @@ export class HalftoneEngine {
     height: number,
     settings: HalftoneSettings
   ): boolean {
-    const { globalShape, direction } = settings;
+    const { globalShape } = settings;
 
     // Calculer la distance relative au centre
     const relX = (x - centerX) / (width / 2);
     const relY = (y - centerY) / (height / 2);
     const distance = Math.sqrt(relX * relX + relY * relY);
 
-    // Appliquer la direction
-    let directionMultiplier = 1;
-    switch (direction) {
-      case "top":
-        directionMultiplier = relY < 0 ? 1 : 0.3;
-        break;
-      case "bottom":
-        directionMultiplier = relY > 0 ? 1 : 0.3;
-        break;
-      case "left":
-        directionMultiplier = relX < 0 ? 1 : 0.3;
-        break;
-      case "right":
-        directionMultiplier = relX > 0 ? 1 : 0.3;
-        break;
-      case "center":
-        directionMultiplier = distance < 0.5 ? 1 : 0.3;
-        break;
-      case "radial":
-        directionMultiplier = 1 - distance * 0.5;
-        break;
-      default:
-        directionMultiplier = 1;
-    }
-
-    // Vérifier la forme globale
+    // La direction n'affecte PAS la forme globale (elle affecte la taille des points via calculateSizeFromPosition)
     switch (globalShape) {
       case "circle":
-        return distance <= 1 * directionMultiplier;
+        return distance <= 1;
       case "square":
-        return (
-          Math.abs(relX) <= 1 * directionMultiplier &&
-          Math.abs(relY) <= 1 * directionMultiplier
-        );
+        return Math.abs(relX) <= 1 && Math.abs(relY) <= 1;
       case "diamond":
-        return Math.abs(relX) + Math.abs(relY) <= 1 * directionMultiplier;
+        return Math.abs(relX) + Math.abs(relY) <= 1;
       case "hexagon": {
         // Regular hexagon (vertex pointing right)
         const absX = Math.abs(relX);
         const absY = Math.abs(relY);
-        return absY <= 0.866 * directionMultiplier && absX + absY * 0.577 <= directionMultiplier;
+        return absY <= 0.866 && absX + absY * 0.577 <= 1;
       }
       case "triangle": {
         // Equilateral triangle pointing up: apex at top (relY=-1), base at bottom (relY=1)
         const triNorm = (relY + 1) / 2;
-        return triNorm >= 0 && triNorm <= directionMultiplier && Math.abs(relX) <= triNorm * directionMultiplier;
+        return triNorm >= 0 && triNorm <= 1 && Math.abs(relX) <= triNorm;
       }
       case "star": {
         // 5-pointed star with proper inner/outer radii
@@ -224,13 +196,12 @@ export class HalftoneEngine {
         const maxR = Math.floor(slicePos) % 2 === 0
           ? outerR + (innerR - outerR) * fraction
           : innerR + (outerR - innerR) * fraction;
-        return distance <= maxR * directionMultiplier;
+        return distance <= maxR;
       }
       case "heart": {
         // Heart shape: (x² + y² - 1)³ - x²y³ ≤ 0
-        const dm = Math.max(directionMultiplier, 0.01);
-        const hx = relX / dm;
-        const hy = -relY / dm;
+        const hx = relX;
+        const hy = -relY;
         const heartEq = Math.pow(hx * hx + hy * hy - 1, 3) - hx * hx * hy * hy * hy;
         return heartEq <= 0;
       }
