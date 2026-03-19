@@ -84,6 +84,7 @@ export interface HalftoneStore extends AppState {
   savePreset: (name: string) => void;
   loadPreset: (name: string) => void;
   deletePreset: (name: string) => void;
+  clearSourceImage: () => void;
   setProcessing: (processing: boolean) => void;
   setPreviewSize: (size: { width: number; height: number }) => void;
 }
@@ -121,7 +122,7 @@ const defaultSettings: HalftoneSettings = {
     ],
   },
   opacity: 0.9, // Plus visible par défaut
-  blendMode: "normal",
+  blendMode: "source-over",
   jitter: 0.1, // Légère variation par défaut
   seed: 0,
   useMask: false,
@@ -140,6 +141,7 @@ export const useHalftoneStore = create<HalftoneStore>()(
       previewSize: { width: 800, height: 600 },
 
       setSourceImage: (image) => set({ sourceImage: image }),
+      clearSourceImage: () => set({ sourceImage: undefined }),
 
       updateSettings: (newSettings) =>
         set((state) => ({

@@ -14,9 +14,10 @@ export class HalftoneExporter {
     canvas: HTMLCanvasElement,
     options: ExportOptions
   ): Promise<Blob> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
         if (blob) resolve(blob);
+        else reject(new Error("Failed to export PNG"));
       }, "image/png");
     });
   }
@@ -26,10 +27,11 @@ export class HalftoneExporter {
     canvas: HTMLCanvasElement,
     options: ExportOptions
   ): Promise<Blob> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       canvas.toBlob(
         (blob) => {
           if (blob) resolve(blob);
+          else reject(new Error("Failed to export JPG"));
         },
         "image/jpeg",
         options.quality || 0.9

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useHalftoneStore } from "@/lib/halftone-store";
+import { useHalftoneStore, ColorMode, Mapping } from "@/lib/halftone-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -356,10 +356,14 @@ export function ControlsPanel() {
                       className="flex-1"
                     />
                     <Input
+                      type="number"
+                      min={0}
+                      max={180}
                       value={settings.angle}
-                      onChange={(e) =>
-                        updateSettings({ angle: Number(e.target.value) })
-                      }
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        if (!isNaN(v)) updateSettings({ angle: v });
+                      }}
                       className="w-16 text-center"
                     />
                   </div>
@@ -409,10 +413,14 @@ export function ControlsPanel() {
                       className="flex-1"
                     />
                     <Input
+                      type="number"
+                      min={1}
+                      max={300}
                       value={settings.frequency}
-                      onChange={(e) =>
-                        updateSettings({ frequency: Number(e.target.value) })
-                      }
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        if (!isNaN(v)) updateSettings({ frequency: v });
+                      }}
                       className="w-16 text-center"
                     />
                   </div>
@@ -437,10 +445,14 @@ export function ControlsPanel() {
                       className="flex-1"
                     />
                     <Input
+                      type="number"
+                      min={1}
+                      max={50}
                       value={settings.sizeMin}
-                      onChange={(e) =>
-                        updateSettings({ sizeMin: Number(e.target.value) })
-                      }
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        if (!isNaN(v)) updateSettings({ sizeMin: v });
+                      }}
                       className="w-16 text-center"
                     />
                   </div>
@@ -463,10 +475,14 @@ export function ControlsPanel() {
                       className="flex-1"
                     />
                     <Input
+                      type="number"
+                      min={1}
+                      max={100}
                       value={settings.sizeMax}
-                      onChange={(e) =>
-                        updateSettings({ sizeMax: Number(e.target.value) })
-                      }
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        if (!isNaN(v)) updateSettings({ sizeMax: v });
+                      }}
                       className="w-16 text-center"
                     />
                   </div>
@@ -508,7 +524,7 @@ export function ControlsPanel() {
                     id="colorMode"
                     value={settings.modeCouleur}
                     onChange={(e) =>
-                      updateSettings({ modeCouleur: e.target.value as any })
+                      updateSettings({ modeCouleur: e.target.value as ColorMode })
                     }
                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-sm"
                   >
@@ -611,12 +627,14 @@ export function ControlsPanel() {
                       className="flex-1"
                     />
                     <Input
+                      type="number"
+                      min={0}
+                      max={100}
                       value={Math.round(settings.opacity * 100)}
-                      onChange={(e) =>
-                        updateSettings({
-                          opacity: Number(e.target.value) / 100,
-                        })
-                      }
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        if (!isNaN(v)) updateSettings({ opacity: v / 100 });
+                      }}
                       className="w-16 text-center"
                     />
                   </div>
@@ -657,7 +675,7 @@ export function ControlsPanel() {
                     id="mapping"
                     value={settings.mapping}
                     onChange={(e) =>
-                      updateSettings({ mapping: e.target.value as any })
+                      updateSettings({ mapping: e.target.value as Mapping })
                     }
                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-sm"
                   >
@@ -686,10 +704,15 @@ export function ControlsPanel() {
                         className="flex-1"
                       />
                       <Input
+                        type="number"
+                        min={0.1}
+                        max={5}
+                        step={0.1}
                         value={settings.gamma}
-                        onChange={(e) =>
-                          updateSettings({ gamma: Number(e.target.value) })
-                        }
+                        onChange={(e) => {
+                          const v = Number(e.target.value);
+                          if (!isNaN(v)) updateSettings({ gamma: v });
+                        }}
                         className="w-16 text-center"
                       />
                     </div>
@@ -713,12 +736,14 @@ export function ControlsPanel() {
                       className="flex-1"
                     />
                     <Input
+                      type="number"
+                      min={0}
+                      max={100}
                       value={Math.round(settings.threshold * 100)}
-                      onChange={(e) =>
-                        updateSettings({
-                          threshold: Number(e.target.value) / 100,
-                        })
-                      }
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        if (!isNaN(v)) updateSettings({ threshold: v / 100 });
+                      }}
                       className="w-16 text-center"
                     />
                   </div>
@@ -741,10 +766,14 @@ export function ControlsPanel() {
                       className="flex-1"
                     />
                     <Input
+                      type="number"
+                      min={0}
+                      max={100}
                       value={Math.round(settings.jitter * 100)}
-                      onChange={(e) =>
-                        updateSettings({ jitter: Number(e.target.value) / 100 })
-                      }
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        if (!isNaN(v)) updateSettings({ jitter: v / 100 });
+                      }}
                       className="w-16 text-center"
                     />
                   </div>
@@ -757,10 +786,12 @@ export function ControlsPanel() {
                   <Input
                     id="seed"
                     type="number"
+                    min={0}
                     value={settings.seed}
-                    onChange={(e) =>
-                      updateSettings({ seed: Number(e.target.value) })
-                    }
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      if (!isNaN(v)) updateSettings({ seed: v });
+                    }}
                     className="w-full"
                   />
                 </div>

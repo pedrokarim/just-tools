@@ -263,7 +263,7 @@ export function ImageDropzone() {
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                     className="w-full"
-                    onKeyPress={(e) => {
+                    onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         handleUrlLoad();
                       }

@@ -66,6 +66,15 @@ export function HalftonePlayground() {
     }, 100);
   }, [sourceImage, settings, setProcessing]);
 
+  // Cleanup du timeout au unmount
+  useEffect(() => {
+    return () => {
+      if (renderTimeoutRef.current) {
+        clearTimeout(renderTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Rendu automatique seulement si autoApply est activé
   useEffect(() => {
     if (settings.autoApply) {
