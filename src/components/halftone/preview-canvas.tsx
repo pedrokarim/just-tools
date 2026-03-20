@@ -2,7 +2,8 @@
 
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { useHalftoneStore } from "@/lib/halftone-store";
+import { useHalftoneStore, useActiveLayerSettings } from "@/lib/halftone-store";
+import { ShapeResizeOverlay } from "./shape-resize-overlay";
 import { Card, CardContent } from "@/components/ui/card";
 import { Eye, ZoomIn, ZoomOut, RotateCcw, X, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,11 +17,13 @@ export const PreviewCanvas = forwardRef<HTMLCanvasElement, PreviewCanvasProps>(
   ({ isProcessing }, ref) => {
     const { sourceImage, previewSize, setPreviewSize, clearSourceImage } =
       useHalftoneStore();
+    const { settings, updateSettings } = useActiveLayerSettings();
     const containerRef = useRef<HTMLDivElement>(null);
     const [zoom, setZoom] = useState(1);
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [isCanvasHovering, setIsCanvasHovering] = useState(false);
 
     // Gestion du zoom
     const handleZoomIn = () => setZoom((prev) => Math.min(prev * 1.2, 5));
@@ -157,15 +160,36 @@ export const PreviewCanvas = forwardRef<HTMLCanvasElement, PreviewCanvasProps>(
               }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
-              <canvas
-                ref={ref}
-                width={previewSize.width}
-                height={previewSize.height}
-                className="max-w-none shadow-lg rounded"
-                style={{
-                  cursor: isDragging ? "grabbing" : "grab",
-                }}
-              />
+              <div
+                style={{ position: "relative", display: "inline-block" }}
+                onMouseEnter={() => setIsCanvasHovering(true)}
+                onMouseLeave={() => setIsCanvasHovering(false)}
+              >
+                <canvas
+                  ref={ref}
+                  width={previewSize.width}
+                  height={previewSize.height}
+                  className="max-w-none shadow-lg rounded"
+                  style={{
+                    cursor: isDragging ? "grabbing" : "grab",
+                  }}
+                />
+                {settings.globalShape !== "custom" && (
+                  <ShapeResizeOverlay
+                    canvasWidth={previewSize.width}
+                    canvasHeight={previewSize.height}
+                    settings={settings}
+                    zoom={zoom}
+                    isHovering={isCanvasHovering}
+                    onScaleChange={(scale) =>
+                      updateSettings({ globalShapeScale: scale })
+                    }
+                    onPositionChange={(pos) =>
+                      updateSettings({ effectPosition: pos })
+                    }
+                  />
+                )}
+              </div>
             </motion.div>
 
             {/* Overlay d'information */}

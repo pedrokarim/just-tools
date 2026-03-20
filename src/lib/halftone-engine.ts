@@ -218,10 +218,11 @@ export class HalftoneEngine {
     settings: HalftoneSettings
   ): boolean {
     const { globalShape } = settings;
+    const scale = settings.globalShapeScale ?? 1.0;
 
-    // Calculer la distance relative au centre
-    const relX = (x - centerX) / (width / 2);
-    const relY = (y - centerY) / (height / 2);
+    // Calculer la distance relative au centre (scale agrandit/réduit la forme)
+    const relX = (x - centerX) / ((width / 2) * scale);
+    const relY = (y - centerY) / ((height / 2) * scale);
     const distance = Math.sqrt(relX * relX + relY * relY);
 
     // La direction n'affecte PAS la forme globale (elle affecte la taille des points via calculateSizeFromPosition)
@@ -291,9 +292,9 @@ export class HalftoneEngine {
     const cos = Math.cos(angleRad);
     const sin = Math.sin(angleRad);
 
-    // Calculer le centre de l'image
-    const centerX = width / 2;
-    const centerY = height / 2;
+    // Centre de la forme = effectPosition (cohérent avec le gradient de taille)
+    const centerX = (settings.effectPosition.x / 100) * width;
+    const centerY = (settings.effectPosition.y / 100) * height;
 
     // Générer la grille de base
     for (let y = -spacing; y < height + spacing; y += spacing) {

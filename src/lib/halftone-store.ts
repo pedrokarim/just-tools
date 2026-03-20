@@ -42,6 +42,9 @@ export interface HalftoneSettings {
     y: number; // -100 à 200 (pour sortir de l'image)
   };
 
+  // Taille de la forme globale (1.0 = 50% du canvas, 2.0 = 100%, etc.)
+  globalShapeScale: number;
+
   // Paramètres de base
   angle: number;
   frequency: number;
@@ -125,6 +128,7 @@ export const defaultSettings: HalftoneSettings = {
   globalShape: "circle",
   direction: "center",
   effectPosition: { x: 50, y: 50 },
+  globalShapeScale: 1.0,
   angle: 0,
   frequency: 80,
   sizeMin: 3,
@@ -306,14 +310,15 @@ export const useHalftoneStore = create<HalftoneStore>()(
       loadPreset: (name) =>
         set((state) => {
           const preset = state.presets[name];
-          if (!preset) return state;
+          if (!preset || preset.length === 0) return state;
+          const newLayers = preset.map((l) => ({
+            ...l,
+            id: crypto.randomUUID(),
+            settings: { ...l.settings },
+          }));
           return {
-            layers: preset.map((l) => ({
-              ...l,
-              id: crypto.randomUUID(),
-              settings: { ...l.settings },
-            })),
-            activeLayerId: null,
+            layers: newLayers,
+            activeLayerId: newLayers[0].id,
           };
         }),
 
@@ -335,7 +340,7 @@ export const useHalftoneStore = create<HalftoneStore>()(
     }),
     {
       name: "halftone-store",
-      version: 2,
+      version: 3,
       partialize: (state) => ({
         layers: state.layers.map((l) => ({
           ...l,
@@ -376,10 +381,35 @@ export const useHalftoneStore = create<HalftoneStore>()(
               ];
             }
           }
-          return {
+          persisted = {
             layers: [migratedLayer],
             activeLayerId: migratedLayer.id,
             presets: migratedPresets,
+          };
+        }
+        if (version < 3) {
+          // Migration v2 -> v3 : add globalShapeScale to all layers
+          const state = persisted as {
+            layers: HalftoneLayer[];
+            activeLayerId: string | null;
+            presets: Record<string, HalftoneLayer[]>;
+          };
+          const addScale = (l: HalftoneLayer) => ({
+            ...l,
+            settings: {
+              ...l.settings,
+              globalShapeScale: (l.settings as Record<string, unknown>).globalShapeScale ?? 1.0,
+            },
+          });
+          return {
+            ...state,
+            layers: state.layers.map(addScale),
+            presets: Object.fromEntries(
+              Object.entries(state.presets).map(([name, layers]) => [
+                name,
+                layers.map(addScale),
+              ])
+            ),
           };
         }
         return persisted;

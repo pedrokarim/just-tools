@@ -272,6 +272,28 @@ export function ControlsPanel() {
                   </div>
                 </div>
 
+                {/* Taille de la forme globale */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-slate-500">
+                    <span>Taille de la forme</span>
+                    <span>{Math.round((settings.globalShapeScale ?? 1) * 100)}%</span>
+                  </div>
+                  <Slider
+                    value={[settings.globalShapeScale ?? 1]}
+                    onValueChange={([value]) =>
+                      updateSettings({ globalShapeScale: value })
+                    }
+                    min={0.1}
+                    max={3}
+                    step={0.01}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-slate-400">
+                    <span>10%</span>
+                    <span>300%</span>
+                  </div>
+                </div>
+
                 {/* Auto-application */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
