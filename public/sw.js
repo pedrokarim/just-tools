@@ -1,6 +1,6 @@
 // Dynamic values replaced at build time by scripts/build-sw.js
-const CACHE_NAME = 'just-tools-1.0.0-v2.1.0-95101c0e-mmyrkiuh';
-const APP_VERSION = '1.0.0 (v2.1.0 - 95101c0e)';
+const CACHE_NAME = 'just-tools-1.0.0-v2.1.0-f7fb015d-mmz0gsly';
+const APP_VERSION = '1.0.0 (v2.1.0 - f7fb015d)';
 
 const PRECACHE_URLS = [
   '/',
