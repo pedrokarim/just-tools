@@ -9,6 +9,7 @@ import { PreviewCanvas } from "./preview-canvas";
 import { ControlsPanel } from "./controls-panel";
 import { ExportPanel } from "./export-panel";
 import { PresetsBar } from "./presets-bar";
+import { LayerPanel } from "./layer-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,16 +20,16 @@ import {
   RotateCcw,
   Eye,
   EyeOff,
+  Layers,
 } from "lucide-react";
 import { toast } from "sonner";
 
 export function HalftonePlayground() {
   const {
     sourceImage,
-    settings,
+    layers,
     isProcessing,
     setProcessing,
-    updateSettings,
     resetSettings,
     savePreset,
     clearSourceImage,
@@ -36,25 +37,27 @@ export function HalftonePlayground() {
 
   const [showControls, setShowControls] = useState(true);
   const [showExport, setShowExport] = useState(false);
+  const [showLayers, setShowLayers] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null!);
   const renderTimeoutRef = useRef<NodeJS.Timeout>(undefined);
 
-  // Fonction de rendu avec debounce
+  // Vérifier si autoApply est activé sur au moins un calque
+  const autoApply = layers.some((l) => l.settings.autoApply);
+
+  // Fonction de rendu multi-calques avec debounce
   const renderHalftone = useCallback(async () => {
     if (!sourceImage || !canvasRef.current) return;
 
-    // Annuler le rendu précédent
     if (renderTimeoutRef.current) {
       clearTimeout(renderTimeoutRef.current);
     }
 
-    // Debounce de 100ms
     renderTimeoutRef.current = setTimeout(async () => {
       try {
         setProcessing(true);
-        await HalftoneEngine.renderHalftone(
+        await HalftoneEngine.renderLayers(
           sourceImage,
-          settings,
+          layers,
           canvasRef.current!
         );
       } catch (error) {
@@ -64,7 +67,7 @@ export function HalftonePlayground() {
         setProcessing(false);
       }
     }, 100);
-  }, [sourceImage, settings, setProcessing]);
+  }, [sourceImage, layers, setProcessing]);
 
   // Cleanup du timeout au unmount
   useEffect(() => {
@@ -75,12 +78,12 @@ export function HalftonePlayground() {
     };
   }, []);
 
-  // Rendu automatique seulement si autoApply est activé
+  // Rendu automatique
   useEffect(() => {
-    if (settings.autoApply) {
+    if (autoApply) {
       renderHalftone();
     }
-  }, [renderHalftone, settings.autoApply]);
+  }, [renderHalftone, autoApply]);
 
   // Sauvegarder un preset
   const handleSavePreset = () => {
@@ -164,15 +167,20 @@ export function HalftonePlayground() {
             </Button>
 
             <Button
-              variant="outline"
+              variant={showLayers ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowLayers(!showLayers)}
+            >
+              <Layers className="h-4 w-4 mr-2" />
+              Calques
+            </Button>
+
+            <Button
+              variant={showControls ? "default" : "outline"}
               size="sm"
               onClick={() => setShowControls(!showControls)}
             >
-              {showControls ? (
-                <EyeOff className="h-4 w-4 mr-2" />
-              ) : (
-                <Eye className="h-4 w-4 mr-2" />
-              )}
+              <Settings className="h-4 w-4 mr-2" />
               Contrôles
             </Button>
 
@@ -192,9 +200,24 @@ export function HalftonePlayground() {
       {/* Barre des presets */}
       <PresetsBar />
 
-      {/* Contenu principal */}
+      {/* Contenu principal : 3 colonnes */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Zone de prévisualisation */}
+        {/* Panneau de calques (gauche) */}
+        <AnimatePresence>
+          {showLayers && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 260, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex-shrink-0 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-card overflow-hidden"
+            >
+              <LayerPanel />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Zone de prévisualisation (centre) */}
         <div className="flex-1 flex flex-col p-4">
           {!sourceImage ? (
             <ImageDropzone />
@@ -205,7 +228,7 @@ export function HalftonePlayground() {
           )}
         </div>
 
-        {/* Panneau latéral */}
+        {/* Panneau latéral (droite) */}
         <AnimatePresence>
           {(showControls || showExport) && (
             <motion.div

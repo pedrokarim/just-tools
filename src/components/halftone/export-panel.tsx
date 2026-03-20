@@ -25,7 +25,7 @@ interface ExportPanelProps {
 }
 
 export function ExportPanel({ canvasRef }: ExportPanelProps) {
-  const { sourceImage, settings } = useHalftoneStore();
+  const { sourceImage, layers } = useHalftoneStore();
   const [exportOptions, setExportOptions] = useState<ExportOptions>({
     format: "png",
     resolution: 1,
@@ -43,7 +43,7 @@ export function ExportPanel({ canvasRef }: ExportPanelProps) {
     try {
       const blob = await HalftoneExporter.export(
         sourceImage,
-        settings,
+        layers,
         exportOptions
       );
 

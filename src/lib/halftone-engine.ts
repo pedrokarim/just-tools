@@ -1,4 +1,4 @@
-import { HalftoneSettings, Shape } from "./halftone-store";
+import { HalftoneSettings, HalftoneLayer, Shape } from "./halftone-store";
 
 export class HalftoneEngine {
   private canvas: HTMLCanvasElement;
@@ -8,41 +8,8 @@ export class HalftoneEngine {
     this.ctx = canvas.getContext("2d")!;
   }
 
-  // Fonction principale de rendu
-  async renderHalftone(
-    image: HTMLImageElement | ImageBitmap,
-    settings: HalftoneSettings,
-    outputCanvas: HTMLCanvasElement
-  ): Promise<void> {
-    const outputCtx = outputCanvas.getContext("2d")!;
-
-    // Calculer la taille de sortie
-    const { width, height } = this.calculateOutputSize(image, outputCanvas);
-    outputCanvas.width = width;
-    outputCanvas.height = height;
-
-    // Effacer le canvas
-    outputCtx.clearRect(0, 0, width, height);
-
-    // 1. D'abord, dessiner l'image originale
-    outputCtx.drawImage(image, 0, 0, width, height);
-
-    // 2. Appliquer le fond si nécessaire (en overlay)
-    if (settings.gradient?.enabled) {
-      this.applyGradient(outputCtx, settings.gradient, width, height);
-    }
-
-    // 3. Calculer la grille halftone pour l'effet
-    const grid = this.calculateGrid(width, height, settings);
-
-    // 4. Rendre l'effet de trame par-dessus l'image
-    for (const point of grid) {
-      await this.renderHalftoneEffect(outputCtx, image, point, settings);
-    }
-  }
-
   // Calculer la taille de sortie
-  private calculateOutputSize(
+  calculateOutputSize(
     image: HTMLImageElement | ImageBitmap,
     outputCanvas: HTMLCanvasElement
   ): { width: number; height: number } {
@@ -59,6 +26,100 @@ export class HalftoneEngine {
     }
 
     return { width: Math.round(width), height: Math.round(height) };
+  }
+
+  // Rendre uniquement les points halftone (sans l'image de base) sur un canvas transparent
+  async renderHalftoneLayerOnly(
+    image: HTMLImageElement | ImageBitmap,
+    settings: HalftoneSettings,
+    outputCanvas: HTMLCanvasElement
+  ): Promise<void> {
+    const outputCtx = outputCanvas.getContext("2d")!;
+    outputCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+
+    // Appliquer le fond gradient si nécessaire
+    if (settings.gradient?.enabled) {
+      this.applyGradient(
+        outputCtx,
+        settings.gradient,
+        outputCanvas.width,
+        outputCanvas.height
+      );
+    }
+
+    // Calculer la grille halftone
+    const grid = this.calculateGrid(
+      outputCanvas.width,
+      outputCanvas.height,
+      settings
+    );
+
+    // Rendre chaque point
+    for (const point of grid) {
+      await this.renderHalftoneEffect(outputCtx, image, point, settings);
+    }
+  }
+
+  // Fonction principale de rendu (single layer, backward-compatible)
+  async renderHalftone(
+    image: HTMLImageElement | ImageBitmap,
+    settings: HalftoneSettings,
+    outputCanvas: HTMLCanvasElement
+  ): Promise<void> {
+    const { width, height } = this.calculateOutputSize(image, outputCanvas);
+    outputCanvas.width = width;
+    outputCanvas.height = height;
+
+    const outputCtx = outputCanvas.getContext("2d")!;
+    outputCtx.clearRect(0, 0, width, height);
+
+    // 1. Dessiner l'image originale
+    outputCtx.drawImage(image, 0, 0, width, height);
+
+    // 2. Rendre la couche halftone par-dessus
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = width;
+    tempCanvas.height = height;
+    await this.renderHalftoneLayerOnly(image, settings, tempCanvas);
+
+    outputCtx.drawImage(tempCanvas, 0, 0);
+  }
+
+  // Rendu multi-calques
+  static async renderLayers(
+    image: HTMLImageElement | ImageBitmap,
+    layers: HalftoneLayer[],
+    outputCanvas: HTMLCanvasElement
+  ): Promise<void> {
+    const engine = new HalftoneEngine(outputCanvas);
+    const { width, height } = engine.calculateOutputSize(image, outputCanvas);
+    outputCanvas.width = width;
+    outputCanvas.height = height;
+
+    const outputCtx = outputCanvas.getContext("2d")!;
+    outputCtx.clearRect(0, 0, width, height);
+
+    // 1. Dessiner l'image originale comme base
+    outputCtx.drawImage(image, 0, 0, width, height);
+
+    // 2. Composer chaque calque visible (du premier au dernier = bas vers haut)
+    for (const layer of layers) {
+      if (!layer.visible) continue;
+
+      // Canvas temporaire pour ce calque
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = width;
+      tempCanvas.height = height;
+
+      await engine.renderHalftoneLayerOnly(image, layer.settings, tempCanvas);
+
+      // Composer sur le canvas de sortie avec opacité et blend mode du calque
+      outputCtx.save();
+      outputCtx.globalAlpha = layer.opacity;
+      outputCtx.globalCompositeOperation = layer.blendMode;
+      outputCtx.drawImage(tempCanvas, 0, 0);
+      outputCtx.restore();
+    }
   }
 
   // Calculer la taille basée sur la position et la direction
@@ -143,8 +204,6 @@ export class HalftoneEngine {
     height: number,
     settings: HalftoneSettings
   ): string {
-    // Pour l'instant, utiliser la première couleur de la palette
-    // On pourrait aussi créer un dégradé de couleur basé sur la position
     return settings.couleurs[0] || "#000000";
   }
 
@@ -188,21 +247,24 @@ export class HalftoneEngine {
         // 5-pointed star with proper inner/outer radii
         const starAngle = Math.atan2(relY, relX) + Math.PI / 2;
         const fullSlice = Math.PI / 5;
-        const normAngle = ((starAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        const normAngle =
+          ((starAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
         const slicePos = normAngle / fullSlice;
         const fraction = slicePos - Math.floor(slicePos);
         const outerR = 1.0;
         const innerR = 0.382;
-        const maxR = Math.floor(slicePos) % 2 === 0
-          ? outerR + (innerR - outerR) * fraction
-          : innerR + (outerR - innerR) * fraction;
+        const maxR =
+          Math.floor(slicePos) % 2 === 0
+            ? outerR + (innerR - outerR) * fraction
+            : innerR + (outerR - innerR) * fraction;
         return distance <= maxR;
       }
       case "heart": {
         // Heart shape: (x² + y² - 1)³ - x²y³ ≤ 0
         const hx = relX;
         const hy = -relY;
-        const heartEq = Math.pow(hx * hx + hy * hy - 1, 3) - hx * hx * hy * hy * hy;
+        const heartEq =
+          Math.pow(hx * hx + hy * hy - 1, 3) - hx * hx * hy * hy * hy;
         return heartEq <= 0;
       }
       default:
@@ -216,8 +278,12 @@ export class HalftoneEngine {
     height: number,
     settings: HalftoneSettings
   ): Array<{ x: number; y: number; size: number; angle: number }> {
-    const points: Array<{ x: number; y: number; size: number; angle: number }> =
-      [];
+    const points: Array<{
+      x: number;
+      y: number;
+      size: number;
+      angle: number;
+    }> = [];
     const spacing = 1000 / settings.frequency; // Espacement en pixels
 
     // Appliquer la rotation
@@ -292,7 +358,7 @@ export class HalftoneEngine {
     );
     if (size <= 0) return;
 
-    // Obtenir la couleur de l'effet (utiliser une couleur fixe ou basée sur la position)
+    // Obtenir la couleur de l'effet
     const effectColor = this.getEffectColorFromPosition(
       point.x,
       point.y,
@@ -436,7 +502,7 @@ export class HalftoneEngine {
     return x - Math.floor(x);
   }
 
-  // API publique pour le rendu
+  // API publique pour le rendu single-layer (backward-compatible)
   static async renderHalftone(
     image: HTMLImageElement | ImageBitmap,
     settings: HalftoneSettings,

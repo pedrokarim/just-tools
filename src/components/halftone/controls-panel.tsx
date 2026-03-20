@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useHalftoneStore, ColorMode, Mapping } from "@/lib/halftone-store";
+import { useActiveLayerSettings, ColorMode, Mapping } from "@/lib/halftone-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 
 export function ControlsPanel() {
-  const { settings, updateSettings } = useHalftoneStore();
+  const { settings, updateSettings, isLocked, activeLayer } = useActiveLayerSettings();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(["global-shape", "shape", "size", "color"])
   );
@@ -58,12 +58,18 @@ export function ControlsPanel() {
   };
 
   return (
-    <div className="h-full overflow-y-auto p-4 space-y-4">
+    <div className={`h-full overflow-y-auto p-4 space-y-4 ${isLocked ? "pointer-events-none opacity-50" : ""}`}>
       <div className="sticky top-0 bg-white dark:bg-card pb-2 z-10">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center space-x-2">
           <Settings className="h-5 w-5" />
           <span>Paramètres</span>
         </h2>
+        {activeLayer && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {activeLayer.name}
+            {isLocked && " (verrouillé)"}
+          </p>
+        )}
       </div>
 
       {/* Forme globale */}

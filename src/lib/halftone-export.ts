@@ -1,4 +1,4 @@
-import { HalftoneSettings } from "./halftone-store";
+import { HalftoneSettings, HalftoneLayer } from "./halftone-store";
 import { HalftoneEngine } from "./halftone-engine";
 
 export interface ExportOptions {
@@ -42,14 +42,10 @@ export class HalftoneExporter {
   // Exporter en SVG (approximation vectorielle)
   static async exportSVG(
     image: HTMLImageElement | ImageBitmap,
-    settings: HalftoneSettings,
+    layers: HalftoneLayer[],
     options: ExportOptions
   ): Promise<Blob> {
-    // Créer un canvas temporaire pour obtenir les données
     const tempCanvas = document.createElement("canvas");
-    const tempCtx = tempCanvas.getContext("2d")!;
-
-    // Calculer la taille finale
     const { width, height } = this.calculateExportSize(
       image,
       options.resolution
@@ -57,15 +53,21 @@ export class HalftoneExporter {
     tempCanvas.width = width;
     tempCanvas.height = height;
 
-    // Rendre l'halftone
-    await HalftoneEngine.renderHalftone(image, settings, tempCanvas);
+    // Rendre tous les calques
+    await HalftoneEngine.renderLayers(image, layers, tempCanvas);
 
-    // Générer le SVG
+    // Générer le SVG à partir du premier calque visible (approximation)
+    const visibleLayer = layers.find((l) => l.visible);
+    const settings = visibleLayer?.settings ?? layers[0]?.settings;
+    if (!settings) {
+      return new Blob(
+        ['<svg xmlns="http://www.w3.org/2000/svg"></svg>'],
+        { type: "image/svg+xml" }
+      );
+    }
+
     const svgContent = this.generateSVG(tempCanvas, settings, options);
-
-    // Créer le blob
-    const blob = new Blob([svgContent], { type: "image/svg+xml" });
-    return blob;
+    return new Blob([svgContent], { type: "image/svg+xml" });
   }
 
   // Calculer la taille d'export
@@ -89,17 +91,13 @@ export class HalftoneExporter {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const { width, height } = canvas;
 
-    // Créer le SVG
     let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">\n`;
 
-    // Ajouter le fond si nécessaire
     if (settings.gradient?.enabled && !options.transparent) {
       svg += this.generateGradientSVG(settings.gradient, width, height);
     }
 
-    // Ajouter les formes (approximation)
     svg += this.generateShapesSVG(imageData, settings, width, height);
-
     svg += "</svg>";
     return svg;
   }
@@ -149,7 +147,6 @@ export class HalftoneExporter {
     const data = imageData.data;
     const spacing = 1000 / settings.frequency;
 
-    // Parcourir l'image par blocs pour créer les formes
     for (let y = 0; y < height; y += spacing) {
       for (let x = 0; x < width; x += spacing) {
         const index = (Math.floor(y) * width + Math.floor(x)) * 4;
@@ -159,11 +156,16 @@ export class HalftoneExporter {
         const a = data[index + 3] / 255;
 
         if (a > 0.1) {
-          // Seuil de transparence
           const color = `rgb(${r}, ${g}, ${b})`;
           const size = Math.max(1, spacing * 0.8);
-
-          shapes += this.generateShapeSVG(x, y, size, settings.shape, color, a);
+          shapes += this.generateShapeSVG(
+            x,
+            y,
+            size,
+            settings.shape,
+            color,
+            a
+          );
         }
       }
     }
@@ -230,17 +232,13 @@ export class HalftoneExporter {
     return `<polygon points="${points.join(" ")}" ${fill} />\n`;
   }
 
-  // Fonction principale d'export
+  // Fonction principale d'export (multi-calques)
   static async export(
     image: HTMLImageElement | ImageBitmap,
-    settings: HalftoneSettings,
+    layers: HalftoneLayer[],
     options: ExportOptions
   ): Promise<Blob> {
-    // Créer un canvas temporaire
     const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d")!;
-
-    // Calculer la taille d'export
     const { width, height } = this.calculateExportSize(
       image,
       options.resolution
@@ -248,13 +246,8 @@ export class HalftoneExporter {
     canvas.width = width;
     canvas.height = height;
 
-    // Appliquer le fond si nécessaire
-    if (!options.transparent && settings.gradient?.enabled) {
-      this.applyGradientToCanvas(ctx, settings.gradient, width, height);
-    }
-
-    // Rendre l'halftone
-    await HalftoneEngine.renderHalftone(image, settings, canvas);
+    // Rendre tous les calques
+    await HalftoneEngine.renderLayers(image, layers, canvas);
 
     // Exporter selon le format
     switch (options.format) {
@@ -263,7 +256,7 @@ export class HalftoneExporter {
       case "jpg":
         return this.exportJPG(canvas, options);
       case "svg":
-        return this.exportSVG(image, settings, options);
+        return this.exportSVG(image, layers, options);
       default:
         throw new Error(`Format non supporté: ${options.format}`);
     }
