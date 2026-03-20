@@ -92,9 +92,9 @@ export class HalftoneEngine {
     outputCanvas: HTMLCanvasElement
   ): Promise<void> {
     const engine = new HalftoneEngine(outputCanvas);
-    const { width, height } = engine.calculateOutputSize(image, outputCanvas);
-    outputCanvas.width = width;
-    outputCanvas.height = height;
+    // Utiliser les dimensions existantes du canvas (définies par le caller)
+    const width = outputCanvas.width;
+    const height = outputCanvas.height;
 
     const outputCtx = outputCanvas.getContext("2d")!;
     outputCtx.clearRect(0, 0, width, height);
