@@ -10,6 +10,7 @@ import {
   Image,
   Volume2,
   Sparkles,
+  Scissors,
 } from "lucide-react";
 
 export interface ToolMetadata {
@@ -139,6 +140,19 @@ export const toolsMetadata: ToolMetadata[] = [
     iconColor: "text-amber-600 dark:text-amber-400",
     route: "/tools/color-extractor",
     createdAt: new Date("2025-08-05"),
+  },
+  {
+    id: "remove-background",
+    name: "Suppression d'Arrière-plan",
+    description:
+      "Supprimez automatiquement l'arrière-plan de vos images grâce à l'IA, directement dans votre navigateur",
+    category: "Design",
+    status: "ready",
+    icon: <Scissors className="w-6 h-6" />,
+    iconBg: "bg-sky-100 dark:bg-sky-950",
+    iconColor: "text-sky-600 dark:text-sky-400",
+    route: "/tools/remove-background",
+    createdAt: new Date("2026-04-23"),
   },
   {
     id: "text-to-speech",

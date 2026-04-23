@@ -1,6 +1,6 @@
 {
   "name": "just-tools",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "scripts": {
     "dev": "bun --bun next dev --turbopack",
@@ -28,6 +28,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@imgly/background-removal": "^1.7.0",
     "@prisma/client": "^6.14.0",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-checkbox": "^1.3.3",
