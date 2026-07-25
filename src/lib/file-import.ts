@@ -190,6 +190,72 @@ export async function extractTextFromImageURL(
   });
 }
 
+// Reconnaissance de texte sur une image déjà chargée dans un canvas
+async function runOcr(canvas: HTMLCanvasElement): Promise<string> {
+  const { createWorker } = await import("tesseract.js");
+  const worker = await createWorker("fra+eng", 1, { logger: () => {} });
+
+  try {
+    const {
+      data: { text },
+    } = await worker.recognize(canvas);
+    return text;
+  } finally {
+    await worker.terminate();
+  }
+}
+
+function drawToCanvas(src: string): Promise<HTMLCanvasElement> {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = document.createElement("img") as HTMLImageElement;
+
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx?.drawImage(img, 0, 0);
+      resolve(canvas);
+    };
+
+    img.onerror = () => reject(new Error("Erreur de chargement de l'image"));
+    img.src = src;
+  });
+}
+
+/**
+ * Variantes silencieuses (sans toast) des extractions OCR, destinées au
+ * traitement par lot où seul le bilan global est notifié.
+ */
+export async function extractTextFromImageSilent(file: File): Promise<string> {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Fichier non valide");
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    return await runOcr(await drawToCanvas(objectUrl));
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+export async function extractTextFromImageURLSilent(
+  imageUrl: string
+): Promise<string> {
+  const trimmed = imageUrl.trim();
+
+  try {
+    new URL(trimmed);
+  } catch {
+    throw new Error("URL invalide");
+  }
+
+  // Passer par le proxy interne pour contourner les restrictions CORS
+  const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(trimmed)}`;
+  return runOcr(await drawToCanvas(proxyUrl));
+}
+
 // Fonction pour récupérer le texte du presse-papiers
 export async function getClipboardText(
   setText: (text: string) => void

@@ -10,6 +10,9 @@
   "scope": "/",
   "lang": "fr",
   "categories": ["productivity", "utilities", "developer"],
+  "launch_handler": {
+    "client_mode": ["focus-existing", "auto"]
+  },
   "icons": [
     {
       "src": "/assets/images/icon-192.png",
@@ -140,6 +143,18 @@
       "short_name": "TTS",
       "description": "Convertissez du texte en parole",
       "url": "/tools/text-to-speech",
+      "icons": [
+        {
+          "src": "/assets/images/icon-text-to-speech-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Lecteur vocal",
+      "short_name": "Lecteur",
+      "description": "Mode lecteur épuré de la synthèse vocale",
+      "url": "/tools/text-to-speech?mini=1",
       "icons": [
         {
           "src": "/assets/images/icon-text-to-speech-192.png",

@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
 import { ThemeProvider } from "next-themes";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
+import { LaunchHandler } from "@/components/launch-handler";
 import Script from "next/script";
 import { PROJECT_CONFIG } from "@/lib/constants";
 import { getToolsCount } from "@/lib/tools-metadata";
@@ -198,6 +199,7 @@ export default function RootLayout({
         >
           <NuqsAdapter>
             <Providers>{children}</Providers>
+            <LaunchHandler />
             <AnalyticsTracker />
             <Toaster richColors position="top-right" />
           </NuqsAdapter>

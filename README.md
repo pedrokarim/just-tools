@@ -20,6 +20,7 @@ Toute la documentation du projet est disponible dans le dossier [`docs/`](./docs
 - **[Déploiement Docker](./docs/DOCKER_DEPLOYMENT.md)** - Configuration Docker
 - **[SEO](./docs/SEO.md)** - Optimisations SEO
 - **[Tests](./docs/TEST_README.md)** - Documentation des tests
+- **[Synthèse Vocale](./docs/TEXT_TO_SPEECH.md)** - Paramètres d'URL, lecture automatique et client de raccourci clavier
 
 ## 🚀 Technologies Utilisées
 
@@ -99,11 +100,18 @@ Toute la documentation du projet est disponible dans le dossier [`docs/`](./docs
 - Palette de couleurs harmonieuses
 - Support du glisser-déposer d'images
 
-#### ✅ Synthèse Vocale
+#### ✅ Synthèse Vocale (Fullscreen)
 - Conversion de texte en parole avec des voix naturelles
-- Paramètres personnalisables (vitesse, hauteur, voix)
-- Interface moderne avec contrôles en temps réel
-- Support de multiples langues et accents
+- Lecteur complet : barre de progression déplaçable, temps écoulé et durée
+  estimée, pause qui interrompt réellement la voix, saut de ±10 s
+- Suivi mot à mot pendant la lecture, clic dans le texte pour s'y déplacer
+- Pilotable par URL (`?text=…&autoplay=1`) et mode lecteur épuré (`?mini=1`)
+- Paramètres personnalisables (vitesse, hauteur, voix), multi-langues
+- Import fichier, OCR d'images, traduction intégrée
+
+Voir [`docs/TEXT_TO_SPEECH.md`](./docs/TEXT_TO_SPEECH.md) pour les paramètres
+d'URL, et [`tts-hotkey/`](./tts-hotkey/) pour le client Windows qui envoie le
+presse-papiers vers l'outil via un raccourci clavier global.
 
 ## 🏃‍♂️ Démarrage Rapide
 
