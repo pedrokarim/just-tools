@@ -57,3 +57,6 @@ scripts/temp-*
 
 temp
 .claude
+
+# sous-projet Rust (client de raccourci clavier)
+/tts-hotkey/target
