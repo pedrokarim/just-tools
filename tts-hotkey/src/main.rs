@@ -234,8 +234,10 @@ fn register_hotkey(spec: &str) -> Result<String> {
 }
 
 fn load_tray_icon() -> Result<tray_icon::Icon> {
-    // L'icône de l'outil est embarquée dans le binaire.
-    const PNG: &[u8] = include_bytes!("../../public/assets/images/icon-text-to-speech-192.png");
+    // Icône dédiée au client, embarquée dans le binaire : haut-parleur plein sur
+    // dégradé indigo, dessiné pour rester lisible à 16 px et pour ne pas être
+    // confondu, dans la barre des tâches, avec l'onglet du navigateur qu'il ouvre.
+    const PNG: &[u8] = include_bytes!("../../public/assets/images/icon-tts-hotkey-512.png");
 
     let image = image::load_from_memory(PNG)
         .context("décodage de l'icône embarquée")?

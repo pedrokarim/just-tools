@@ -75,8 +75,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/og-image.png",
-        width: 512,
-        height: 512,
+        width: 1200,
+        height: 630,
         alt: `${siteName} - Outils de développement`,
       },
     ],
@@ -172,7 +172,9 @@ export default function RootLayout({
           type="image/png"
           sizes="512x512"
         />
-        <link rel="apple-touch-icon" href="/assets/images/icon-192.png" />
+        {/* iOS ne gère pas la transparence des icônes d'écran d'accueil (elle
+            devient noire) : on sert la variante pleine bord à bord. */}
+        <link rel="apple-touch-icon" href="/assets/images/icon-maskable-192.png" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#2563eb" />
         <meta name="msapplication-TileColor" content="#2563eb" />
