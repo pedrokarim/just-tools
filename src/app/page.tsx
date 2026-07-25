@@ -17,6 +17,7 @@ import { tools, categories } from "@/lib/tools-metadata";
 import { PROJECT_CONFIG } from "@/lib/constants";
 import { ContributionModal } from "@/components/contribution-modal";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { OtherProjects } from "@/components/other-projects";
 
 const features = [
   {
@@ -249,6 +250,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Other Projects Section */}
+      <OtherProjects />
 
       {/* Footer */}
       <footer className="bg-background border-t border-border">

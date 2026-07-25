@@ -94,6 +94,12 @@ const nextConfig: NextConfig = {
     formats: ["image/webp", "image/avif"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Logos des autres projets de l'écosystème, servis par chaque projet
+    // (section « Nos autres projets » de l'accueil).
+    remotePatterns: [
+      { protocol: "https", hostname: "ascencia.re" },
+      { protocol: "https", hostname: "*.ascencia.re" },
+    ],
   },
 
   // Compression gzip
