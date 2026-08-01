@@ -37,7 +37,9 @@ describe("ToolsDropdown Component", () => {
     const link = screen.getByRole("link", { name: "Outils" });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "/tools");
-    expect(link).toHaveClass("text-slate-700", "dark:text-slate-300");
+    // Le composant est passé aux jetons sémantiques du thème ; le test était
+    // resté sur les anciennes classes Slate en dur.
+    expect(link).toHaveClass("text-muted-foreground", "hover:text-foreground");
   });
 
   it("should render desktop version when isMobile is false", () => {

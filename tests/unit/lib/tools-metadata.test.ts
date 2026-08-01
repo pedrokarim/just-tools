@@ -10,6 +10,7 @@ import {
   getReadyTools,
   getStats,
   categories,
+  toolsMetadata,
 } from "@/lib/tools-metadata";
 
 describe("Tools Metadata Functions", () => {
@@ -82,26 +83,39 @@ describe("Tools Metadata Functions", () => {
     });
   });
 
+  // Ces trois tests portaient des valeurs en dur (10 outils, « Synthèse Vocale »
+  // comme dernier), qui cassaient à chaque ajout d'outil — ils étaient rouges
+  // depuis l'arrivée de « Suppression d'Arrière-plan ». Réécrits en invariants :
+  // ils vérifient la propriété, plus l'instantané.
+
   it("should get latest tool", () => {
     const latestTool = getLatestTool();
     expect(latestTool).toBeDefined();
-    expect(latestTool?.name).toBe("Synthèse Vocale"); // Le plus récent selon les données
+
+    // Le plus récent est celui de `createdAt` maximal, quel qu'il soit.
+    const expected = [...toolsMetadata].sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+    )[0];
+    expect(latestTool?.id).toBe(expected.id);
   });
 
   it("should get tools count", () => {
-    const count = getToolsCount();
-    expect(count).toBe(10); // 10 outils dans les métadonnées
+    expect(getToolsCount()).toBe(toolsMetadata.length);
   });
 
   it("should get tools by category", () => {
-    const devTools = getToolsByCategory("Développement");
-    expect(devTools.length).toBe(2); // code-formatter et json-validator
-    devTools.forEach((tool) => {
-      expect(tool.category).toBe("Développement");
-    });
+    for (const category of ["Développement", "Design"]) {
+      const filtered = getToolsByCategory(category);
 
-    const designTools = getToolsByCategory("Design");
-    expect(designTools.length).toBe(4); // color-palette, pattern-editor, halftone, color-extractor
+      // Le filtre ne doit rien laisser passer d'autre…
+      filtered.forEach((tool) => expect(tool.category).toBe(category));
+
+      // …ni rien oublier. Comparer au décompte réel plutôt qu'à un nombre figé
+      // évite de casser à chaque nouvel outil.
+      const expected = toolsMetadata.filter((t) => t.category === category);
+      expect(filtered).toHaveLength(expected.length);
+      expect(expected.length).toBeGreaterThan(0);
+    }
   });
 
   it("should get all tools when category is 'Tous'", () => {

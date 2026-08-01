@@ -1,3 +1,6 @@
+// `usePagination` écrit dans l'URL via nuqs, qui ne stocke que des chaînes :
+// le setter sous-jacent reçoit donc "2", pas 2. Les assertions attendaient des
+// nombres et échouaient sur le type.
 // Mock de nuqs
 vi.mock("nuqs", () => ({
   useQueryState: vi.fn(),
@@ -80,7 +83,7 @@ describe("usePagination", () => {
       result.current.nextPage();
     });
 
-    expect(mockSetPage).toHaveBeenCalledWith(2);
+    expect(mockSetPage).toHaveBeenCalledWith("2");
   });
 
   it("should not call setPage when nextPage is called on last page", () => {
@@ -108,7 +111,7 @@ describe("usePagination", () => {
       result.current.prevPage();
     });
 
-    expect(mockSetPage).toHaveBeenCalledWith(1);
+    expect(mockSetPage).toHaveBeenCalledWith("1");
   });
 
   it("should not call setPage when prevPage is called on first page", () => {
@@ -136,7 +139,7 @@ describe("usePagination", () => {
       result.current.goToPage(5);
     });
 
-    expect(mockSetPage).toHaveBeenCalledWith(5);
+    expect(mockSetPage).toHaveBeenCalledWith("5");
   });
 
   it("should not call setPage when goToPage is called with invalid page", () => {
@@ -170,8 +173,8 @@ describe("usePagination", () => {
       result.current.reset();
     });
 
-    expect(mockSetPage).toHaveBeenCalledWith(1);
-    expect(mockSetPageSize).toHaveBeenCalledWith(20);
+    expect(mockSetPage).toHaveBeenCalledWith("1");
+    expect(mockSetPageSize).toHaveBeenCalledWith("20");
   });
 
   it("should handle edge case with exact page size", () => {

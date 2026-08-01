@@ -7,26 +7,39 @@ import {
   exportAnalytics,
 } from "@/lib/analytics";
 
-// Mock Prisma
-const mockPrisma = {
-  pageView: {
-    create: vi.fn(),
-    count: vi.fn(),
-    findMany: vi.fn(),
-    deleteMany: vi.fn(),
+// `vi.mock` est hissé en haut du fichier : sa factory ne peut pas référencer un
+// `const` déclaré plus bas (« Cannot access 'mockPrisma' before
+// initialization »). `vi.hoisted` remonte la déclaration avec elle.
+const { mockPrisma } = vi.hoisted(() => ({
+  mockPrisma: {
+    pageView: {
+      create: vi.fn(),
+      count: vi.fn(),
+      findMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    uniqueVisitor: {
+      upsert: vi.fn(),
+      count: vi.fn(),
+      findMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    $queryRaw: vi.fn(),
   },
-  uniqueVisitor: {
-    upsert: vi.fn(),
-    count: vi.fn(),
-    findMany: vi.fn(),
-    deleteMany: vi.fn(),
-  },
-  $queryRaw: vi.fn(),
-};
+}));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: mockPrisma,
 }));
+
+/** Recompose le SQL de tous les appels `$queryRaw` (templates balisés). */
+function executedSql(): string {
+  return mockPrisma.$queryRaw.mock.calls
+    .map(([strings]: [unknown]) =>
+      Array.isArray(strings) ? strings.join(" ? ") : String(strings)
+    )
+    .join("\n");
+}
 
 describe("Analytics Functions", () => {
   beforeEach(() => {
@@ -179,13 +192,12 @@ describe("Analytics Functions", () => {
         ]),
       });
 
-      // Vérifier que les requêtes PostgreSQL sont appelées
-      expect(mockPrisma.$queryRaw).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT "pagePath", COUNT(*)::integer as count')
-      );
-      expect(mockPrisma.$queryRaw).toHaveBeenCalledWith(
-        expect.stringContaining("EXTRACT(hour FROM timestamp)")
-      );
+      // `$queryRaw` est appelé en template balisé : le mock reçoit un
+      // TemplateStringsArray, jamais une chaîne. `stringContaining` ne pouvait
+      // donc pas matcher — on recompose le SQL avant de l'inspecter.
+      const sql = executedSql();
+      expect(sql).toContain('SELECT "pagePath", COUNT(*)::integer as count');
+      expect(sql).toContain("EXTRACT(hour FROM timestamp)");
     });
 
     it("should handle database errors and return default values", async () => {

@@ -47,13 +47,16 @@ describe("PROJECT_CONFIG", () => {
     expect(PROJECT_CONFIG.pwa.name).toBeDefined();
     expect(PROJECT_CONFIG.pwa.shortName).toBe("Just Tools");
     expect(PROJECT_CONFIG.pwa.description).toBeDefined();
-    expect(PROJECT_CONFIG.pwa.themeColor).toBe("#3b82f6");
+    // Le thème est passé au bleu-600 ; le test était resté sur l'ancien bleu-500.
+    expect(PROJECT_CONFIG.pwa.themeColor).toBe("#2563eb");
     expect(PROJECT_CONFIG.pwa.backgroundColor).toBe("#ffffff");
     expect(PROJECT_CONFIG.pwa.display).toBe("standalone");
   });
 
   it("should have stats information", () => {
-    expect(PROJECT_CONFIG.stats.toolsCount).toBe(10);
+    // Dérivé de la liste d'outils : ce test validait auparavant un 10 codé en
+    // dur alors que le projet en comptait 12.
+    expect(PROJECT_CONFIG.stats.toolsCount).toBe(PROJECT_CONFIG.tools.length);
     expect(PROJECT_CONFIG.stats.isFree).toBe(true);
     expect(PROJECT_CONFIG.stats.isOpenSource).toBe(true);
     expect(PROJECT_CONFIG.stats.availability).toBe("24/7");

@@ -93,7 +93,10 @@ export const PROJECT_CONFIG = {
 
   // Statistiques du projet
   stats: {
-    toolsCount: 10,
+    // Dérivé de la liste : la valeur était figée à 10 et n'avait pas suivi les
+    // ajouts d'outils (12 à ce jour). Un compteur écrit à la main à côté de sa
+    // propre source ne peut que finir par mentir.
+    toolsCount: toolsMetadata.length,
     isFree: true,
     isOpenSource: true,
     availability: "24/7",

@@ -98,7 +98,11 @@ describe("AdminSidebar Component", () => {
     render(<AdminSidebar />);
 
     const sidebar = screen.getByTestId("sidebar");
-    expect(sidebar).toHaveAttribute("data-collapsible", "icon");
+    // Le mock de `Sidebar` étale les props reçues sur une <div> : l'attribut
+    // rendu porte le nom de la prop (`collapsible`). `data-collapsible` est
+    // produit par le vrai composant, qui ne le renseigne d'ailleurs qu'à
+    // l'état replié — l'assertion ne pouvait donc pas passer.
+    expect(sidebar).toHaveAttribute("collapsible", "icon");
   });
 
   it("should render with custom props", () => {
