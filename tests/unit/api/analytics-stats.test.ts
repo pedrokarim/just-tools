@@ -1,16 +1,44 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextResponse } from "next/server";
 import { GET } from "@/app/api/analytics/stats/route";
 
-// Mock de la fonction getAnalyticsStats
-const mockGetAnalyticsStats = vi.fn();
+// `vi.mock` est hissé en haut du fichier : sa factory ne peut pas référencer un
+// `const` déclaré plus bas (« Cannot access 'mockGetAnalyticsStats' before
+// initialization »). `vi.hoisted` remonte la déclaration avec elle.
+const { mockGetAnalyticsStats, mockRequireAdmin } = vi.hoisted(() => ({
+  mockGetAnalyticsStats: vi.fn(),
+  mockRequireAdmin: vi.fn(),
+}));
 
 vi.mock("@/lib/analytics", () => ({
   getAnalyticsStats: mockGetAnalyticsStats,
 }));
 
+vi.mock("@/lib/admin-auth", () => ({
+  requireAdmin: mockRequireAdmin,
+}));
+
+const AUTHORIZED = {
+  ok: true as const,
+  user: { id: "u1", name: "Test", email: null, discordId: "42" },
+};
+
 describe("Analytics Stats API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRequireAdmin.mockResolvedValue(AUTHORIZED);
+  });
+
+  it("refuse la requête si l'appelant n'est pas administrateur", async () => {
+    mockRequireAdmin.mockResolvedValue({
+      ok: false,
+      response: NextResponse.json({ error: "Accès refusé" }, { status: 403 }),
+    });
+
+    const response = await GET();
+
+    expect(response.status).toBe(403);
+    expect(mockGetAnalyticsStats).not.toHaveBeenCalled();
   });
 
   it("should return analytics stats successfully", async () => {

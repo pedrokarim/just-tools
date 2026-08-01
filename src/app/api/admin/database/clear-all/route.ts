@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function POST(request: NextRequest) {
+  const guard = await requireAdmin();
+  if (!guard.ok) return guard.response;
+
   try {
     // Supprimer toutes les données dans l'ordre pour éviter les erreurs de contrainte
     const deletedPageViews = await prisma.pageView.deleteMany({});

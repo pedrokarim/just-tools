@@ -1,23 +1,61 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { GET } from "@/app/api/admin/pages/route";
 
-// Mock Prisma
-const mockPrisma = {
-  pageView: {
-    count: vi.fn(),
-    findMany: vi.fn(),
+// `vi.mock` est hissé en haut du fichier : sa factory ne peut pas référencer un
+// `const` déclaré plus bas, sinon il est encore dans sa zone morte temporelle
+// (« Cannot access 'mockPrisma' before initialization »). `vi.hoisted` remonte
+// la déclaration avec elle.
+const { mockPrisma, mockRequireAdmin } = vi.hoisted(() => ({
+  mockPrisma: {
+    pageView: {
+      count: vi.fn(),
+      findMany: vi.fn(),
+    },
+    $queryRaw: vi.fn(),
   },
-  $queryRaw: vi.fn(),
-};
+  mockRequireAdmin: vi.fn(),
+}));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: mockPrisma,
 }));
 
+vi.mock("@/lib/admin-auth", () => ({
+  requireAdmin: mockRequireAdmin,
+}));
+
+const AUTHORIZED = {
+  ok: true as const,
+  user: { id: "u1", name: "Test", email: null, discordId: "42" },
+};
+
+/** Recompose le SQL de tous les appels `$queryRaw` (templates balisés). */
+function executedSql(): string {
+  return mockPrisma.$queryRaw.mock.calls
+    .map(([strings]: [unknown]) =>
+      Array.isArray(strings) ? strings.join(" ? ") : String(strings)
+    )
+    .join("\n");
+}
+
 describe("Admin Pages API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRequireAdmin.mockResolvedValue(AUTHORIZED);
+  });
+
+  it("refuse la requête si l'appelant n'est pas administrateur", async () => {
+    mockRequireAdmin.mockResolvedValue({
+      ok: false,
+      response: NextResponse.json({ error: "Accès refusé" }, { status: 403 }),
+    });
+
+    const request = new NextRequest("http://localhost:3000/api/admin/pages");
+    const response = await GET(request);
+
+    expect(response.status).toBe(403);
+    expect(mockPrisma.pageView.count).not.toHaveBeenCalled();
   });
 
   it("should return pages data with pagination", async () => {
@@ -148,23 +186,19 @@ describe("Admin Pages API", () => {
     const request = new NextRequest("http://localhost:3000/api/admin/pages");
     await GET(request);
 
-    // Vérifier que les requêtes PostgreSQL sont utilisées
-    expect(mockPrisma.$queryRaw).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT COUNT(DISTINCT "pagePath") as count')
-    );
-    expect(mockPrisma.$queryRaw).toHaveBeenCalledWith(
-      expect.stringContaining('FROM "page_views"')
-    );
-    expect(mockPrisma.$queryRaw).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT "pagePath"')
-    );
-    expect(mockPrisma.$queryRaw).toHaveBeenCalledWith(
-      expect.stringContaining('COUNT(*)::integer as "viewCount"')
-    );
-    expect(mockPrisma.$queryRaw).toHaveBeenCalledWith(
-      expect.stringContaining(
-        'COUNT(DISTINCT fingerprint)::integer as "uniqueVisitors"'
-      )
+    // `$queryRaw` est appelé en template balisé : le mock reçoit un
+    // TemplateStringsArray, jamais une chaîne. `stringContaining` ne pouvait
+    // donc pas matcher — on recompose le SQL avant de l'inspecter.
+    const sql = executedSql();
+
+    expect(sql).toContain('SELECT COUNT(DISTINCT "pagePath") as count');
+    expect(sql).toContain('FROM "page_views"');
+    // Le SQL est indenté sur plusieurs lignes : on ne peut pas exiger la
+    // séquence littérale `SELECT "pagePath"`.
+    expect(sql).toMatch(/SELECT\s+"pagePath"/);
+    expect(sql).toContain('COUNT(*)::integer as "viewCount"');
+    expect(sql).toContain(
+      'COUNT(DISTINCT fingerprint)::integer as "uniqueVisitors"'
     );
   });
 
@@ -177,10 +211,7 @@ describe("Admin Pages API", () => {
     const request = new NextRequest("http://localhost:3000/api/admin/pages");
     await GET(request);
 
-    // Vérifier que l'ordre est correct
-    expect(mockPrisma.$queryRaw).toHaveBeenCalledWith(
-      expect.stringContaining('ORDER BY "viewCount" DESC')
-    );
+    expect(executedSql()).toContain('ORDER BY "viewCount" DESC');
   });
 
   it("should include recent views for each page", async () => {

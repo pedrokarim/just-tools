@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { exportAnalytics } from "@/lib/analytics";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET() {
+  const guard = await requireAdmin();
+  if (!guard.ok) return guard.response;
+
   try {
     const data = await exportAnalytics();
 

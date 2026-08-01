@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { assertSafeExternalUrl } from "@/lib/safe-fetch";
+
+/** Au-delà, on coupe : évite qu'une URL hostile serve un flux sans fin. */
+const MAX_BYTES = 10 * 1024 * 1024; // 10 Mo
+const TIMEOUT_MS = 10_000;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -11,87 +16,57 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Validation AVANT toute requête sortante : c'est le seul moment où l'on
+  // peut empêcher le serveur d'atteindre le réseau interne.
+  const safe = await assertSafeExternalUrl(imageUrl);
+  if (!safe.ok) {
+    return NextResponse.json({ error: safe.reason }, { status: 400 });
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
   try {
-    // Validation de l'URL - on vérifie juste que c'est une URL valide
-    const url = new URL(imageUrl);
-
-    // PROTECTION DES IMAGES COMMENTÉE :
-    // On laisse passer toutes les images maintenant car :
-    // 1. On ne stocke pas les images (Vercel s'en occupe)
-    // 2. La vérification du Content-Type suffit pour s'assurer que c'est une image
-    // 3. Cela permet plus de flexibilité pour les utilisateurs
-
-    // Ancien code de vérification des domaines autorisés (commenté) :
-    /*
-    const allowedDomains = [
-      "images.unsplash.com",
-      "picsum.photos", 
-      "via.placeholder.com",
-      "loremflickr.com",
-      "placehold.co",
-      "placehold.it",
-      "dummyimage.com",
-      "imgur.com",
-      "i.imgur.com",
-      "cdn.pixabay.com",
-      "images.pexels.com",
-      "source.unsplash.com",
-      "img.ascencia.re",
-    ];
-
-    const isAllowedDomain = allowedDomains.some(
-      (domain) => url.hostname === domain || url.hostname.endsWith(`.${domain}`)
-    );
-
-    if (!isAllowedDomain) {
-      return NextResponse.json(
-        {
-          error: "Domain not allowed for security reasons",
-        },
-        { status: 403 }
-      );
-    }
-    */
-
-    // Récupérer l'image
-    const response = await fetch(imageUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; JustTools/1.0)",
-      },
+    const response = await fetch(safe.url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; JustTools/1.0)" },
+      signal: controller.signal,
+      // Sans ça, une redirection pourrait renvoyer vers une IP interne après
+      // que la validation a eu lieu.
+      redirect: "error",
     });
 
     if (!response.ok) {
+      // Statut amont volontairement masqué : le renvoyer transformait cette
+      // route en oracle permettant de cartographier hôtes et ports.
       return NextResponse.json(
-        {
-          error: `Failed to fetch image: ${response.status}`,
-        },
-        { status: response.status }
+        { error: "Failed to fetch image" },
+        { status: 502 }
       );
     }
 
-    // VÉRIFICATION IMPORTANTE : S'assurer que c'est vraiment une image
-    // Cette vérification est cruciale car elle empêche :
-    // - L'injection de scripts malveillants
-    // - Le téléchargement de fichiers non-images
-    // - Les attaques par proxy de contenu dangereux
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.startsWith("image/")) {
       return NextResponse.json(
-        {
-          error: "URL does not point to a valid image",
-        },
+        { error: "URL does not point to a valid image" },
         { status: 400 }
       );
     }
 
-    // Récupérer les données de l'image
-    const imageBuffer = await response.arrayBuffer();
+    const declared = Number(response.headers.get("content-length") ?? "0");
+    if (declared > MAX_BYTES) {
+      return NextResponse.json({ error: "Image too large" }, { status: 413 });
+    }
 
-    // Renvoyer l'image avec les bons headers
+    const imageBuffer = await response.arrayBuffer();
+    // `content-length` est déclaratif : on revérifie sur la taille réelle.
+    if (imageBuffer.byteLength > MAX_BYTES) {
+      return NextResponse.json({ error: "Image too large" }, { status: 413 });
+    }
+
     return new NextResponse(imageBuffer, {
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": "public, max-age=3600", // Cache 1 heure
+        "Cache-Control": "public, max-age=3600",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET",
         "Access-Control-Allow-Headers": "Content-Type",
@@ -100,15 +75,14 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error proxying image:", error);
     return NextResponse.json(
-      {
-        error: "Failed to proxy image",
-      },
-      { status: 500 }
+      { error: "Failed to proxy image" },
+      { status: 502 }
     );
+  } finally {
+    clearTimeout(timer);
   }
 }
 
-// Gérer les requêtes OPTIONS pour CORS
 export async function OPTIONS() {
   return new NextResponse(null, {
     headers: {

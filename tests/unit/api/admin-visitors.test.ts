@@ -1,27 +1,64 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { GET } from "@/app/api/admin/visitors/route";
 
-// Mock Prisma
-const mockPrisma = {
-  uniqueVisitor: {
-    count: vi.fn(),
-    findMany: vi.fn(),
+// `vi.mock` est hissé en haut du fichier : sa factory ne peut pas référencer un
+// `const` déclaré plus bas (« Cannot access 'mockPrisma' before
+// initialization »). `vi.hoisted` remonte la déclaration avec elle.
+const { mockPrisma, mockRequireAdmin } = vi.hoisted(() => ({
+  mockPrisma: {
+    uniqueVisitor: {
+      count: vi.fn(),
+      findMany: vi.fn(),
+    },
+    pageView: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+    },
+    $queryRaw: vi.fn(),
   },
-  pageView: {
-    findMany: vi.fn(),
-    count: vi.fn(),
-  },
-  $queryRaw: vi.fn(),
-};
+  mockRequireAdmin: vi.fn(),
+}));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: mockPrisma,
 }));
 
+vi.mock("@/lib/admin-auth", () => ({
+  requireAdmin: mockRequireAdmin,
+}));
+
+const AUTHORIZED = {
+  ok: true as const,
+  user: { id: "u1", name: "Test", email: null, discordId: "42" },
+};
+
+/** Recompose le SQL de tous les appels `$queryRaw` (templates balisés). */
+function executedSql(): string {
+  return mockPrisma.$queryRaw.mock.calls
+    .map(([strings]: [unknown]) =>
+      Array.isArray(strings) ? strings.join(" ? ") : String(strings)
+    )
+    .join("\n");
+}
+
 describe("Admin Visitors API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRequireAdmin.mockResolvedValue(AUTHORIZED);
+  });
+
+  it("refuse la requête si l'appelant n'est pas administrateur", async () => {
+    mockRequireAdmin.mockResolvedValue({
+      ok: false,
+      response: NextResponse.json({ error: "Accès refusé" }, { status: 403 }),
+    });
+
+    const request = new NextRequest("http://localhost:3000/api/admin/visitors");
+    const response = await GET(request);
+
+    expect(response.status).toBe(403);
+    expect(mockPrisma.uniqueVisitor.count).not.toHaveBeenCalled();
   });
 
   it("should return visitors data with pagination", async () => {
@@ -55,12 +92,17 @@ describe("Admin Visitors API", () => {
 
     const mockUniquePages = [{ count: 3 }];
 
-    // Mock des appels Prisma
+    // Mock des appels Prisma.
+    // `pageView.count` est appelé deux fois par la route : d'abord pour le
+    // total global, puis une fois par visiteur. Il faut donc `...Once` pour le
+    // premier — un second `mockResolvedValue` écrasait le premier, ce qui
+    // ramenait `totalPageViews` à 5 et la moyenne à 0,1.
     mockPrisma.uniqueVisitor.count.mockResolvedValue(50);
-    mockPrisma.pageView.count.mockResolvedValue(100);
+    mockPrisma.pageView.count
+      .mockResolvedValueOnce(100) // totalPageViews
+      .mockResolvedValue(5); // totalViews de chaque visiteur
     mockPrisma.uniqueVisitor.findMany.mockResolvedValue(mockVisitors);
     mockPrisma.pageView.findMany.mockResolvedValue(mockRecentViews);
-    mockPrisma.pageView.count.mockResolvedValue(5); // totalViews pour chaque visiteur
     mockPrisma.$queryRaw.mockResolvedValue(mockUniquePages);
 
     const request = new NextRequest(
@@ -166,13 +208,12 @@ describe("Admin Visitors API", () => {
     const request = new NextRequest("http://localhost:3000/api/admin/visitors");
     await GET(request);
 
-    // Vérifier que la requête PostgreSQL est utilisée
-    expect(mockPrisma.$queryRaw).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT COUNT(DISTINCT "pagePath") as count')
-    );
-    expect(mockPrisma.$queryRaw).toHaveBeenCalledWith(
-      expect.stringContaining('FROM "page_views"')
-    );
+    // `$queryRaw` est appelé en template balisé : le mock reçoit un
+    // TemplateStringsArray, jamais une chaîne. `stringContaining` ne pouvait
+    // donc pas matcher — on recompose le SQL avant de l'inspecter.
+    const sql = executedSql();
+    expect(sql).toContain('SELECT COUNT(DISTINCT "pagePath") as count');
+    expect(sql).toContain('FROM "page_views"');
   });
 
   it("should calculate visitor statistics correctly", async () => {
