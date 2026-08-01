@@ -10,7 +10,6 @@ import { useTheme } from "next-themes";
 import { ToolsDropdown } from "./tools-dropdown";
 
 export function Navbar() {
-  const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -22,7 +21,6 @@ export function Navbar() {
   const forceWhiteText = isHomepage && !scrolled;
 
   useEffect(() => {
-    setMounted(true);
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
@@ -30,7 +28,10 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (!mounted) return null;
+  // Pas de garde `mounted` ici : rien dans ce rendu ne dépend du client.
+  // `theme` n'est lu que dans le gestionnaire de clic, et `scrolled` vaut false
+  // des deux côtés au premier rendu. La navigation est donc rendue par le
+  // serveur, au lieu d'apparaître seulement après hydratation.
 
   // Text color classes depending on context
   const logoTextClass = forceWhiteText

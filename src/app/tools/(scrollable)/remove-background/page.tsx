@@ -409,7 +409,7 @@ export default function RemoveBackgroundPage() {
                             <div className="w-full max-w-xs">
                               <div className="h-2 bg-muted-foreground/20 rounded-full overflow-hidden">
                                 <div
-                                  className="h-full bg-sky-500 transition-all"
+                                  className="h-full bg-sky-500 transition-[width]"
                                   style={{ width: `${progress}%` }}
                                 />
                               </div>

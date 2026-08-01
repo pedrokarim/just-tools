@@ -120,7 +120,7 @@ export function PWAInstallPrompt() {
 
   return (
     <div
-      className={`fixed bottom-4 right-4 z-50 transition-all duration-300 ease-out ${
+      className={`fixed bottom-4 right-4 z-50 transition-[transform,opacity] duration-300 ease-out ${
         isVisible
           ? "translate-y-0 opacity-100 scale-100"
           : "translate-y-4 opacity-0 scale-95"

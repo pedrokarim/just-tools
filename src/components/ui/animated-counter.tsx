@@ -73,7 +73,7 @@ export function AnimatedCounter({
   return (
     <span
       className={cn(
-        "transition-all duration-300",
+        "transition-[color,transform] duration-300",
         isAnimating && "scale-105",
         className
       )}

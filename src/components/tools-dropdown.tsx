@@ -78,7 +78,7 @@ export function ToolsDropdown({
               <li className="row-span-3">
                 <NavigationMenuLink asChild>
                   <Link
-                    className="from-muted/50 to-muted flex h-full w-full flex-col justify-end rounded-md bg-gradient-to-b p-6 no-underline outline-none select-none focus:shadow-md"
+                    className="from-muted/50 to-muted flex h-full w-full flex-col justify-end rounded-md bg-gradient-to-b p-6 no-underline outline-none select-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                     href="/tools"
                   >
                     <div className="flex items-center space-x-2 mb-4">

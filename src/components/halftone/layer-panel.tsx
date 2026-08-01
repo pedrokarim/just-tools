@@ -320,7 +320,7 @@ export function LayerPanel() {
           {/* Blend mode */}
           <div className="flex items-center gap-2">
             <select
-              className="flex-1 h-7 text-xs bg-muted/50 border border-border rounded px-1.5 focus:outline-none focus:ring-1 focus:ring-ring"
+              className="flex-1 h-7 text-xs bg-muted/50 border border-border rounded px-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               value={activeLayer.blendMode}
               onChange={(e) =>
                 setLayerBlendMode(
