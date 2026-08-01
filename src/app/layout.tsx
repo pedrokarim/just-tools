@@ -176,7 +176,20 @@ export default function RootLayout({
             devient noire) : on sert la variante pleine bord à bord. */}
         <link rel="apple-touch-icon" href="/assets/images/icon-maskable-192.png" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#2563eb" />
+        {/* La barre du navigateur doit reprendre le fond de la page, pas la
+            couleur d'accent. Les valeurs suivent `--background` (globals.css).
+            Le suivi se fait sur la préférence système : un thème choisi à la
+            main dans l'app ne la repeint pas, ce qui demanderait du JS. */}
+        <meta
+          name="theme-color"
+          media="(prefers-color-scheme: light)"
+          content="#fafafa"
+        />
+        <meta
+          name="theme-color"
+          media="(prefers-color-scheme: dark)"
+          content="#0f111a"
+        />
         <meta name="msapplication-TileColor" content="#2563eb" />
         <meta
           name="viewport"

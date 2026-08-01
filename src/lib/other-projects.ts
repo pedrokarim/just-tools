@@ -59,7 +59,7 @@ export const OTHER_PROJECTS: OtherProject[] = [
     id: "cardmyanime",
     name: "CardMyAnime",
     description:
-      "Créez des cartes de profil dynamiques et élégantes pour vos plateformes d'anime préférées, avec classements et statistiques détaillées.",
+      "Créez des cartes de profil dynamiques et élégantes pour vos plateformes d’anime préférées, avec classements et statistiques détaillées.",
     url: "https://cma.ascencia.re/",
     logo: "https://cma.ascencia.re/images/cma-logo.png",
     tag: "Anime",
@@ -86,7 +86,7 @@ export const OTHER_PROJECTS: OtherProject[] = [
     id: "portfolio",
     name: "Portfolio",
     description:
-      "Portfolio personnel d'Ahmed Karim. Ses projets, ses compétences et ses réalisations en développement web.",
+      "Portfolio personnel d’Ahmed Karim. Ses projets, ses compétences et ses réalisations en développement web.",
     url: "https://portfolio.ascencia.re/",
     logo: "https://portfolio.ascencia.re/img/logo.png",
     tag: "Portfolio",

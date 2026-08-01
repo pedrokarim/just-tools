@@ -46,7 +46,7 @@ export function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-[background-color,box-shadow,border-color,backdrop-filter] duration-200 ${
         scrolled
           ? "bg-background/80 backdrop-blur-md shadow-sm border-b border-border"
           : "bg-transparent"
@@ -87,9 +87,9 @@ export function Navbar() {
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className={`w-9 h-9 p-0 ${iconBtnClass}`}
             >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" aria-hidden="true" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" aria-hidden="true" />
+              <span className="sr-only">Changer de thème</span>
             </Button>
           </div>
 
@@ -101,20 +101,23 @@ export function Navbar() {
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className={`w-9 h-9 p-0 ${iconBtnClass}`}
             >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" aria-hidden="true" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" aria-hidden="true" />
+              <span className="sr-only">Changer de thème</span>
             </Button>
             <Button
               variant="ghost"
               size="sm"
               className={`w-9 h-9 p-0 ${iconBtnClass}`}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+              aria-expanded={isMenuOpen}
+              aria-controls="menu-mobile"
             >
               {isMenuOpen ? (
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5" aria-hidden="true" />
               ) : (
-                <Menu className="h-5 w-5" />
+                <Menu className="h-5 w-5" aria-hidden="true" />
               )}
             </Button>
           </div>
@@ -122,7 +125,10 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border bg-background/95 backdrop-blur-md -mx-4 px-4">
+          <div
+            id="menu-mobile"
+            className="md:hidden py-4 border-t border-border bg-background/95 backdrop-blur-md -mx-4 px-4"
+          >
             <div className="flex flex-col space-y-4">
               <Link
                 href="/"

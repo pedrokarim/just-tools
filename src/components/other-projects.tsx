@@ -36,7 +36,7 @@ export function OtherProjects() {
                 href={project.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group block rounded-xl border border-border bg-card p-6 transition-shadow duration-200 hover:shadow-md"
+                className="group block rounded-xl border border-border bg-card p-6 transition-shadow duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-muted">
@@ -61,8 +61,12 @@ export function OtherProjects() {
                 </div>
 
                 <h3 className="mb-2 flex items-center gap-1.5 text-lg font-semibold text-foreground transition-colors duration-200 group-hover:text-primary">
-                  {project.name}
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="min-w-0 truncate">{project.name}</span>
+                  <ExternalLink
+                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <span className="sr-only">(nouvel onglet)</span>
                 </h3>
 
                 <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
@@ -71,7 +75,10 @@ export function OtherProjects() {
 
                 <span className="inline-flex items-center text-sm font-medium text-primary">
                   Découvrir
-                  <ArrowUpRight className="ml-1 h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  <ArrowUpRight
+                    className="ml-1 h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    aria-hidden="true"
+                  />
                 </span>
               </a>
             ))}
@@ -82,10 +89,10 @@ export function OtherProjects() {
               href={ECOSYSTEM_HUB.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="inline-flex items-center rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             >
               Tous nos projets sur {ECOSYSTEM_HUB.name}
-              <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
+              <ArrowUpRight className="ml-1 h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           </div>
         </div>

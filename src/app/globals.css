@@ -76,9 +76,14 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.908 0 0);
   --sidebar-ring: oklch(0.488 0.243 264);
+
+  /* Aligne les widgets natifs (scrollbars, inputs, menus déroulants) sur le
+     thème. Sans ça, ils restent clairs en mode sombre sous Windows. */
+  color-scheme: light;
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.14 0.02 260);
   --foreground: oklch(0.93 0.01 260);
   --card: oklch(0.18 0.025 260);
@@ -116,8 +121,50 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    /* Remplace les `scrollIntoView({ behavior: "smooth" })` en JS : le lien
+       d'ancre reste un vrai lien, et le bloc prefers-reduced-motion plus bas
+       neutralise l'animation pour qui la refuse. */
+    scroll-behavior: smooth;
+  }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* La navbar est fixe (h-16) : sans cette marge, une ancre place le titre
+     visé juste dessous, caché. */
+  :target,
+  [id] {
+    scroll-margin-top: 5rem;
+  }
+
+  /* Supprime le délai de 300 ms du double-tap sur mobile. */
+  a,
+  button,
+  [role="button"],
+  input,
+  label,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+}
+
+/* Respecte le réglage système « réduire les animations ». On neutralise les
+   transitions et le défilement fluide plutôt que de maintenir des variantes
+   réduites au cas par cas. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
