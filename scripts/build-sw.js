@@ -1,50 +1,34 @@
-const fs = require('fs');
-const path = require('path');
+/**
+ * Génère public/sw.js à partir de scripts/sw-template.js.
+ *
+ * Auparavant, ce script réécrivait public/sw.js *sur place* — un fichier suivi
+ * par Git. Chaque build laissait donc le dépôt sale et un diff parasite dans
+ * les commits. Le gabarit est la source, la sortie est ignorée par Git.
+ */
 
-const swFile = path.join(__dirname, '..', 'public', 'sw.js');
-const versionFile = path.join(__dirname, '..', 'public', 'version.json');
+const fs = require("fs");
+const path = require("path");
+const { getVersionInfo } = require("./version");
 
-// Lire la version
-let versionData = {
-  version: '1.0.0',
-  buildTime: 'unknown',
-  commitSha: 'unknown',
-  gitTag: 'none',
-  cacheVersion: 'unknown',
-};
-try {
-  if (fs.existsSync(versionFile)) {
-    versionData = JSON.parse(fs.readFileSync(versionFile, 'utf8'));
-  }
-} catch (error) {
-  console.warn('Erreur lors de la lecture du fichier version.json:', error.message);
-}
+const info = getVersionInfo();
+const templateFile = path.join(__dirname, "sw-template.js");
+const outputFile = path.join(__dirname, "..", "public", "sw.js");
 
-const shortSha =
-  versionData.commitSha && versionData.commitSha !== 'unknown'
-    ? versionData.commitSha.substring(0, 8)
-    : 'unknown';
+const cacheName = `just-tools-${info.cacheVersion}`;
 
-// Prioriser la version de cache générée dans update-version.js
-const cacheVersion =
-  versionData.cacheVersion && versionData.cacheVersion !== 'unknown'
-    ? versionData.cacheVersion
-    : `${versionData.version}-${versionData.gitTag || 'none'}-${shortSha}`;
+const banner = [
+  "// Fichier généré — NE PAS ÉDITER.",
+  "// Source : scripts/sw-template.js — régénéré par scripts/build-sw.js à chaque build.",
+  `// Version ${info.label}, généré le ${new Date().toISOString()}.`,
+].join("\n");
 
-const appVersionLabel = `${versionData.version} (${versionData.gitTag || 'none'} - ${shortSha})`;
+const output = fs
+  .readFileSync(templateFile, "utf8")
+  .replace("__BANNER__", banner)
+  .replace("__CACHE_NAME__", cacheName)
+  .replace("__APP_VERSION__", info.label);
 
-// Lire le service worker
-let swContent = fs.readFileSync(swFile, 'utf8');
+fs.mkdirSync(path.dirname(outputFile), { recursive: true });
+fs.writeFileSync(outputFile, output);
 
-// Remplacer la version du cache
-swContent = swContent.replace(
-  /const CACHE_NAME = 'just-tools-[^']*';/,
-  `const CACHE_NAME = 'just-tools-${cacheVersion}';`
-);
-swContent = swContent.replace(/const APP_VERSION = '[^']*';/, `const APP_VERSION = '${appVersionLabel}';`);
-
-// Écrire le service worker mis à jour
-fs.writeFileSync(swFile, swContent);
-
-console.log('Service Worker mis à jour avec la version:', appVersionLabel);
-console.log('Nom de cache SW:', `just-tools-${cacheVersion}`);
+console.log(`[sw] ${info.label} — cache « ${cacheName} » → public/sw.js`);

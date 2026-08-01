@@ -1,8 +1,18 @@
 import type { NextConfig } from "next";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { getVersionInfo } = require("./scripts/version");
+
+const versionInfo = getVersionInfo();
+
 const nextConfig: NextConfig = {
   // Configuration pour Docker
   output: "standalone",
+
+  // Un bun.lock traîne dans le dossier parent, ce qui faisait déduire à Next
+  // une racine de workspace au-dessus du projet. En sortie `standalone`, c'est
+  // cette racine qui détermine les fichiers embarqués dans l'image.
+  outputFileTracingRoot: __dirname,
 
   // Configuration webpack pour les bases de données
   webpack: (config, { isServer }) => {
@@ -13,18 +23,25 @@ const nextConfig: NextConfig = {
     return config;
   },
 
-  // Désactivation du linting et de la validation pour accélérer le build
-  // @ts-expect-error -- eslint config still works at runtime in Next.js canary
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Pas de clé `eslint` ici : cette version de Next ne la reconnaît plus (elle
+  // provoquait « Unrecognized key(s) in object: 'eslint' ») et ne lance plus
+  // ESLint pendant le build. Le lint se lance à part, via `bun run lint`.
   typescript: {
-    ignoreBuildErrors: true,
+    // Le typecheck passe (0 erreur) : on le laisse bloquer le build plutôt que
+    // de le masquer. C'est ce masquage qui avait laissé une erreur survivre
+    // dans halftone-store.ts sans que rien ne la signale.
+    ignoreBuildErrors: false,
   },
 
   // Configuration du port depuis les variables d'environnement
   env: {
     PORT: process.env.PORT || "3000",
+    // Toujours dérivée de package.json, jamais de .env : un
+    // NEXT_PUBLIC_VERSION écrit à la main y était resté figé à 1.0.0 pendant
+    // que le projet passait en 2.2.1. Pour forcer une version en CI, utiliser
+    // APP_VERSION (voir scripts/version.js).
+    NEXT_PUBLIC_VERSION: versionInfo.version,
+    NEXT_PUBLIC_BUILD_SHA: versionInfo.shortSha || "",
   },
 
   async headers() {

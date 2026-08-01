@@ -398,7 +398,12 @@ export const useHalftoneStore = create<HalftoneStore>()(
             ...l,
             settings: {
               ...l.settings,
-              globalShapeScale: (l.settings as Record<string, unknown>).globalShapeScale ?? 1.0,
+              // `HalftoneSettings` déclare ce champ obligatoire, mais on lit ici
+              // des données v2 qui sont antérieures à son ajout : il faut donc
+              // le traiter comme absent, d'où la lecture via `Partial`.
+              globalShapeScale:
+                (l.settings as Partial<HalftoneSettings>).globalShapeScale ??
+                1.0,
             },
           });
           return {

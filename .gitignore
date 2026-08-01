@@ -63,3 +63,8 @@ temp
 
 # atelier de design (non versionné)
 /design/
+
+# Artefacts générés au build par scripts/update-version.js et scripts/build-sw.js
+# (la source du service worker est scripts/sw-template.js)
+/public/sw.js
+/public/version.json
