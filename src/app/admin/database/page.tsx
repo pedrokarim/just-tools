@@ -24,7 +24,7 @@ import {
   DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Database, RefreshCw, Trash2, Download, Eye, FileText, Users, Shield, Globe, Hash } from "lucide-react";
+import { Database, RefreshCw, Eye, FileText, Users, Shield, Globe, Hash } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { AdminLoading } from "@/components/ui/loading";
@@ -102,44 +102,6 @@ export default function DatabasePage() {
       console.error("Erreur lors du chargement des statistiques:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const clearAllData = async () => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer toutes les données ?")) {
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/admin/database/clear-all", {
-        method: "POST",
-      });
-      if (response.ok) {
-        fetchDatabaseStats();
-      }
-    } catch (error) {
-      console.error("Erreur lors de la suppression:", error);
-    }
-  };
-
-  const exportData = async () => {
-    try {
-      const response = await fetch("/api/admin/database/export");
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `database-export-${
-          new Date().toISOString().split("T")[0]
-        }.json`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
-    } catch (error) {
-      console.error("Erreur lors de l'export:", error);
     }
   };
 
@@ -250,14 +212,6 @@ export default function DatabasePage() {
               className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
             />
             {refreshing ? "Actualisation..." : "Actualiser"}
-          </Button>
-          <Button onClick={exportData} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Exporter
-          </Button>
-          <Button onClick={clearAllData} variant="destructive" size="sm">
-            <Trash2 className="h-4 w-4 mr-2" />
-            Vider
           </Button>
         </div>
       </div>
