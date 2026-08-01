@@ -28,6 +28,16 @@ export interface OtherProject {
 
 export const OTHER_PROJECTS: OtherProject[] = [
   {
+    id: "sarutobi",
+    name: "Sarutobi",
+    description:
+      "Product Analytics auto-hébergé : événements, funnels, Web Vitals et erreurs, avec vos données qui restent chez vous.",
+    url: "https://sarutobi.ascencia.re/",
+    logo: "https://sarutobi.ascencia.re/icon.png",
+    tag: "Analytics",
+    isNew: true,
+  },
+  {
     id: "watchme",
     name: "WatchMe",
     description:
@@ -35,7 +45,6 @@ export const OTHER_PROJECTS: OtherProject[] = [
     url: "https://watchme.ascencia.re/",
     logo: "https://watchme.ascencia.re/icons/icon-192.png",
     tag: "Films & séries",
-    isNew: true,
   },
   {
     id: "mcinfo",
