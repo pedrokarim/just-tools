@@ -10,6 +10,9 @@ import Script from "next/script";
 import { PROJECT_CONFIG } from "@/lib/constants";
 import { getToolsCount } from "@/lib/tools-metadata";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+// Réexport local : le paquet publié n'embarque pas sa directive « use client ».
+// Voir le commentaire dans ce module.
+import { SarutobiProvider } from "@/components/sarutobi-provider";
 
 // Import d'initialisation Prisma (s'exécute automatiquement côté serveur)
 import "@/lib/prisma";
@@ -206,19 +209,30 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
+        {/* Sarutobi — Product Analytics auto-hébergé (sarutobi.ascencia.re).
+            Le provider ne rend que ses enfants : il n'introduit aucune frontière
+            de rendu, et les enfants restent des Server Components.
+            `excludePaths` écarte le back-office, dont le trafic ne dit rien de
+            l'audience. Sans `siteId`, le SDK reste inerte (cf. plus bas). */}
+        <SarutobiProvider
+          siteId={process.env.NEXT_PUBLIC_SARUTOBI_SITE_ID ?? ""}
+          disabled={!process.env.NEXT_PUBLIC_SARUTOBI_SITE_ID}
+          excludePaths={["/admin/**"]}
         >
-          <NuqsAdapter>
-            <Providers>{children}</Providers>
-            <LaunchHandler />
-            <AnalyticsTracker />
-            <Toaster richColors position="top-right" />
-          </NuqsAdapter>
-        </ThemeProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <NuqsAdapter>
+              <Providers>{children}</Providers>
+              <LaunchHandler />
+              <AnalyticsTracker />
+              <Toaster richColors position="top-right" />
+            </NuqsAdapter>
+          </ThemeProvider>
+        </SarutobiProvider>
 
         {/* Script pour enregistrer le service worker (production uniquement) */}
         <Script
