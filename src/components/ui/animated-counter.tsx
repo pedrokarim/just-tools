@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface AnimatedCounterProps {
@@ -23,6 +23,15 @@ export function AnimatedCounter({
   const [displayValue, setDisplayValue] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // L'animation a besoin de sa valeur de départ, mais elle met `displayValue`
+  // à jour à chaque image : en faire une dépendance de l'effet relancerait
+  // l'animation en boucle. On la suit donc dans une ref, qu'on lit sans
+  // s'y abonner.
+  const displayValueRef = useRef(displayValue);
+  useEffect(() => {
+    displayValueRef.current = displayValue;
+  }, [displayValue]);
+
   useEffect(() => {
     if (value === 0) {
       setDisplayValue(0);
@@ -31,7 +40,7 @@ export function AnimatedCounter({
 
     setIsAnimating(true);
     const startTime = Date.now();
-    const startValue = displayValue;
+    const startValue = displayValueRef.current;
 
     const animate = () => {
       const elapsed = Date.now() - startTime;

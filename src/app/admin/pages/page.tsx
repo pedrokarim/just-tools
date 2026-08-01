@@ -6,24 +6,14 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  FileText,
-  Eye,
-  Users,
-  Clock,
-  Globe,
-  RefreshCw,
-  TrendingUp,
-  Activity,
-} from "lucide-react";
+import { FileText, Eye, Users, Clock, Globe, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePagination } from "@/hooks/use-pagination";
 import { PaginationControls } from "@/components/admin/pagination-controls";
-import { AdminLoading, LoadingButton } from "@/components/ui/loading";
+import { AdminLoading } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 
 interface PageView {
@@ -59,6 +49,12 @@ export default function PagesPage() {
 
   useEffect(() => {
     fetchPages();
+    // La fonction n'est volontairement pas dans les dépendances : elle est
+    // recréée à chaque rendu, donc l'y mettre relancerait l'effet en boucle.
+    // Elle modifie de surcroît `refreshing`, dont elle dépend — la boucle
+    // serait immédiate. L'effet doit se déclencher sur la pagination seule, et
+    // la fonction lue à ce moment porte déjà les bonnes valeurs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.page, pagination.pageSize]);
 
   const fetchPages = async () => {

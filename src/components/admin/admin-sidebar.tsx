@@ -1,18 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  BarChart3,
-  Eye,
-  Settings,
-  Users,
-  Activity,
-  Home,
-  FileText,
-  Database,
-  Shield,
-  Sparkles,
-} from "lucide-react";
+import { BarChart3, Settings, Users, Home, FileText, Database, Shield, Sparkles } from "lucide-react";
 
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
@@ -21,8 +10,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
-} from "@/components/ui/sidebar";
+  SidebarRail } from "@/components/ui/sidebar";
 
 // Données de navigation pour l'admin
 const navData = {

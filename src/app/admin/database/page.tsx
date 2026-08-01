@@ -6,8 +6,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -15,35 +14,20 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  TableRow } from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Database,
-  RefreshCw,
-  Trash2,
-  Download,
-  Eye,
-  FileText,
-  Users,
-  Shield,
-  Calendar,
-  Globe,
-  Monitor,
-  Hash,
-} from "lucide-react";
+import { Database, RefreshCw, Trash2, Download, Eye, FileText, Users, Shield, Globe, Hash } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { AdminLoading, LoadingButton } from "@/components/ui/loading";
+import { AdminLoading } from "@/components/ui/loading";
 
 interface DatabaseStats {
   totalPageViews: number;
@@ -92,7 +76,7 @@ interface TableData {
 export default function DatabasePage() {
   const [stats, setStats] = useState<DatabaseStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing] = useState(false);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [tableDetails, setTableDetails] = useState<any[]>([]);
   const [detailsLoading, setDetailsLoading] = useState(false);

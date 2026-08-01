@@ -1,17 +1,5 @@
 import React from "react";
-import {
-  Code,
-  Palette,
-  Search,
-  RefreshCw,
-  Lock,
-  FileText,
-  Grid3X3,
-  Image,
-  Volume2,
-  Sparkles,
-  Scissors,
-} from "lucide-react";
+import { Code, Palette, Search, RefreshCw, Lock, FileText, Grid3X3, Image as ImageIcon, Volume2, Sparkles, Scissors } from "lucide-react";
 
 export interface ToolMetadata {
   id: string;
@@ -122,7 +110,7 @@ export const toolsMetadata: ToolMetadata[] = [
       "Ajoutez un effet de trame halftone par-dessus vos images avec des paramètres personnalisables",
     category: "Design",
     status: "ready",
-    icon: <Image className="w-6 h-6" />,
+    icon: <ImageIcon aria-hidden="true" className="w-6 h-6" />,
     iconBg: "bg-purple-100 dark:bg-purple-950",
     iconColor: "text-purple-600 dark:text-purple-400",
     route: "/tools/halftone",

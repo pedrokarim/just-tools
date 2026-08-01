@@ -6,8 +6,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -16,10 +15,8 @@ import {
   Download,
   Trash2,
   RefreshCw,
-  AlertTriangle,
-} from "lucide-react";
+  AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { LoadingButton } from "@/components/ui/loading";
 
 export default function SettingsPage() {
   const [isClearing, setIsClearing] = useState(false);

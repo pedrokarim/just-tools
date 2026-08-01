@@ -13,21 +13,8 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Copy,
-  Download,
-  Upload,
-  FileText,
-  Code,
-  RotateCcw,
-  Settings,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Zap,
-} from "lucide-react";
+  SelectValue } from "@/components/ui/select";
+import { Copy, Download, Upload, Code, RotateCcw, Settings, CheckCircle, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 interface Language {
@@ -77,7 +64,7 @@ export default function CodeFormatter() {
 
   const formatJavaScript = (code: string, indent: string): string => {
     // Formatage basique pour JavaScript
-    let formatted = code
+    const formatted = code
       .replace(/\s*{\s*/g, " {\n")
       .replace(/\s*}\s*/g, "\n}\n")
       .replace(/\s*;\s*/g, ";\n")
@@ -113,7 +100,7 @@ export default function CodeFormatter() {
 
   const formatHTML = (code: string, indent: string): string => {
     // Formatage basique pour HTML
-    let formatted = code
+    const formatted = code
       .replace(/>\s*</g, ">\n<")
       .replace(/\s*\/>\s*/g, " />\n")
       .replace(/\s*>\s*/g, ">\n");
@@ -139,7 +126,7 @@ export default function CodeFormatter() {
 
   const formatCSS = (code: string, indent: string): string => {
     // Formatage basique pour CSS
-    let formatted = code
+    const formatted = code
       .replace(/\s*{\s*/g, " {\n")
       .replace(/\s*}\s*/g, "\n}\n")
       .replace(/\s*;\s*/g, ";\n")
@@ -161,7 +148,7 @@ export default function CodeFormatter() {
 
   const formatPython = (code: string, indent: string): string => {
     // Formatage basique pour Python
-    let formatted = code
+    const formatted = code
       .replace(/\s*:\s*/g, ":\n")
       .replace(/\s*,\s*/g, ", ")
       .replace(/\s*=\s*/g, " = ")
@@ -189,9 +176,9 @@ export default function CodeFormatter() {
     return formattedLines.join("\n");
   };
 
-  const formatGeneric = (code: string, indent: string): string => {
+  const formatGeneric = (code: string, _indent: string): string => {
     // Formatage générique pour les autres langages
-    let formatted = code
+    const formatted = code
       .replace(/\s*{\s*/g, " {\n")
       .replace(/\s*}\s*/g, "\n}\n")
       .replace(/\s*;\s*/g, ";\n")

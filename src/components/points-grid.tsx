@@ -3,14 +3,11 @@
 import { useAtom } from "jotai";
 import {
   patternEditorAtom,
-  toggleCellWithHistoryAtom,
   togglePointSelectionAtom,
   addLineAtom,
   removeLineAtom,
-  Line,
-} from "@/lib/pattern-store";
+  Line } from "@/lib/pattern-store";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
 
 interface Point {
   x: number;
@@ -32,8 +29,7 @@ interface CurrentLine {
 }
 
 export function PointsGrid() {
-  const [editorState, setEditorState] = useAtom(patternEditorAtom);
-  const [, toggleCell] = useAtom(toggleCellWithHistoryAtom);
+  const [editorState] = useAtom(patternEditorAtom);
   const [, togglePointSelection] = useAtom(togglePointSelectionAtom);
   const [, addLine] = useAtom(addLineAtom);
   const [, removeLine] = useAtom(removeLineAtom);
@@ -41,7 +37,7 @@ export function PointsGrid() {
   const [animatedLines, setAnimatedLines] = useState<AnimatedLine[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentLine, setCurrentLine] = useState<CurrentLine | null>(null);
-  const [hoveredPoint, setHoveredPoint] = useState<Point | null>(null);
+  const [, setHoveredPoint] = useState<Point | null>(null);
   const [hoveredLine, setHoveredLine] = useState<Line | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -294,6 +290,8 @@ export function PointsGrid() {
     isDrawing,
     currentLine,
     hoveredLine,
+    // Manquait : afficher ou masquer la grille ne redessinait pas le canvas.
+    editorState.showGrid,
   ]);
 
   const getPointAtPosition = useCallback(

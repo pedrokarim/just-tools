@@ -12,7 +12,7 @@ export class HalftoneExporter {
   // Exporter en PNG
   static async exportPNG(
     canvas: HTMLCanvasElement,
-    options: ExportOptions
+    _options: ExportOptions
   ): Promise<Blob> {
     return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
@@ -108,8 +108,8 @@ export class HalftoneExporter {
       type: "linear" | "radial";
       stops: { offset: number; color: string }[];
     },
-    width: number,
-    height: number
+    _width: number,
+    _height: number
   ): string {
     let defs = "<defs>\n";
 

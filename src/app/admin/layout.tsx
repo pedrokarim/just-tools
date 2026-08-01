@@ -6,8 +6,7 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+  SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Shield } from "lucide-react";
 

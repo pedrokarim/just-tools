@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Utiliser la session Auth.js
     const session = await auth();
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Récupérer l'account Discord associé à cette session
-    const account = await (prisma as any).account.findFirst({
+    const account = await prisma.account.findFirst({
       where: {
         userId: session.user.id,
         provider: "discord",

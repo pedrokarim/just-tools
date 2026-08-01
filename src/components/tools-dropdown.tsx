@@ -8,8 +8,7 @@ import {
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
+  NavigationMenuTrigger } from "@/components/ui/navigation-menu";
 import { PROJECT_CONFIG } from "@/lib/constants";
 import { isToolNew } from "@/lib/tools-metadata";
 

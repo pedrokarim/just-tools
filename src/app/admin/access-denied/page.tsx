@@ -7,8 +7,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from "@/components/ui/card";
 import { Shield, AlertTriangle, ArrowLeft } from "lucide-react";
 
 export default function AccessDeniedPage() {

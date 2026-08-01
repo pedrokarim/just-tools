@@ -11,8 +11,7 @@ import {
   Image as ImageIcon,
   FileImage,
   Link,
-  Loader2,
-} from "lucide-react";
+  Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export function ImageDropzone() {
@@ -46,7 +45,7 @@ export function ImageDropzone() {
         };
 
         img.src = url;
-      } catch (error) {
+      } catch {
         toast.error("Erreur lors du chargement de l'image");
       }
     },
@@ -128,7 +127,7 @@ export function ImageDropzone() {
       };
 
       img.src = proxyUrl;
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors du chargement de l'image");
       setIsLoadingUrl(false);
     }

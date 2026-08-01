@@ -9,16 +9,14 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { RefreshCw, Play, Pause } from "lucide-react";
 import {
   autoRefreshEnabledAtom,
   autoRefreshIntervalAtom,
   refreshIntervals,
-  forceRefreshAtom,
-} from "@/lib/auto-refresh-store";
+  forceRefreshAtom } from "@/lib/auto-refresh-store";
 
 export function AutoRefreshControls() {
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useAtom(
@@ -30,9 +28,9 @@ export function AutoRefreshControls() {
   const [, setForceRefresh] = useAtom(forceRefreshAtom);
 
   // URL state pour persister les préférences
-  const [urlAutoRefresh, setUrlAutoRefresh] = useQueryState("auto-refresh");
+  const [, setUrlAutoRefresh] = useQueryState("auto-refresh");
 
-  const [urlInterval, setUrlInterval] = useQueryState("interval");
+  const [, setUrlInterval] = useQueryState("interval");
 
   // Synchroniser avec l'URL state
   const handleAutoRefreshToggle = (enabled: boolean) => {

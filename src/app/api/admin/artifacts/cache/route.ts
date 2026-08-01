@@ -4,13 +4,12 @@ import { prisma } from "@/lib/prisma";
 import {
   refreshArtifactCache,
   getCacheStats,
-  initializeArtifactService,
-} from "@/lib/artefact-generator/artifact-service";
+  initializeArtifactService } from "@/lib/artefact-generator/artifact-service";
 
 /**
  * Vérifie si l'utilisateur est autorisé à accéder aux fonctions admin
  */
-async function checkAdminAuthorization(request: NextRequest) {
+async function checkAdminAuthorization(_request: NextRequest) {
   try {
     const session = await auth();
 
@@ -19,7 +18,7 @@ async function checkAdminAuthorization(request: NextRequest) {
     }
 
     // Récupérer l'account Discord associé à cette session
-    const account = await (prisma as any).account.findFirst({
+    const account = await prisma.account.findFirst({
       where: {
         userId: session.user.id,
         provider: "discord",

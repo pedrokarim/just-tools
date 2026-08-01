@@ -9,28 +9,25 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
+  type DragEndEvent } from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
+  useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useHalftoneStore, type HalftoneLayer } from "@/lib/halftone-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+  ContextMenuTrigger } from "@/components/ui/context-menu";
 import {
   Eye,
   EyeOff,
@@ -45,8 +42,7 @@ import {
   Diamond,
   Hexagon,
   Minus,
-  Layers,
-} from "lucide-react";
+  Layers } from "lucide-react";
 
 const BLEND_MODES: { value: GlobalCompositeOperation; label: string }[] = [
   { value: "source-over", label: "Normal" },

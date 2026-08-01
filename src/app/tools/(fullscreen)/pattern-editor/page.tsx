@@ -8,8 +8,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,51 +17,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import {
-  patternEditorAtom,
-  savedPatternsAtom,
-  selectedPatternAtom,
-  setGridSizeAtom,
-  toggleCellWithHistoryAtom,
-  clearGridAtom,
-  savePatternAtom,
-  loadPatternAtom,
-  deletePatternAtom,
-  updatePatternAtom,
-  undoAtom,
-  redoAtom,
-  setGridModeAtom,
-  setEditModeAtom,
-  resetConfigurationAtom,
-  type Pattern,
-  type GridMode,
-  type EditMode,
-} from "@/lib/pattern-store";
-import {
-  Save,
-  Download,
-  Trash2,
-  RotateCcw,
-  Grid,
-  Eye,
-  Palette,
-  Plus,
-  Loader2,
-  Undo2,
-  Redo2,
-  Settings,
-  FileText,
-  FolderOpen,
-  Square,
-  Circle,
-  Layers,
-  Pencil,
-  MousePointer,
-  Scissors,
-} from "lucide-react";
+import { patternEditorAtom, savedPatternsAtom, selectedPatternAtom, setGridSizeAtom, toggleCellWithHistoryAtom, clearGridAtom, savePatternAtom, loadPatternAtom, deletePatternAtom, updatePatternAtom, undoAtom, redoAtom, setGridModeAtom, setEditModeAtom, resetConfigurationAtom, type Pattern } from "@/lib/pattern-store";
+import { Save, Download, Trash2, RotateCcw, Grid, Eye, Undo2, Redo2, Settings, FileText, Square, Circle, Layers, Pencil, Scissors } from "lucide-react";
 import { toast } from "sonner";
 import { PointsGrid } from "@/components/points-grid";
 import { PreviewModal } from "@/components/preview-modal";
@@ -197,7 +155,7 @@ export default function PatternEditor() {
       link.click();
 
       toast.success("Motif exporté avec succès !");
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de l'export");
     } finally {
       setIsExporting(false);
@@ -244,6 +202,9 @@ export default function PatternEditor() {
     editorState.showGrid,
     editorState.previewScale,
     editorState.gridMode,
+    // Manquait : le tracé s'appuie dessus, mais le canvas ne se redessinait pas
+    // quand la taille de grille changeait.
+    editorState.gridSize,
   ]);
 
   return (

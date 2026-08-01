@@ -13,8 +13,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from "@/components/ui/select";
 import { Check, Clipboard, Link2, RotateCcw, X } from "lucide-react";
 import { LANGUAGES } from "@/lib/language-data";
 import { LANGUAGE_TO_COUNTRY, type TtsSettings } from "@/lib/tts-store";

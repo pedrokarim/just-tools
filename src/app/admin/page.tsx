@@ -2,42 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { useQueryState } from "nuqs";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+  ChartTooltipContent } from "@/components/ui/chart";
 import { Users, Eye, TrendingUp, Activity } from "lucide-react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
+
 import { RefreshCw } from "lucide-react";
-import { AdminLoading, LoadingButton } from "@/components/ui/loading";
+import { LoadingButton } from "@/components/ui/loading";
 import { StatCard, LoadingCard } from "@/components/ui/loading-card";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 

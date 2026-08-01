@@ -1,4 +1,3 @@
-import { toast } from "sonner";
 
 // Interface pour la réponse de LibreTranslate
 interface LibreTranslateResponse {

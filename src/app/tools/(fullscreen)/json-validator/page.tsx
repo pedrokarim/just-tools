@@ -1,25 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Copy,
-  RotateCcw,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  FileText,
-  Code,
-  Download,
-  Upload,
-  Settings,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { Copy, RotateCcw, CheckCircle, XCircle, FileText, Code, Download, Upload, Settings, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import {
@@ -27,8 +14,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from "@/components/ui/select";
 
 interface ValidationResult {
   isValid: boolean;
@@ -41,11 +27,12 @@ interface ValidationResult {
 
 export default function JsonValidator() {
   const [input, setInput] = useState("");
-  const [result, setResult] = useState<ValidationResult | null>(null);
   const [showFormatted, setShowFormatted] = useState(false);
   const [indentSize, setIndentSize] = useState(2);
 
-  const validateJson = (jsonString: string): ValidationResult => {
+  // Mémoïsée pour pouvoir figurer dans les dépendances de l'effet plus bas :
+  // sans ça, elle était recréée à chaque rendu et l'y ajouter aurait bouclé.
+  const validateJson = useCallback((jsonString: string): ValidationResult => {
     if (!jsonString.trim()) {
       return { isValid: false, error: "Aucun contenu à valider" };
     }
@@ -99,18 +86,16 @@ export default function JsonValidator() {
             : "Erreur de validation inconnue",
       };
     }
-  };
+  }, [indentSize]);
 
-  const handleValidate = () => {
-    const validationResult = validateJson(input);
-    setResult(validationResult);
-
-    if (validationResult.isValid) {
-      toast.success("JSON valide !");
-    } else {
-      toast.error("JSON invalide");
-    }
-  };
+  // État dérivé de la saisie : un `useState` alimenté par un effet provoquait
+  // un rendu en cascade à chaque frappe (et déclenchait
+  // react-hooks/set-state-in-effect). Un calcul mémoïsé exprime la même chose
+  // en un seul rendu.
+  const result = useMemo<ValidationResult | null>(
+    () => (input.trim() ? validateJson(input) : null),
+    [input, validateJson]
+  );
 
   const handleFormat = () => {
     if (result?.isValid && result.formatted) {
@@ -125,8 +110,8 @@ export default function JsonValidator() {
   };
 
   const handleClear = () => {
+    // `result` se recalcule seul depuis `input`.
     setInput("");
-    setResult(null);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,16 +141,6 @@ export default function JsonValidator() {
     URL.revokeObjectURL(url);
     toast.success("Fichier téléchargé !");
   };
-
-  // Validation automatique lors de la saisie
-  useEffect(() => {
-    if (input.trim()) {
-      const validationResult = validateJson(input);
-      setResult(validationResult);
-    } else {
-      setResult(null);
-    }
-  }, [input, indentSize]);
 
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-background">

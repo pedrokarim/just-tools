@@ -19,8 +19,7 @@ import {
   Shield,
   Lock,
   Key,
-  Settings,
-} from "lucide-react";
+  Settings } from "lucide-react";
 import { toast } from "sonner";
 
 interface PasswordOptions {
@@ -113,7 +112,6 @@ export default function PasswordGenerator() {
     }
 
     let score = 0;
-    let feedback = [];
 
     // Longueur
     if (password.length >= 8) score += 1;

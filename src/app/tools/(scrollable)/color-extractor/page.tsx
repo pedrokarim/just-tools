@@ -7,11 +7,10 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -20,24 +19,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Upload,
-  Link,
-  Copy,
-  Palette,
-  History,
-  Download,
-  Image as ImageIcon,
-  Sparkles,
-  Loader2,
-  CheckCircle,
-  XCircle,
-  FileText,
-  Code,
-  Hash,
-} from "lucide-react";
+  DialogTrigger } from "@/components/ui/dialog";
+import { Upload, Link, Copy, Palette, History, Image as ImageIcon, Loader2, FileText, Code, Hash } from "lucide-react";
 import { toast } from "sonner";
 import ColorThief from "colorthief";
 
@@ -95,7 +78,7 @@ const copyFormats: CopyFormat[] = [
 
 export default function ColorExtractor() {
   const [imageUrl, setImageUrl] = useState("");
-  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [, setUploadedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [dominantColors, setDominantColors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -222,7 +205,7 @@ export default function ColorExtractor() {
       await navigator.clipboard.writeText(text);
       toast.success("Copié dans le presse-papiers !");
       setShowCopyDialog(false);
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la copie");
     }
   };
@@ -330,6 +313,11 @@ export default function ColorExtractor() {
           <CardContent>
             {previewUrl ? (
               <div className="space-y-4">
+                {/* `next/image` est inapplicable ici : la source est une URL
+                    d'objet produite par URL.createObjectURL (fichier local, non
+                    optimisable côté serveur), et le `ref` sert à lire les
+                    pixels dans un canvas. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   ref={imageRef}
                   src={previewUrl}
@@ -475,9 +463,12 @@ export default function ColorExtractor() {
                   onClick={() => loadFromHistory(palette)}
                 >
                   <div className="flex items-center space-x-3 mb-3">
+                    {/* Même raison : l'historique conserve des URL d'objet
+                        locales, hors de portée de l'optimiseur. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={palette.imageUrl}
-                      alt="Image"
+                      alt={`Aperçu de la palette de ${palette.colorCount} couleurs`}
                       className="w-12 h-12 object-cover rounded"
                     />
                     <div>

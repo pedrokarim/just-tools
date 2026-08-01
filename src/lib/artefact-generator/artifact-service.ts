@@ -8,8 +8,7 @@ import {
   updateCacheMetadata,
   initializeDefaultData,
   CACHE_KEYS,
-  type ArtifactSetData,
-} from "./artifact-cache";
+  type ArtifactSetData } from "./artifact-cache";
 
 // Sets d'artefacts par défaut (fallback)
 const DEFAULT_ARTIFACT_SETS = [

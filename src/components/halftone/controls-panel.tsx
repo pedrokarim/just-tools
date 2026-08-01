@@ -10,27 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import {
-  Settings,
-  Palette,
-  Circle,
-  Square,
-  Diamond,
-  Hexagon,
-  Minus,
-  Droplets,
-  Layers,
-  Sparkles,
-  Eye,
-  EyeOff,
-  Compass,
-  ArrowUp,
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  Target,
-  Zap,
-} from "lucide-react";
+import { Settings, Palette, Circle, Square, Diamond, Hexagon, Minus, Droplets, Layers, Sparkles, Compass, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Target, Zap } from "lucide-react";
 
 export function ControlsPanel() {
   const { settings, updateSettings, isLocked, activeLayer } = useActiveLayerSettings();

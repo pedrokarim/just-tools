@@ -6,8 +6,7 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,8 +19,7 @@ import {
   Loader2,
   X,
   Image as ImageIcon,
-  FileImage,
-} from "lucide-react";
+  FileImage } from "lucide-react";
 import { toast } from "sonner";
 
 type BackgroundOption = "transparent" | "white" | "black" | "custom";

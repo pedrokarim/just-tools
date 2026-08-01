@@ -7,8 +7,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Copy, RotateCcw, ArrowRight } from "lucide-react";
@@ -28,7 +27,7 @@ export default function Base64Converter() {
         const decoded = atob(input);
         setOutput(decoded);
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la conversion. Vérifiez votre entrée.");
     }
   };

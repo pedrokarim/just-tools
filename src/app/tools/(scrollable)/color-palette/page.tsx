@@ -6,22 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Copy,
-  RotateCcw,
-  Palette,
-  Download,
-  Eye,
-  EyeOff,
-  Settings,
-  Sparkles,
-  Lock,
-  Unlock,
-  Save,
-  Trash2,
-} from "lucide-react";
+import { Palette, Download, Eye, EyeOff, Settings, Sparkles, Lock, Unlock, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Color {
@@ -87,8 +74,8 @@ export default function ColorPalette() {
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
     let h = 0,
-      s = 0,
-      l = (max + min) / 2;
+      s = 0;
+    const l = (max + min) / 2;
 
     if (max !== min) {
       const d = max - min;
@@ -196,6 +183,10 @@ export default function ColorPalette() {
     }
 
     setGeneratedColors(colors);
+    // `generatedColors` est volontairement absent : la fonction le lit pour
+    // conserver les couleurs verrouillées mais l'écrit aussi en fin de course.
+    // L'ajouter recréerait le callback à chaque génération, donc en boucle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseColor, paletteType, colorCount, lockedColors]);
 
   const toggleLock = (index: number) => {
@@ -262,7 +253,9 @@ export default function ColorPalette() {
 
   useEffect(() => {
     generatePalette();
-  }, [baseColor, paletteType, colorCount, lockedColors]);
+    // `generatePalette` est mémoïsée sur exactement ces mêmes valeurs :
+    // dépendre d'elle est équivalent, et vérifiable par le linter.
+  }, [generatePalette]);
 
   return (
     <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6">

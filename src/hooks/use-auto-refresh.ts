@@ -3,8 +3,7 @@ import { useAtom } from "jotai";
 import {
   autoRefreshEnabledAtom,
   autoRefreshIntervalAtom,
-  forceRefreshAtom,
-} from "@/lib/auto-refresh-store";
+  forceRefreshAtom } from "@/lib/auto-refresh-store";
 
 export function useAutoRefresh(callback: () => void) {
   const [autoRefreshEnabled] = useAtom(autoRefreshEnabledAtom);

@@ -6,14 +6,13 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { RefreshCw, Database, Clock, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { AdminLoading, LoadingButton } from "@/components/ui/loading";
+import { AdminLoading } from "@/components/ui/loading";
 
 interface CacheStats {
   artifactSetsCount: number;

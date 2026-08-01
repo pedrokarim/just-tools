@@ -5,30 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Copy,
-  Download,
-  Upload,
-  FileText,
-  Eye,
-  EyeOff,
-  Split,
-  Bold,
-  Italic,
-  List,
-  Link,
-  Image,
-  Code,
-  Quote,
-  Heading1,
-  Heading2,
-  Heading3,
-  Table,
-  RotateCcw,
-  Save,
-  Settings,
-} from "lucide-react";
+
+import { Download, Upload, FileText, Eye, Split, Bold, Italic, List, Link, Image as ImageIcon, Code, Quote, Heading1, Heading2, Heading3, Table, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
 
 interface MarkdownToolbarProps {
@@ -155,7 +133,7 @@ const MarkdownToolbar = ({ onInsert, textareaRef }: MarkdownToolbarProps) => {
         onClick={() => insertText("![alt text](", ")")}
         title="Image"
       >
-        <Image className="h-4 w-4" />
+        <ImageIcon aria-hidden="true" className="h-4 w-4" />
       </Button>
       <Button
         variant="ghost"
@@ -187,7 +165,7 @@ const MarkdownToolbar = ({ onInsert, textareaRef }: MarkdownToolbarProps) => {
 const MarkdownPreview = ({ content }: { content: string }) => {
   const renderMarkdown = (text: string) => {
     // Conversion basique du Markdown en HTML
-    let html = text
+    const html = text
       // Titres
       .replace(
         /^### (.*$)/gim,

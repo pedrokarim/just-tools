@@ -31,7 +31,7 @@ async function checkAdminAuthorization(): Promise<boolean> {
 
     // Récupérer l'account Discord associé à cette session
     const { prisma } = await import("@/lib/prisma");
-    const account = await (prisma as any).account.findFirst({
+    const account = await prisma.account.findFirst({
       where: {
         userId: session.user.id,
         provider: "discord",

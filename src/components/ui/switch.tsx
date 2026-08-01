@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
 
 export interface SwitchProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -9,7 +8,7 @@ export interface SwitchProps
 }
 
 const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
-  ({ className, label, ...props }, ref) => {
+  ({ className: _className, label, ...props }, ref) => {
     return (
       <div className="flex items-center space-x-2">
         <label className="relative inline-flex items-center cursor-pointer">

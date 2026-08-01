@@ -11,8 +11,7 @@ import {
   RotateCcw,
   Rewind,
   FastForward,
-  Square,
-} from "lucide-react";
+  Square } from "lucide-react";
 import { formatDuration, type PlayerStatus } from "@/hooks/use-tts-player";
 
 interface PlayerBarProps {

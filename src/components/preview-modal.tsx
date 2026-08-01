@@ -3,15 +3,14 @@
 import { useAtom } from "jotai";
 import {
   patternEditorAtom,
-  migratePreviewSettingsAtom,
-} from "@/lib/pattern-store";
+  migratePreviewSettingsAtom } from "@/lib/pattern-store";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { X, Download, ZoomIn, ZoomOut, Grid } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 
 interface PreviewModalProps {
   isOpen: boolean;

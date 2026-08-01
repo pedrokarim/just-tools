@@ -8,8 +8,7 @@ import {
   Users,
   Zap,
   Shield,
-  Star,
-} from "lucide-react";
+  Star } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 
 export const metadata: Metadata = {

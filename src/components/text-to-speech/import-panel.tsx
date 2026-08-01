@@ -13,14 +13,12 @@ import {
   Loader2,
   Play,
   Plus,
-  X,
-} from "lucide-react";
+  X } from "lucide-react";
 import {
   extractTextFromImageSilent,
   extractTextFromImageURLSilent,
   getClipboardText,
-  importTextFile,
-} from "@/lib/file-import";
+  importTextFile } from "@/lib/file-import";
 
 interface ImportPanelProps {
   /** Remplace le texte courant. */

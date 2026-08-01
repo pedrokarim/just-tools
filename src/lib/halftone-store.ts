@@ -172,7 +172,7 @@ const initialLayer = createDefaultLayer("Calque 1");
 
 export const useHalftoneStore = create<HalftoneStore>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       sourceImage: undefined,
       layers: [initialLayer],
       activeLayerId: initialLayer.id,

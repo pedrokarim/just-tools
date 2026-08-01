@@ -2,8 +2,7 @@ import { toast } from "sonner";
 import {
   cleanFileContent,
   validateFileType,
-  validateImage,
-} from "./text-processing";
+  validateImage } from "./text-processing";
 
 // Fonction pour importer un fichier texte
 export async function importTextFile(

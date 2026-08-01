@@ -5,7 +5,7 @@ import { prisma } from "./prisma";
 
 // Fonction pour obtenir la géolocalisation (DÉSACTIVÉE TEMPORAIREMENT)
 async function getLocationData(
-  ip: string
+  _ip: string
 ): Promise<{ country?: string; city?: string }> {
   // DÉSACTIVÉ - Retourner des valeurs par défaut
   return {
@@ -30,7 +30,7 @@ async function recordLoginAttempt(data: {
       ? await getLocationData(data.ipAddress)
       : {};
 
-    await (prisma as any).loginAttempt.create({
+    await prisma.loginAttempt.create({
       data: {
         discordId: data.discordId,
         username: data.username,
@@ -66,7 +66,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   secret: process.env.AUTH_SECRET,
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       // Vérifier l'autorisation pour Discord
       if (account?.provider === "discord") {
         const discordId = account.providerAccountId;
@@ -111,7 +111,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   events: {
-    async signIn({ user, account, isNewUser }) {
+    async signIn({ user, account }) {
       // Log des connexions pour debugging
       console.log(
         `Connexion: ${user.name} (${user.email}) via ${account?.provider}`

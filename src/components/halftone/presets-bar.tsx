@@ -2,10 +2,10 @@
 
 import { useHalftoneStore } from "@/lib/halftone-store";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
-import { Save, Trash2, Settings, Clock, Star } from "lucide-react";
+import { Trash2, Settings, Star } from "lucide-react";
 import { toast } from "sonner";
 
 export function PresetsBar() {

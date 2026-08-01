@@ -14,15 +14,13 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from "@/components/ui/select";
 import {
   AlertCircle,
   ArrowRightLeft,
@@ -41,35 +39,30 @@ import {
   Trash2,
   Upload,
   Volume2,
-  X,
-} from "lucide-react";
+  X } from "lucide-react";
 import { TRANSLATION_LANGUAGES } from "@/lib/language-data";
 import { cleanTextForTTS } from "@/lib/text-processing";
 import { detectLanguage, translateText } from "@/lib/translation";
 import {
   extractTextFromImage,
-  importTextFile,
-} from "@/lib/file-import";
+  importTextFile } from "@/lib/file-import";
 import {
   DEFAULT_SETTINGS,
   ttsHistoryAtom,
   ttsSavedTextsAtom,
   ttsSettingsAtom,
   ttsTextAtom,
-  type SavedText,
-} from "@/lib/tts-store";
+  type SavedText } from "@/lib/tts-store";
 import {
   buildTtsUrl,
   parseTtsParams,
   stripTtsParams,
-  type TtsLaunchParams,
-} from "@/lib/tts-params";
+  type TtsLaunchParams } from "@/lib/tts-params";
 import {
   formatDuration,
   pickDefaultVoice,
   useTtsPlayer,
-  type SpeechOverrides,
-} from "@/hooks/use-tts-player";
+  type SpeechOverrides } from "@/hooks/use-tts-player";
 import { PlayerBar } from "@/components/text-to-speech/player-bar";
 import { ReaderText } from "@/components/text-to-speech/reader-text";
 import { SettingsPanel } from "@/components/text-to-speech/settings-panel";

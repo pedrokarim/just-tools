@@ -1,23 +1,21 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { motion } from "framer-motion";
+import { useState } from "react";
+
 import { useHalftoneStore } from "@/lib/halftone-store";
 import { HalftoneExporter, ExportOptions } from "@/lib/halftone-export";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+
 import {
   Download,
   FileImage,
   FileText,
   Settings,
   Check,
-  Loader2,
-} from "lucide-react";
+  Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface ExportPanelProps {

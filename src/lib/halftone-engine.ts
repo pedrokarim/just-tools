@@ -11,7 +11,7 @@ export class HalftoneEngine {
   // Calculer la taille de sortie
   calculateOutputSize(
     image: HTMLImageElement | ImageBitmap,
-    outputCanvas: HTMLCanvasElement
+    _outputCanvas: HTMLCanvasElement
   ): { width: number; height: number } {
     const maxSize = 1280; // Limite pour la prévisualisation
     const aspectRatio = image.width / image.height;

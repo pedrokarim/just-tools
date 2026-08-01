@@ -16,7 +16,7 @@ interface LoadingCardProps {
 
 export function LoadingCard({
   title,
-  description,
+  description: _description,
   icon,
   isLoading = false,
   children,

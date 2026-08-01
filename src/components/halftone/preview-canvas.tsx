@@ -4,8 +4,8 @@ import { forwardRef, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useHalftoneStore, useActiveLayerSettings } from "@/lib/halftone-store";
 import { ShapeResizeOverlay } from "./shape-resize-overlay";
-import { Card, CardContent } from "@/components/ui/card";
-import { Eye, ZoomIn, ZoomOut, RotateCcw, X, Image } from "lucide-react";
+
+import { Eye, ZoomIn, ZoomOut, RotateCcw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 

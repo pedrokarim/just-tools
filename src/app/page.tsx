@@ -10,8 +10,7 @@ import {
   Zap,
   Sparkles,
   CheckCircle,
-  Github,
-} from "lucide-react";
+  Github } from "lucide-react";
 import { tools } from "@/lib/tools-metadata";
 import { PROJECT_CONFIG } from "@/lib/constants";
 import { ContributionModal } from "@/components/contribution-modal";
@@ -19,8 +18,7 @@ import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { OtherProjects } from "@/components/other-projects";
 import {
   ToolsSection,
-  ToolsSectionFallback,
-} from "@/components/tools-section";
+  ToolsSectionFallback } from "@/components/tools-section";
 
 const features = [
   {

@@ -1,19 +1,18 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { useQueryState } from "nuqs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -33,19 +32,9 @@ import {
   Flower,
   Feather,
   Clock,
-  Wine,
-} from "lucide-react";
+  Wine } from "lucide-react";
 import { toast } from "sonner";
-import {
-  generateGenshinArtefact,
-  generateMultipleGenshinArtefacts,
-  generateGenshinArtefactWithSet,
-  calculateGenshinArtefactProbability,
-  formatGenshinArtefactShort,
-  getGenshinGenerationStats,
-  type GenshinArtefact,
-  type GenshinArtefactGenerationOptions,
-} from "@/lib/artefact-generator/genshin-api";
+import { generateGenshinArtefactWithSet, calculateGenshinArtefactProbability, formatGenshinArtefactShort, getGenshinGenerationStats, type GenshinArtefact } from "@/lib/artefact-generator/genshin-api";
 import Image from "next/image";
 
 const typeIcons = {
@@ -121,11 +110,11 @@ export default function ArtefactGeneratorClient({
 }: ArtefactGeneratorClientProps) {
   const [artefacts, setArtefacts] = useState<GenshinArtefact[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [availableSets, setAvailableSets] =
+  const [availableSets] =
     useState<string[]>(initialAvailableSets);
   const [selectedSet, setSelectedSet] = useState<string>("all");
-  const [allArtifacts, setAllArtifacts] = useState<any[]>(initialArtifacts);
-  const [isLoadingSets, setIsLoadingSets] = useState(false);
+  const [allArtifacts] = useState<any[]>(initialArtifacts);
+  const [isLoadingSets] = useState(false);
 
   // Search params avec nuqs pour chaque tab
   const [activeTab, setActiveTab] = useQueryState("tab", {
@@ -134,7 +123,7 @@ export default function ArtefactGeneratorClient({
   const [searchQuery, setSearchQuery] = useQueryState("search", {
     defaultValue: "",
   });
-  const [selectedType, setSelectedType] = useQueryState("type", {
+  const [] = useQueryState("type", {
     defaultValue: "all",
   });
   const [sortBy, setSortBy] = useQueryState("sort", { defaultValue: "name" });
@@ -168,12 +157,12 @@ export default function ArtefactGeneratorClient({
 
       setArtefacts([newArtefact]);
       toast.success("Artefact généré !");
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la génération");
     } finally {
       setIsGenerating(false);
     }
-  }, [selectedSet]);
+  }, [selectedSet, initialArtifacts]);
 
   const generateMultiple = useCallback(
     async (count: 10 | 50) => {
@@ -195,13 +184,13 @@ export default function ArtefactGeneratorClient({
 
         setArtefacts(newArtefacts);
         toast.success(`${count} artefacts générés !`);
-      } catch (error) {
+      } catch {
         toast.error("Erreur lors de la génération");
       } finally {
         setIsGenerating(false);
       }
     },
-    [selectedSet]
+    [selectedSet, initialArtifacts]
   );
 
   const copyArtefact = (artefact: GenshinArtefact) => {
@@ -526,7 +515,7 @@ export default function ArtefactGeneratorClient({
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {artefacts.map((artefact, index) => {
+                    {artefacts.map((artefact, _index) => {
                       const TypeIcon =
                         typeIcons[artefact.type as keyof typeof typeIcons] ||
                         Star;
@@ -823,7 +812,7 @@ export default function ArtefactGeneratorClient({
                                 "sands",
                                 "goblet",
                                 "circlet",
-                              ].map((type, typeIndex) => {
+                              ].map((type, _typeIndex) => {
                                 const typeNames = {
                                   flower: "Fleur",
                                   plume: "Plume",

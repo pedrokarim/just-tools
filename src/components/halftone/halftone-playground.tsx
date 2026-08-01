@@ -12,16 +12,7 @@ import { PresetsBar } from "./presets-bar";
 import { LayerPanel } from "./layer-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Image,
-  Settings,
-  Download,
-  Save,
-  RotateCcw,
-  Eye,
-  EyeOff,
-  Layers,
-} from "lucide-react";
+import { Image as ImageIcon, Settings, Download, Save, RotateCcw, Eye, Layers } from "lucide-react";
 import { toast } from "sonner";
 
 export function HalftonePlayground() {
@@ -119,7 +110,7 @@ export function HalftonePlayground() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <Image className="h-6 w-6 text-blue-600" />
+              <ImageIcon aria-hidden="true" className="h-6 w-6 text-blue-600" />
               <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                 Effet de Trame
               </h1>
@@ -137,7 +128,7 @@ export function HalftonePlayground() {
               onClick={() => clearSourceImage()}
               disabled={!sourceImage}
             >
-              <Image className="h-4 w-4 mr-2" />
+              <ImageIcon aria-hidden="true" className="h-4 w-4 mr-2" />
               Changer d'image
             </Button>
 
