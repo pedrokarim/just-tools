@@ -1,0 +1,51 @@
+{
+  "$schema": "https://id.ascencia.re/schemas/manifest-v1.json",
+  "app": "just-tools",
+
+  "permissions": [
+    {
+      "key": "admin.access",
+      "name": "Panneau d'administration",
+      "group": "Administration",
+      "description": "Ouvrir /admin et ses écrans : visiteurs, pages, connexions, base, artefacts, réglages."
+    },
+    {
+      "key": "admin.database.read",
+      "name": "Lire la base",
+      "group": "Administration",
+      "description": "Consulter le contenu des tables depuis l'écran « Base de données »."
+    },
+    {
+      "key": "admin.analytics.purge",
+      "name": "Purger les statistiques",
+      "group": "Administration",
+      "description": "Effacer les vues et visiteurs enregistrés. Destructeur et sans retour."
+    },
+    {
+      "key": "demo.access",
+      "name": "Accès à la démonstration",
+      "group": "Accès",
+      "description": "Voir la démonstration, sans aucun droit d'administration."
+    }
+  ],
+
+  "roles": [
+    {
+      "key": "admin",
+      "name": "Administrateur",
+      "description": "Accès complet. Ce que la variable AUTHORIZED_USERS accordait, en bloc et sans nuance.",
+      "color": "#c2410c",
+      "priority": 100,
+      "permissions": ["*"]
+    },
+    {
+      "key": "demo",
+      "name": "Démonstration",
+      "description": "Voir la démonstration, rien d'autre. C'est le rôle donné par défaut à qui rejoint : une invitation sans rôle précisé ne doit jamais ouvrir l'administration.",
+      "color": "#0369a1",
+      "priority": 10,
+      "is_default": true,
+      "permissions": ["demo.access"]
+    }
+  ]
+}

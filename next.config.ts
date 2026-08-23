@@ -6,6 +6,24 @@ const { getVersionInfo } = require("./scripts/version");
 const versionInfo = getVersionInfo();
 
 const nextConfig: NextConfig = {
+  /*
+   * Les paquets Ascencia sont publiés en TypeScript source, sans étape de
+   * compilation : c'est le choix du monorepo qui les produit. Next doit donc
+   * les transpiler comme du code local, sans quoi le build échoue sur la
+   * première annotation de type.
+   *
+   * **Toute la chaîne doit y figurer, pas seulement ce qu'on importe.**
+   * `id-rbac` n'est jamais importé ici — c'est une dépendance de `id-core` et
+   * de `id-server` — et l'oublier faisait échouer le build sur un
+   * `Unexpected token` dans son `index.ts`. Le typecheck, lui, passait au
+   * vert : il lit le TypeScript, c'est le bundler qui ne sait pas quoi en
+   * faire.
+   */
+  transpilePackages: [
+    "@ascencia/id-rbac",
+    "@ascencia/id-core",
+    "@ascencia/id-server",
+  ],
   // Configuration pour Docker
   output: "standalone",
 

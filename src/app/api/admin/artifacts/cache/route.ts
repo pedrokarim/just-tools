@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import {
   refreshArtifactCache,
@@ -7,48 +7,22 @@ import {
   initializeArtifactService } from "@/lib/artefact-generator/artifact-service";
 
 /**
- * Vérifie si l'utilisateur est autorisé à accéder aux fonctions admin
+ * La garde locale a disparu.
+ *
+ * Elle recopiait la même logique que trois autres fichiers : session, compte
+ * Discord, comparaison à `AUTHORIZED_USERS`. Cette logique n'existe plus —
+ * `requireAdmin()` pose la question à Ascencia ID, qui connaît les rôles.
  */
 async function checkAdminAuthorization(_request: NextRequest) {
-  try {
-    const session = await auth();
-
-    if (!session || !session.user) {
-      return { authorized: false, reason: "Non connecté" };
-    }
-
-    // Récupérer l'account Discord associé à cette session
-    const account = await prisma.account.findFirst({
-      where: {
-        userId: session.user.id,
-        provider: "discord",
-      },
-    });
-
-    if (!account) {
-      return { authorized: false, reason: "Aucun compte Discord trouvé" };
-    }
-
-    const discordId = account.providerAccountId;
-
-    // Vérifier si l'utilisateur est autorisé
-    const authorizedUsers = process.env.AUTHORIZED_USERS?.split(",") || [];
-    const isAuthorized = authorizedUsers.includes(discordId);
-
-    return {
-      authorized: isAuthorized,
-      user: {
-        id: session.user.id,
-        name: session.user.name,
-        email: session.user.email,
-        discordId: discordId,
-      },
-      reason: isAuthorized ? undefined : "Utilisateur non autorisé",
-    };
-  } catch (error) {
-    console.error("Erreur lors de la vérification d'autorisation:", error);
-    return { authorized: false, reason: "Erreur de vérification" };
+  const guard = await requireAdmin();
+  if (!guard.ok) {
+    return { authorized: false, reason: "Accès refusé" } as const;
   }
+  return {
+    authorized: true,
+    user: { id: guard.user.id, roles: guard.user.roles },
+    reason: undefined,
+  } as const;
 }
 
 /**

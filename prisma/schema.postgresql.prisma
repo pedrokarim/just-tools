@@ -97,3 +97,29 @@ model loginAttempt {
   reason      String?  // Raison de l'échec (ex: "Non autorisé")
   timestamp   DateTime @default(now())
 }
+
+/// Les sessions applicatives d'Ascencia ID.
+///
+/// Pourquoi une table et pas la mémoire : Just Tools est déployé sur Vercel,
+/// donc en serverless. Un magasin en mémoire repart vide à chaque démarrage à
+/// froid, et l'utilisateur se retrouve déconnecté au hasard — un symptôme qui
+/// ressemble à un caprice plutôt qu'à une panne, donc très mal diagnostiqué.
+///
+/// `data` est du texte et non du `Json` : le schéma SQLite de développement ne
+/// connaît pas le type `Json`, et une colonne qui n'existe que dans une des
+/// deux variantes fait diverger les deux schémas en silence.
+///
+/// Ce qui est stocké : les jetons OAuth de la session. Ils ne sortent jamais du
+/// serveur — le navigateur ne reçoit qu'un identifiant opaque dans un cookie
+/// `httpOnly` — donc un XSS sur le site ne suffit pas à voler un accès. La
+/// contrepartie est que cette table est aussi sensible que celle des sessions
+/// qu'elle remplace.
+model ascenciaSession {
+  id        String   @id
+  data      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+  @@map("ascencia_sessions")
+}

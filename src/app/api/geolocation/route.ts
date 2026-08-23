@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import { LRUCache } from "@/lib/lru-cache";
-import { auth } from "@/lib/auth";
 
 // Interface pour les données de géolocalisation
 interface GeolocationData {
@@ -20,40 +20,12 @@ const geolocationCache = new LRUCache<GeolocationData>(
   24 * 60 * 60 * 1000
 ); // 1000 items, 24h TTL
 
-// Fonction pour vérifier l'autorisation admin
+// L'autorisation passe par la garde partagée : la logique locale recopiait
+// celle de trois autres fichiers, et elle comparait un identifiant Discord à
+// une variable d'environnement. C'est maintenant une question de permission.
 async function checkAdminAuthorization(): Promise<boolean> {
-  try {
-    const session = await auth();
-
-    if (!session || !session.user) {
-      return false;
-    }
-
-    // Récupérer l'account Discord associé à cette session
-    const { prisma } = await import("@/lib/prisma");
-    const account = await prisma.account.findFirst({
-      where: {
-        userId: session.user.id,
-        provider: "discord",
-      },
-    });
-
-    if (!account) {
-      return false;
-    }
-
-    // Vérifier si l'utilisateur est autorisé
-    const authorizedUsers = process.env.AUTHORIZED_USERS?.split(",") || [];
-    const discordId = account.providerAccountId;
-
-    return authorizedUsers.includes(discordId);
-  } catch (error) {
-    console.error(
-      "Erreur lors de la vérification d'autorisation admin:",
-      error
-    );
-    return false;
-  }
+  const guard = await requireAdmin();
+  return guard.ok;
 }
 
 export async function GET(request: NextRequest) {

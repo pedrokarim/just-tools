@@ -5,6 +5,7 @@ import { BarChart3, Settings, Users, Home, FileText, Database, Shield, Sparkles 
 
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
+import type { AdminChromeUser } from "./admin-chrome";
 import {
   Sidebar,
   SidebarContent,
@@ -55,8 +56,9 @@ const navData = {
 };
 
 export function AdminSidebar({
+  user,
   ...props
-}: React.ComponentProps<typeof Sidebar>) {
+}: React.ComponentProps<typeof Sidebar> & { user: AdminChromeUser }) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -74,7 +76,7 @@ export function AdminSidebar({
         <NavMain items={navData.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
