@@ -1,52 +1,48 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+/**
+ * Ce qui tourne à l'installation, donc à chaque build Vercel.
+ *
+ * ── Ce qu'il faisait, et pourquoi ça ne pouvait pas rester ─────────────────
+ *
+ * Il appelait `prisma db push --accept-data-loss` dès que `VERCEL` valait 1 —
+ * c'est-à-dire **à chaque déploiement**, sur la base de production. `db push`
+ * compare le schéma au vivant et applique la différence : un champ renommé, un
+ * modèle retiré, et la colonne part sans un mot.
+ *
+ * Et l'erreur était avalée « pour ne pas faire échouer le build ». Une perte de
+ * données pouvait donc traverser tout le pipeline sans qu'aucun voyant ne
+ * s'allume.
+ *
+ * ── Ce qu'il fait maintenant ───────────────────────────────────────────────
+ *
+ * Il génère le client Prisma, puis applique les scripts SQL de `prisma/sql/`,
+ * relus et écrits à la main. Aucune différence n'est déduite, aucune colonne
+ * n'est supprimée par accident, et un échec arrête le déploiement.
+ *
+ * Pour préparer un changement de schéma : écrire un fichier dans `prisma/sql/`
+ * (numéroté, idempotent), et mettre `prisma/schema.prisma` en accord. Les deux
+ * doivent rester cohérents — le schéma décrit, le SQL applique.
+ */
 
-console.log('🚀 Démarrage de la migration de production...');
+const { execSync } = require('child_process');
 
 try {
-    // 1. Générer le client Prisma (toujours nécessaire)
-    console.log('📦 Génération du client Prisma...');
-    execSync('bun --bun prisma generate', { stdio: 'inherit' });
+  console.log('📦 Génération du client Prisma…');
+  execSync('bun --bun prisma generate', { stdio: 'inherit' });
 
-    // 2. Vérifier si on est en production
-    const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+  if (!process.env.DATABASE_URL && !process.env.DIRECT_URL) {
+    console.log('⚠️  Aucune URL de base — le build continue sans migration.');
+    process.exit(0);
+  }
 
-    // 3. Vérifier si DATABASE_URL est définie
-    if (!process.env.DATABASE_URL) {
-        console.log('⚠️  DATABASE_URL non définie - Skip de la migration');
-        console.log('✅ Build peut continuer sans migration');
-        process.exit(0);
-    }
+  console.log('🗄️  Application des scripts SQL…');
+  execSync('node scripts/apply-sql.js', { stdio: 'inherit' });
 
-    // 4. Exécuter la migration appropriée
-    if (isProduction) {
-        console.log('🌐 Mode production détecté - Migration sécurisée');
-        // Utiliser db push sans --force-reset pour éviter les problèmes
-        execSync('bun --bun prisma db push --accept-data-loss', {
-            stdio: 'inherit',
-            timeout: 30000 // 30 secondes de timeout
-        });
-    } else {
-        console.log('🔧 Mode développement - Migration normale');
-        execSync('bun --bun prisma db push', {
-            stdio: 'inherit',
-            timeout: 30000 // 30 secondes de timeout
-        });
-    }
-
-    console.log('✅ Migration terminée avec succès !');
+  console.log('✅ Base à jour.');
 } catch (error) {
-    console.error('❌ Erreur lors de la migration:', error.message);
-
-    // En cas d'erreur, ne pas faire échouer le build
-    if (isProduction) {
-        console.log('⚠️  En production, le build continue malgré l\'erreur de migration');
-        console.log('💡 La migration pourra être effectuée manuellement après le déploiement');
-        process.exit(0);
-    } else {
-        process.exit(1);
-    }
+  console.error('❌ Migration interrompue :', error.message);
+  // Échouer, et fort. Un déploiement qui continue sur une base dans un état
+  // inconnu est exactement ce qu'on cherche à ne plus faire.
+  process.exit(1);
 }

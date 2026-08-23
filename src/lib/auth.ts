@@ -1,121 +1,149 @@
-import NextAuth from "next-auth";
-import Discord from "next-auth/providers/discord";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "./prisma";
+import { cookies } from "next/headers";
+import { createAscenciaServer, type AscenciaServer } from "@ascencia/id-server/next";
+import { AscenciaContext } from "@ascencia/id-server";
+import { prismaSessionStore } from "./ascencia-session-store";
 
-// Fonction pour obtenir la géolocalisation (DÉSACTIVÉE TEMPORAIREMENT)
-async function getLocationData(
-  _ip: string
-): Promise<{ country?: string; city?: string }> {
-  // DÉSACTIVÉ - Retourner des valeurs par défaut
-  return {
-    country: "Unknown",
-    city: "Unknown",
-  };
+/**
+ * L'authentification de Just Tools, déléguée à Ascencia ID.
+ *
+ * ── Ce qui a changé, et pourquoi ───────────────────────────────────────────
+ *
+ * Avant : NextAuth avec Discord, et une liste blanche dans la variable
+ * d'environnement `AUTHORIZED_USERS`. Ça marchait, mais ouvrir l'accès à
+ * quelqu'un demandait d'éditer un `.env` et de **redéployer**. Il n'existait ni
+ * trace de qui avait ouvert l'accès, ni retrait, ni expiration, ni nuance entre
+ * « administrateur » et « peut voir la démonstration ».
+ *
+ * Maintenant : l'application est déclarée dans Ascencia ID en `invite_only`.
+ * On invite une adresse depuis la console, la personne rejoint, on révoque
+ * quand on veut — et **rien ne se redéploie**. Le journal d'audit garde la
+ * trace de chaque geste.
+ *
+ * Discord reste le moyen de se connecter : il est simplement passé derrière
+ * l'IdP, qui devient le seul à parler OAuth à des tiers.
+ *
+ * ── Client confidentiel ────────────────────────────────────────────────────
+ *
+ * Les jetons restent côté serveur ; le navigateur ne reçoit qu'un identifiant
+ * opaque dans un cookie `httpOnly`. Un XSS sur le site ne suffit donc pas à
+ * voler un accès.
+ */
+
+function required(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    // Échouer au démarrage plutôt qu'à la première connexion : une variable
+    // oubliée doit se voir au déploiement, pas le jour où quelqu'un se connecte.
+    throw new Error(`[auth] ${name} est absent de l'environnement.`);
+  }
+  return value;
 }
 
-// Fonction pour enregistrer une tentative de connexion
-async function recordLoginAttempt(data: {
-  discordId?: string;
-  username?: string;
-  email?: string;
-  avatar?: string;
-  ipAddress?: string;
-  userAgent?: string;
-  success: boolean;
-  reason?: string;
-}) {
-  try {
-    const locationData = data.ipAddress
-      ? await getLocationData(data.ipAddress)
-      : {};
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-    await prisma.loginAttempt.create({
-      data: {
-        discordId: data.discordId,
-        username: data.username,
-        email: data.email,
-        avatar: data.avatar,
-        ipAddress: data.ipAddress,
-        userAgent: data.userAgent,
-        country: locationData.country,
-        city: locationData.city,
-        success: data.success,
-        reason: data.reason,
-      },
+export const ascencia: AscenciaServer = createAscenciaServer({
+  issuer: required("ASCENCIA_ISSUER"),
+  clientId: required("ASCENCIA_CLIENT_ID"),
+  clientSecret: required("ASCENCIA_CLIENT_SECRET"),
+  /*
+   * Dérivée de l'URL du site, surchargeable par `ASCENCIA_REDIRECT_URI`.
+   *
+   * Cette valeur doit correspondre **au caractère près** à une URI enregistrée
+   * dans la console : la comparaison est exacte, jamais un préfixe, et c'est ce
+   * qui empêche un open redirect. La faire dépendre de `NEXT_PUBLIC_SITE_URL`
+   * est pratique en production, et piégeux ailleurs — cette variable sert aussi
+   * aux liens de partage et aux images, donc quelqu'un peut la changer sans
+   * penser à l'authentification.
+   *
+   * En développement local, l'IdP occupe 3000 et Just Tools 3001 : la
+   * surcharge évite d'avoir à tordre une variable qui ne parle pas de ça.
+   */
+  redirectUri: process.env.ASCENCIA_REDIRECT_URI ?? `${siteUrl}/api/auth/callback`,
+  // Obligatoire ici : Vercel est serverless, la mémoire ne survit pas d'une
+  // invocation à l'autre (voir `ascencia-session-store.ts`).
+  /*
+   * Les scopes sont explicites, et `ascencia.perms` n'est pas décoratif.
+   *
+   * C'est lui qui fait émettre la revendication `perms` du jeton — celle que
+   * `context.can()` lit. Sans lui, `can()` rend **false pour tout**, sans
+   * erreur ni avertissement : l'application refuse tout le monde et rien
+   * n'explique pourquoi. C'est ce qui est arrivé au premier essai.
+   *
+   * Le SDK l'a désormais dans ses défauts, mais les déclarer ici reste plus
+   * sûr : un défaut se déplace d'une version à l'autre, une liste écrite non.
+   */
+  scopes: ["openid", "profile", "email", "ascencia.roles", "ascencia.perms"],
+  sessionStore: prismaSessionStore(),
+  defaultRedirect: "/admin",
+});
+
+/**
+ * Le contexte de la requête courante, ou `null`.
+ *
+ * Garde le nom `auth()` de NextAuth pour ne pas réécrire tous les appelants,
+ * mais **ne rend pas la même chose** : un `AscenciaContext` porte les rôles et
+ * les permissions résolus, là où une session NextAuth ne portait qu'un
+ * identifiant. C'est ce qui permet à `requireAdmin()` de poser une vraie
+ * question — « cette personne a-t-elle le droit ? » — au lieu de comparer un
+ * identifiant Discord à une liste.
+ */
+export async function auth(): Promise<AscenciaContext | null> {
+  const jar = await cookies();
+  return ascencia.getContext(jar);
+}
+
+export interface AscenciaProfile {
+  sub: string;
+  name: string | null;
+  email: string | null;
+  picture: string | null;
+}
+
+/**
+ * Le profil affichable, lu chez l'IdP.
+ *
+ * Il n'est **pas** dans le jeton d'accès, et c'est volontaire : un jeton
+ * d'accès autorise, il n'identifie pas. Le nom et l'avatar se demandent à
+ * `/oauth/userinfo`, avec le jeton, au moment où l'on en a besoin.
+ */
+export async function getProfile(): Promise<AscenciaProfile | null> {
+  const jar = await cookies();
+  const token = await ascencia.getAccessToken(jar);
+  if (!token) return null;
+
+  try {
+    const response = await fetch(`${required("ASCENCIA_ISSUER")}/oauth/userinfo`, {
+      headers: { authorization: `Bearer ${token}` },
+      cache: "no-store",
     });
-  } catch (error) {
-    console.error(
-      "Erreur lors de l'enregistrement de la tentative de connexion:",
-      error
-    );
+    if (!response.ok) return null;
+
+    const claims = (await response.json()) as Record<string, unknown>;
+    return {
+      sub: String(claims.sub ?? ""),
+      name: typeof claims.name === "string" ? claims.name : null,
+      email: typeof claims.email === "string" ? claims.email : null,
+      picture: typeof claims.picture === "string" ? claims.picture : null,
+    };
+  } catch {
+    // Un profil illisible ne doit pas casser une page : on affiche ce qu'on a.
+    return null;
   }
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
-  providers: [
-    Discord({
-      clientId: process.env.DISCORD_CLIENT_ID!,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-    }),
-  ],
-  pages: {
-    signIn: "/admin/login",
-    error: "/admin/access-denied",
-  },
-  secret: process.env.AUTH_SECRET,
-  callbacks: {
-    async signIn({ user, account }) {
-      // Vérifier l'autorisation pour Discord
-      if (account?.provider === "discord") {
-        const discordId = account.providerAccountId;
+/** Où envoyer quelqu'un pour qu'il se connecte. */
+export function signInUrl(returnTo = "/admin"): string {
+  return `/api/auth/signin?redirect=${encodeURIComponent(returnTo)}`;
+}
 
-        // Vérifier si l'utilisateur est autorisé
-        const authorizedUsers = process.env.AUTHORIZED_USERS?.split(",") || [];
-        const isAuthorized = authorizedUsers.includes(discordId);
-
-        if (!isAuthorized) {
-          // Enregistrer la tentative échouée
-          await recordLoginAttempt({
-            discordId,
-            username: user.name || undefined,
-            email: user.email || undefined,
-            avatar: user.image || undefined,
-            success: false,
-            reason: "Utilisateur non autorisé",
-          });
-
-          return false; // Refuser la connexion
-        } else {
-          // Enregistrer la tentative réussie
-          await recordLoginAttempt({
-            discordId,
-            username: user.name || undefined,
-            email: user.email || undefined,
-            avatar: user.image || undefined,
-            success: true,
-            reason: "Connexion autorisée",
-          });
-        }
-      }
-
-      return true;
-    },
-    async session({ session, user }) {
-      // Ajouter l'ID utilisateur à la session
-      if (session.user) {
-        session.user.id = user.id;
-      }
-      return session;
-    },
-  },
-  events: {
-    async signIn({ user, account }) {
-      // Log des connexions pour debugging
-      console.log(
-        `Connexion: ${user.name} (${user.email}) via ${account?.provider}`
-      );
-    },
-  },
-});
+/**
+ * Où envoyer quelqu'un pour qu'il se déconnecte.
+ *
+ * `global` ferme aussi la session Ascencia ID, donc partout. Sans lui, la
+ * personne quitte Just Tools mais reste connectée à l'IdP — ce qui est le bon
+ * défaut sur un poste partagé avec d'autres applications, et le mauvais sur un
+ * poste public.
+ */
+export function signOutUrl(global = false): string {
+  return `/api/auth/signout${global ? "?global=1" : ""}`;
+}
