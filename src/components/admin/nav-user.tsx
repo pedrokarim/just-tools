@@ -114,15 +114,34 @@ export function NavUser({ user }: { user: AdminChromeUser }) {
 
             <DropdownMenuSeparator />
             {/*
-              Un lien, pas un `onClick` : la déconnexion doit aboutir même si le
-              JavaScript de la page a échoué — c'est précisément le moment où
-              l'on veut pouvoir partir.
+              Un `<a>` et non un `<Link>` : la cible est une route d'API, pas
+              une page. `Link` tente une navigation côté client, va chercher une
+              charge utile React qui n'existe pas, et le clic ne fait rien — ce
+              qui est exactement ce qu'on a constaté.
+
+              Et un lien plutôt qu'un `onClick` : la déconnexion doit aboutir
+              même si le JavaScript de la page a échoué. C'est précisément le
+              moment où l'on veut pouvoir partir.
             */}
             <DropdownMenuItem asChild>
-              <Link href="/api/auth/signout">
+              <a href="/api/auth/signout">
                 <LogOut className="mr-2 h-4 w-4" aria-hidden />
                 Se déconnecter
-              </Link>
+              </a>
+            </DropdownMenuItem>
+
+            {/*
+              Se déconnecter d'ici ne ferme pas la session Ascencia ID : c'est
+              le principe du SSO, et c'est le bon défaut sur un poste à soi.
+              Mais sans cette seconde entrée, on se déconnecte, on reclique
+              « Se connecter », et on rentre **sans qu'on nous demande rien** —
+              ce qui donne l'impression que la déconnexion n'a pas marché.
+            */}
+            <DropdownMenuItem asChild>
+              <a href="/api/auth/signout?global=1">
+                <LogOut className="mr-2 h-4 w-4" aria-hidden />
+                Se déconnecter partout
+              </a>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
