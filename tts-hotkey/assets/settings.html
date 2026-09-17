@@ -670,7 +670,7 @@ kbd {
             <rect width="20" height="16" x="2" y="4" rx="2"/>
           </svg>
         </button>
-        <div class="field-hint" id="hotkeyHint">Cliquez puis composez la combinaison. Au moins un modificateur est requis (Ctrl, Alt, Shift ou Win).</div>
+        <div class="field-hint" id="hotkeyHint"></div>
       </div>
 
       <div class="field">
@@ -1007,7 +1007,12 @@ $("launchModes").innerHTML = LAUNCH_MODES.map((mode) => `
 
 /* --- Capture du raccourci ------------------------------------------------ */
 
+const HOTKEY_HINT =
+  "Cliquez, ou appuyez sur Entrée, puis composez la combinaison. " +
+  "Au moins un modificateur est requis (Ctrl, Alt, Shift ou Win).";
+
 let hotkey = "Ctrl+Alt+S";
+let previousHotkey = hotkey;
 let capturing = false;
 
 /* Traduit `KeyboardEvent.code` vers les noms que le client sait relire. */
@@ -1040,28 +1045,53 @@ function renderHotkey(value, placeholder) {
 
 function setHotkey(value) {
   hotkey = value;
-  renderHotkey(value, false);
+  renderHotkey(value, capturing);
   $("hotkey").classList.remove("invalid");
-  $("hotkeyHint").textContent =
-    "Cliquez puis composez la combinaison. Au moins un modificateur est requis (Ctrl, Alt, Shift ou Win).";
+  if (!capturing) $("hotkeyHint").textContent = HOTKEY_HINT;
 }
 
-$("hotkey").addEventListener("focus", () => {
+/*
+  La capture démarre sur une action délibérée, jamais sur le simple focus :
+  autrement, une combinaison destinée à l'interface (Ctrl+2 pour changer de
+  section) redéfinirait le raccourci à l'insu de l'utilisateur.
+
+  Un <button> émet aussi « click » sur Entrée et Espace : le clavier seul
+  suffit donc à lancer la capture.
+*/
+function startCapture() {
+  if (capturing) return;
   capturing = true;
+  previousHotkey = hotkey;
   $("hotkey").classList.add("capturing");
   renderHotkey(hotkey, true);
-});
+  $("hotkeyHint").textContent =
+    "Composez la combinaison. Échap annule, Suppr efface.";
+}
 
-$("hotkey").addEventListener("blur", () => {
+function stopCapture(restore) {
+  if (!capturing) return;
   capturing = false;
+  if (restore) hotkey = previousHotkey;
   $("hotkey").classList.remove("capturing");
   renderHotkey(hotkey, false);
-});
+  $("hotkeyHint").textContent = HOTKEY_HINT;
+}
+
+$("hotkey").addEventListener("click", startCapture);
+$("hotkey").addEventListener("blur", () => stopCapture(false));
 
 $("hotkey").addEventListener("keydown", (event) => {
   if (!capturing) return;
   event.preventDefault();
   event.stopPropagation();
+
+  // Échap rend la combinaison précédente : une capture lancée par erreur ne
+  // doit rien coûter.
+  if (event.key === "Escape") {
+    stopCapture(true);
+    $("hotkey").blur();
+    return;
+  }
 
   // Un modificateur seul ne forme pas encore un raccourci.
   if (["Control", "Alt", "Shift", "Meta"].includes(event.key)) return;
@@ -1093,6 +1123,11 @@ $("hotkey").addEventListener("keydown", (event) => {
 
   parts.push(name);
   setHotkey(parts.join("+"));
+
+  // La combinaison est complète : on sort du mode capture, sinon les frappes
+  // suivantes continueraient de la réécrire.
+  stopCapture(false);
+  $("hotkey").blur();
 });
 
 /* --- Champs -------------------------------------------------------------- */
@@ -1347,6 +1382,8 @@ document.addEventListener("keydown", (event) => {
     send({ type: "cancel" });
   }
 });
+
+$("hotkeyHint").textContent = HOTKEY_HINT;
 
 send({ type: "ready" });
 </script>
