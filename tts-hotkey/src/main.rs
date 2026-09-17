@@ -10,15 +10,17 @@
 mod autostart;
 mod clipboard;
 mod config;
+mod install;
 mod launcher;
 mod logging;
+mod settings;
 mod url;
 
 use std::sync::{Arc, Mutex};
 
 use anyhow::{Context, Result, anyhow};
 use tray_icon::menu::{CheckMenuItem, Menu, MenuEvent, MenuItem, PredefinedMenuItem};
-use tray_icon::{TrayIcon, TrayIconBuilder};
+use tray_icon::{MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent};
 use windows::Win32::Foundation::HWND;
 use windows::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole};
 // MessageBeep est exposé par windows-rs sous Diagnostics::Debug.
@@ -43,6 +45,8 @@ fn main() {
     }
 
     logging::rotate_if_needed();
+    // Une mise à jour précédente a pu laisser l'ancien binaire à côté du neuf.
+    install::cleanup_previous();
 
     if let Err(error) = run() {
         let message = format!("{error:#}");
@@ -102,6 +106,36 @@ fn run() -> Result<()> {
             println!("{}", config::config_path()?.display());
             Ok(())
         }
+        Some("--settings" | "--config") => {
+            // Ouverture directe de la fenêtre, sans mode résident : utile
+            // depuis un raccourci ou pour reconfigurer sans lancer le reste.
+            let config = load_config()?;
+            match settings::open(&config)? {
+                settings::Outcome::Saved(_) => println!("Réglages enregistrés."),
+                settings::Outcome::Cancelled | settings::Outcome::Quit => {}
+            }
+            Ok(())
+        }
+        Some("--install") => {
+            let path = install::install()?;
+            // L'entrée de démarrage doit suivre le binaire installé.
+            if autostart::is_enabled() {
+                autostart::enable()?;
+            }
+            println!("Installé : {}", path.display());
+            println!("Raccourci ajouté au menu Démarrer.");
+            Ok(())
+        }
+        Some("--uninstall") => {
+            match install::uninstall()? {
+                install::Removal::NothingToDo => println!("Rien à désinstaller."),
+                install::Removal::Removed => println!("Désinstallation terminée."),
+                install::Removal::Deferred => {
+                    println!("Désinstallation planifiée : les fichiers seront retirés sous peu.");
+                }
+            }
+            Ok(())
+        }
         Some("--install-autostart") => {
             autostart::enable()?;
             println!("Démarrage automatique activé.");
@@ -126,6 +160,9 @@ Sans argument, le programme s'installe dans la zone de notification et
 enregistre le raccourci défini dans sa configuration.
 
 Options :
+  --settings              Ouvre la fenêtre de configuration, puis quitte
+  --install               Installe le programme et l'ajoute au menu Démarrer
+  --uninstall             Retire l'installation, le raccourci et le démarrage
   --once                  Envoie le presse-papiers immédiatement, puis quitte
   --text <texte>          Envoie un texte précis, puis quitte
   --print-url [texte]     Affiche l'URL qui serait ouverte (diagnostic)
@@ -138,12 +175,21 @@ Options :
 }
 
 fn load_config() -> Result<Config> {
+    Ok(load_config_detecting_first_run()?.0)
+}
+
+/// Charge la configuration en signalant s'il s'agit de la toute première
+/// exécution : c'est le moment d'ouvrir la fenêtre de configuration, sans quoi
+/// l'utilisateur ne découvre jamais les réglages ni le démarrage automatique.
+fn load_config_detecting_first_run() -> Result<(Config, bool)> {
+    let first_run = !config::config_path()?.exists();
+
     // À la première exécution, pré-remplir la PWA Just Tools si elle est déjà
     // installée dans Edge.
-    let detected = if config::config_path()?.exists() {
-        None
-    } else {
+    let detected = if first_run {
         launcher::detect_just_tools_app()
+    } else {
+        None
     };
 
     if let Some(app) = &detected {
@@ -155,7 +201,9 @@ fn load_config() -> Result<Config> {
         );
     }
 
-    Config::load_or_create(detected.map(|app| (app.id, app.profile)))
+    let config = Config::load_or_create(detected.map(|app| (app.id, app.profile)))?;
+
+    Ok((config, first_run))
 }
 
 /// Envoie un texte déjà connu vers l'outil.
@@ -190,7 +238,7 @@ fn send_text(config: &Config, text: &str) -> Option<std::thread::JoinHandle<()>>
 
 /// Déclenchement : lecture du presse-papiers puis envoi.
 #[must_use]
-fn trigger(config: &Config) -> Option<std::thread::JoinHandle<()>> {
+pub(crate) fn trigger(config: &Config) -> Option<std::thread::JoinHandle<()>> {
     if config.beep {
         unsafe {
             let _ = MessageBeep(MB_OK);
@@ -252,6 +300,7 @@ fn load_tray_icon() -> Result<tray_icon::Icon> {
 struct TrayMenu {
     _tray: TrayIcon,
     speak: MenuItem,
+    settings: MenuItem,
     open_config: MenuItem,
     reload: MenuItem,
     open_log: MenuItem,
@@ -265,7 +314,8 @@ fn build_tray(hotkey_label: &str) -> Result<TrayMenu> {
         true,
         None,
     );
-    let open_config = MenuItem::new("Ouvrir la configuration", true, None);
+    let settings = MenuItem::new("Configuration…", true, None);
+    let open_config = MenuItem::new("Ouvrir le fichier de configuration", true, None);
     let reload = MenuItem::new("Recharger la configuration", true, None);
     let open_log = MenuItem::new("Ouvrir le journal", true, None);
     let autostart_item =
@@ -274,10 +324,11 @@ fn build_tray(hotkey_label: &str) -> Result<TrayMenu> {
 
     let menu = Menu::new();
     menu.append_items(&[
+        &settings,
         &speak,
         &PredefinedMenuItem::separator(),
-        &open_config,
         &reload,
+        &open_config,
         &open_log,
         &PredefinedMenuItem::separator(),
         &autostart_item,
@@ -288,15 +339,21 @@ fn build_tray(hotkey_label: &str) -> Result<TrayMenu> {
 
     let tray = TrayIconBuilder::new()
         .with_menu(Box::new(menu))
-        .with_tooltip(format!("Just Tools — synthèse vocale ({hotkey_label})"))
+        .with_tooltip(format!(
+            "Synthèse vocale (Just Tools)
+{hotkey_label} : lire le presse-papiers"
+        ))
         .with_icon(load_tray_icon()?)
-        .with_menu_on_left_click(true)
+        // Convention Windows : le clic gauche déclenche l'action principale,
+        // le clic droit ouvre le menu.
+        .with_menu_on_left_click(false)
         .build()
         .context("création de l'icône de la zone de notification")?;
 
     Ok(TrayMenu {
         _tray: tray,
         speak,
+        settings,
         open_config,
         reload,
         open_log,
@@ -306,7 +363,8 @@ fn build_tray(hotkey_label: &str) -> Result<TrayMenu> {
 }
 
 fn run_tray() -> Result<()> {
-    let config = Arc::new(Mutex::new(load_config()?));
+    let (initial, first_run) = load_config_detecting_first_run()?;
+    let config = Arc::new(Mutex::new(initial));
 
     let hotkey_label = {
         let guard = config.lock().unwrap();
@@ -317,7 +375,18 @@ fn run_tray() -> Result<()> {
     log_line!("démarré, raccourci actif : {hotkey_label}");
 
     let menu_events = MenuEvent::receiver();
+    let tray_events = TrayIconEvent::receiver();
     let mut message = MSG::default();
+
+    // Première exécution : la fenêtre se montre d'elle-même. C'est le seul
+    // moment où l'on est certain que l'utilisateur voit les réglages, et donc
+    // l'option de démarrage automatique.
+    if first_run {
+        log_line!("première exécution : ouverture de la fenêtre de configuration");
+        if open_settings(&config, &tray)? {
+            return Ok(());
+        }
+    }
 
     loop {
         let result = unsafe { GetMessageW(&mut message, None, 0, 0) };
@@ -337,12 +406,30 @@ fn run_tray() -> Result<()> {
             DispatchMessageW(&message);
         }
 
+        // Un clic gauche sur l'icône ouvre la configuration : sans cela, rien
+        // n'indique que le programme a des réglages.
+        while let Ok(event) = tray_events.try_recv() {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+                && open_settings(&config, &tray)?
+            {
+                break;
+            }
+        }
+
         // Les clics de menu sont livrés par un canal, alimenté pendant le
         // traitement des messages ci-dessus.
         while let Ok(event) = menu_events.try_recv() {
             if event.id == *tray.speak.id() {
                 let current = config.lock().unwrap().clone();
                 drop(trigger(&current));
+            } else if event.id == *tray.settings.id() {
+                if open_settings(&config, &tray)? {
+                    break;
+                }
             } else if event.id == *tray.open_config.id() {
                 open_path(config::config_path());
             } else if event.id == *tray.reload.id() {
@@ -380,6 +467,73 @@ fn run_tray() -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Ouvre la fenêtre de configuration et applique son résultat.
+///
+/// Le raccourci global est libéré le temps de la fenêtre : il doit pouvoir être
+/// capturé au clavier, et une frappe destinée au champ de saisie ne doit pas
+/// déclencher une lecture.
+///
+/// Retourne `true` si le programme doit s'arrêter.
+fn open_settings(config: &Arc<Mutex<Config>>, tray: &TrayMenu) -> Result<bool> {
+    unsafe {
+        let _ = UnregisterHotKey(None, HOTKEY_ID);
+    }
+
+    let current = config.lock().unwrap().clone();
+    let outcome = settings::open(&current);
+
+    // Quoi qu'il arrive, le raccourci doit être rétabli avant de continuer.
+    let restore = |spec: &str| match register_hotkey(spec) {
+        Ok(label) => {
+            tray.speak
+                .set_text(format!("Lire le presse-papiers ({label})"));
+            Some(label)
+        }
+        Err(error) => {
+            log_line!("raccourci non rétabli : {error:#}");
+            show_error(&format!("{error:#}"));
+            None
+        }
+    };
+
+    match outcome {
+        Ok(settings::Outcome::Saved(updated)) => {
+            let previous = current.hotkey.clone();
+
+            if restore(&updated.hotkey).is_none() {
+                // Le nouveau raccourci est refusé : conserver l'ancien plutôt
+                // que de rester sans rien.
+                restore(&previous);
+                *config.lock().unwrap() = Config {
+                    hotkey: previous,
+                    ..*updated
+                };
+            } else {
+                *config.lock().unwrap() = *updated;
+            }
+
+            tray.autostart.set_checked(autostart::is_enabled());
+            log_line!("configuration enregistrée depuis la fenêtre");
+            Ok(false)
+        }
+        Ok(settings::Outcome::Quit) => {
+            log_line!("arrêt après désinstallation");
+            unsafe { PostQuitMessage(0) };
+            Ok(true)
+        }
+        Ok(settings::Outcome::Cancelled) => {
+            restore(&current.hotkey);
+            Ok(false)
+        }
+        Err(error) => {
+            restore(&current.hotkey);
+            log_line!("fenêtre de configuration indisponible : {error:#}");
+            show_error(&format!("{error:#}"));
+            Ok(false)
+        }
+    }
 }
 
 fn open_path(path: Result<std::path::PathBuf>) {

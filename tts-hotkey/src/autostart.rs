@@ -7,9 +7,22 @@ use winreg::enums::{HKEY_CURRENT_USER, KEY_READ, KEY_WRITE};
 const RUN_KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
 const VALUE_NAME: &str = "just-tools-tts-hotkey";
 
+/// Commande inscrite au démarrage.
+///
+/// On privilégie la copie installée : une entrée pointant vers
+/// `target\release\tts-hotkey.exe` devient orpheline au premier `cargo clean`.
 fn executable() -> Result<String> {
-    let path = std::env::current_exe().context("chemin de l'exécutable introuvable")?;
+    let path = crate::install::preferred_executable()
+        .context("chemin de l'exécutable introuvable")?;
     Ok(format!("\"{}\"", path.display()))
+}
+
+/// Chemin actuellement inscrit au démarrage, s'il existe.
+pub fn registered_target() -> Option<String> {
+    RegKey::predef(HKEY_CURRENT_USER)
+        .open_subkey_with_flags(RUN_KEY, KEY_READ)
+        .and_then(|key| key.get_value::<String, _>(VALUE_NAME))
+        .ok()
 }
 
 pub fn is_enabled() -> bool {

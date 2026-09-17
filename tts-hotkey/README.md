@@ -9,6 +9,9 @@ lecture tout seul.
 Ctrl+Alt+S  →  presse-papiers  →  base64url  →  Edge  →  /tools/text-to-speech?b64=…&autoplay=1
 ```
 
+Tout se règle dans une fenêtre de configuration : raccourci, voix, démarrage
+avec Windows et installation. Voir **Fenêtre de configuration** plus bas.
+
 ## Compilation
 
 ```sh
@@ -17,8 +20,30 @@ cargo build --release
 # binaire : target/release/tts-hotkey.exe
 ```
 
-Le binaire est autonome (icône embarquée, aucune DLL à côté). Copiez-le où vous
-voulez, par exemple `%LOCALAPPDATA%\Programs\tts-hotkey\`.
+Le binaire est autonome : icône, manifeste et interface de configuration y sont
+embarqués, aucune DLL à côté.
+
+## Installation
+
+```sh
+.\tts-hotkey.exe --install
+```
+
+Ou, depuis l'interface : **Démarrage → Installer**.
+
+L'installation ne demande aucun privilège administrateur. Elle :
+
+1. copie le binaire dans `%LOCALAPPDATA%\Programs\tts-hotkey\` ;
+2. crée **Synthèse vocale (Just Tools)** dans le menu Démarrer, où la recherche
+   Windows le trouve.
+
+`--uninstall` défait exactement cela, et retire l'entrée de démarrage. La
+configuration et le journal sont conservés : ils vivent dans
+`%APPDATA%\just-tools\` et représentent votre travail.
+
+> Le démarrage automatique vise toujours la **copie installée**. Sans
+> installation il pointerait vers `target\release\`, que le premier
+> `cargo clean` fait disparaître.
 
 ## Premier lancement
 
@@ -26,8 +51,9 @@ voulez, par exemple `%LOCALAPPDATA%\Programs\tts-hotkey\`.
 .\tts-hotkey.exe
 ```
 
-Une icône apparaît dans la zone de notification. Le fichier de configuration est
-créé au premier démarrage dans :
+La fenêtre de configuration s'ouvre d'elle-même la première fois : c'est le seul
+moment où l'on est certain que les réglages, et donc le démarrage automatique,
+sont vus. Le fichier de configuration est créé au même instant dans :
 
 ```
 %APPDATA%\just-tools\tts-hotkey.toml
@@ -36,16 +62,43 @@ créé au premier démarrage dans :
 Si la PWA Just Tools est déjà installée dans Edge, son `app_id` et son profil y
 sont pré-remplis automatiquement.
 
-Pour démarrer avec Windows : menu de l'icône → **Démarrer avec Windows**
-(ou `tts-hotkey.exe --install-autostart`).
+Une icône reste ensuite dans la zone de notification.
+
+> **L'icône est introuvable ?** Windows 11 masque par défaut les nouvelles
+> icônes dans le débordement, derrière le chevron `^` de la barre des tâches.
+> Faites-la glisser dans la zone visible, ou passez par *Paramètres →
+> Personnalisation → Barre des tâches → Autres icônes de la barre d'état
+> système*.
+
+## Fenêtre de configuration
+
+Elle s'ouvre par un **clic gauche sur l'icône**, par le menu (clic droit →
+**Configuration…**), ou par `tts-hotkey.exe --settings`.
+
+L'interface est une page rendue par WebView2, le moteur qui accompagne Edge –
+déjà requis par ailleurs. Elle suit le thème clair ou sombre de Windows.
+
+| Section | Contenu |
+| --- | --- |
+| Général | Raccourci (capturé au clavier), adresse du site, mode d'ouverture, PWA, profil et navigateur |
+| Lecture | Lecture automatique, mode lecteur, débit, hauteur, volume, voix, langue, traitement du texte |
+| Démarrage | Démarrage automatique et installation, avec leur état réel |
+| Avancé | Déblocage de la lecture automatique, bip, accès au fichier et au journal |
+
+**Tester maintenant** envoie le presse-papiers avec les réglages en cours
+d'édition, sans les enregistrer.
+
+Navigation au clavier : `Ctrl+1` à `Ctrl+4` entre les sections, `Échap` pour
+annuler.
 
 ## Menu de l'icône
 
 | Entrée | Effet |
 | --- | --- |
+| Configuration… | Ouvre la fenêtre de réglages |
 | Lire le presse-papiers | Déclenche l'envoi sans passer par le raccourci |
-| Ouvrir la configuration | Ouvre le fichier TOML dans l'éditeur associé |
-| Recharger la configuration | Applique le fichier sans redémarrer (réenregistre le raccourci si besoin) |
+| Recharger la configuration | Applique le fichier TOML sans redémarrer (réenregistre le raccourci si besoin) |
+| Ouvrir le fichier de configuration | Ouvre le TOML dans l'éditeur associé |
 | Ouvrir le journal | `%APPDATA%\just-tools\tts-hotkey.log` |
 | Démarrer avec Windows | Bascule l'entrée de démarrage automatique |
 | Quitter | Libère le raccourci et ferme |
@@ -55,6 +108,8 @@ Pour démarrer avec Windows : menu de l'icône → **Démarrer avec Windows**
 | Option | Effet |
 | --- | --- |
 | *(aucune)* | Mode résident : icône + raccourci global |
+| `--settings` | Ouvre la fenêtre de configuration puis quitte |
+| `--install` / `--uninstall` | Installation locale et raccourci du menu Démarrer |
 | `--once` | Envoie le presse-papiers immédiatement puis quitte |
 | `--text "…"` | Envoie un texte précis puis quitte |
 | `--print-url ["…"]` | Affiche l'URL qui serait ouverte, sans rien lancer |
@@ -67,6 +122,10 @@ Pour démarrer avec Windows : menu de l'icône → **Démarrer avec Windows**
 exactement ce qui serait envoyé, sans ouvrir de fenêtre.
 
 ## Configuration
+
+Le fichier est réécrit par la fenêtre de configuration, commentaires compris. Il
+reste modifiable à la main : utilisez ensuite **Recharger la configuration**
+dans le menu de l'icône.
 
 ```toml
 base_url = "https://just-tools.ascencia.re"
@@ -142,14 +201,40 @@ Ordre de robustesse, du meilleur au pire :
   commutateurs `--app=` et `--app-id=` sont les mêmes.
 - **Fenêtre par déclenchement** en mode `app` : chaque appui ouvre une fenêtre.
   Passez en `pwa` pour n'en avoir qu'une.
+- **WebView2 requis** pour la fenêtre de configuration. Il accompagne Edge et
+  est présent d'office sur Windows 11 ; le raccourci, lui, fonctionne sans.
+- **Raccourci confisqué** : certaines combinaisons `Win+…` sont réservées par
+  le système (`Win+L` verrouille la session) et n'atteignent jamais un
+  programme, quel qu'il soit.
 
 ## Développement
 
 ```sh
-cargo test          # analyse du raccourci, préparation du texte, construction d'URL
+cargo test          # analyse du raccourci, préparation du texte, rendu du TOML, URL
 cargo clippy
 cargo run -- --print-url "Bonjour"
+cargo run -- --settings      # fenêtre de configuration seule
 ```
 
 En profil `debug`, le binaire garde une console (journal visible directement).
 En `release`, il est fenêtré et journalise uniquement dans le fichier.
+
+### Organisation
+
+| Fichier | Rôle |
+| --- | --- |
+| `src/main.rs` | Boucle de messages, raccourci global, zone de notification |
+| `src/settings.rs` | Fenêtre hôte Win32 et pont vers la page de configuration |
+| `assets/settings.html` | L'interface : structure, styles et comportement |
+| `src/install.rs` | Copie locale, raccourci du menu Démarrer, désinstallation |
+| `src/config.rs` | Lecture, écriture et rendu commenté du TOML |
+| `build.rs` | Icône, manifeste et métadonnées embarqués dans l'exécutable |
+
+L'interface dialogue avec l'hôte par messages : la page émet
+`postMessage({type, …})`, l'hôte répond en appelant `window.host.*`. Ajouter un
+réglage demande donc trois points de contact – le champ dans la page, sa lecture
+dans `collect()`, et son écriture dans `Config`.
+
+Le manifeste (`assets/tts-hotkey.manifest`) déclare la prise en charge de la
+densité d'écran et les contrôles communs ; sans lui, la fenêtre est floue sur un
+écran à forte densité.

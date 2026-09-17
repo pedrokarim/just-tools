@@ -1,0 +1,1354 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="light dark" />
+<title>Synthèse vocale</title>
+<style>
+/*
+  Palette reprise de l'icône du client : dégradé indigo, unique dans la famille
+  Just Tools pour que la fenêtre ne soit pas confondue avec le navigateur
+  qu'elle pilote. Le thème suit Windows : l'hôte pose `data-theme` sur <html>,
+  la requête de média sert de repli.
+*/
+:root {
+  --accent: #4f46e5;
+  --accent-soft: #818cf8;
+  --accent-contrast: #ffffff;
+
+  --bg: #f7f7fb;
+  --surface: #ffffff;
+  --surface-alt: #f1f2f7;
+  --sidebar: #ffffff;
+  --border: #e4e4ed;
+  --border-strong: #d0d0dd;
+
+  --text: #1a1a23;
+  --text-soft: #5c5c6e;
+  --text-faint: #8a8a9c;
+
+  --danger: #dc2626;
+  --success: #059669;
+
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow: 0 1px 2px rgb(16 16 32 / 6%), 0 8px 24px rgb(16 16 32 / 8%);
+  --ring: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14141b;
+    --surface: #1c1c25;
+    --surface-alt: #23232e;
+    --sidebar: #181820;
+    --border: #2c2c39;
+    --border-strong: #3a3a4a;
+
+    --text: #edeef4;
+    --text-soft: #a8a9bb;
+    --text-faint: #7c7d92;
+
+    --accent: #6366f1;
+    --accent-soft: #a5b4fc;
+    --danger: #f87171;
+    --success: #34d399;
+    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 35%);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #14141b;
+  --surface: #1c1c25;
+  --surface-alt: #23232e;
+  --sidebar: #181820;
+  --border: #2c2c39;
+  --border-strong: #3a3a4a;
+
+  --text: #edeef4;
+  --text-soft: #a8a9bb;
+  --text-faint: #7c7d92;
+
+  --accent: #6366f1;
+  --accent-soft: #a5b4fc;
+  --danger: #f87171;
+  --success: #34d399;
+  --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 35%);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.45;
+  /* Le contenu est piloté au clavier et à la souris, jamais sélectionné. */
+  user-select: none;
+  cursor: default;
+}
+
+svg { flex: none; }
+
+/* --- Barre latérale ------------------------------------------------------ */
+
+.sidebar {
+  width: 196px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  gap: 4px;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 16px;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent-soft), var(--accent));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.brand-text { min-width: 0; }
+.brand-title {
+  font-weight: 600;
+  font-size: 13.5px;
+  letter-spacing: -0.01em;
+}
+.brand-sub {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-soft);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.nav-item:hover { background: var(--surface-alt); color: var(--text); }
+.nav-item:focus-visible { outline: none; box-shadow: var(--ring); }
+
+.nav-item[aria-selected="true"] {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.nav-spacer { flex: 1; }
+
+.hotkey-badge {
+  margin: 0 2px;
+  padding: 9px 10px;
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+.hotkey-badge-label {
+  font-size: 11px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.hotkey-badge-value {
+  margin-top: 3px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* --- Contenu ------------------------------------------------------------- */
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 28px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.page { display: none; animation: rise 180ms ease; }
+.page.active { display: block; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page { animation: none; }
+  * { transition: none !important; }
+}
+
+.page-title {
+  margin: 0 0 2px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.page-lede {
+  margin: 0 0 20px;
+  color: var(--text-soft);
+  font-size: 12.5px;
+  max-width: 52ch;
+}
+
+.field { margin-bottom: 16px; }
+
+.field-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.field-hint {
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  max-width: 56ch;
+}
+
+input[type="text"], input[type="number"], select {
+  width: 100%;
+  padding: 8px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  user-select: text;
+  cursor: text;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+input::placeholder { color: var(--text-faint); }
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--ring);
+}
+
+input.invalid { border-color: var(--danger); }
+
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; min-width: 0; }
+
+.with-button { display: flex; gap: 8px; }
+.with-button input { flex: 1; min-width: 0; }
+
+/* --- Capture du raccourci ------------------------------------------------ */
+
+.hotkey {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.hotkey:focus { outline: none; border-color: var(--accent); box-shadow: var(--ring); }
+.hotkey.capturing {
+  border-color: var(--accent);
+  box-shadow: var(--ring);
+  color: var(--text-faint);
+  font-style: italic;
+}
+.hotkey.invalid { border-color: var(--danger); }
+.hotkey svg { color: var(--text-faint); }
+
+.keys { display: flex; align-items: center; gap: 4px; flex: 1; }
+
+kbd {
+  display: inline-block;
+  min-width: 22px;
+  padding: 2px 7px;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.keys .plus { color: var(--text-faint); font-size: 11px; }
+
+/* --- Choix de mode ------------------------------------------------------- */
+
+.choices { display: grid; gap: 8px; }
+
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.choice:hover { border-color: var(--border-strong); }
+
+.choice input { position: absolute; opacity: 0; pointer-events: none; }
+
+.choice-dot {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  flex: none;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 50%;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.choice:has(input:checked) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.choice:has(input:checked) .choice-dot {
+  border-color: var(--accent);
+  border-width: 5px;
+}
+
+.choice:has(input:focus-visible) { box-shadow: var(--ring); }
+
+.choice-body { min-width: 0; }
+.choice-title { display: block; font-weight: 600; font-size: 12.5px; }
+.choice-desc { display: block; color: var(--text-soft); font-size: 11.5px; }
+
+/* --- Interrupteurs ------------------------------------------------------- */
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+
+.toggle:last-of-type { border-bottom: 0; }
+.toggle input { position: absolute; opacity: 0; pointer-events: none; }
+
+.toggle-text { flex: 1; min-width: 0; }
+.toggle-title { display: block; font-size: 12.5px; font-weight: 600; }
+.toggle-desc { display: block; color: var(--text-soft); font-size: 11.5px; }
+
+.track {
+  width: 38px;
+  height: 21px;
+  flex: none;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  transition: background 160ms ease;
+}
+
+.thumb {
+  /* Un <span> inline ignorerait width et height. */
+  display: block;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+  transition: transform 160ms cubic-bezier(.2,.9,.3,1);
+}
+
+.toggle input:checked + .track { background: var(--accent); }
+.toggle input:checked + .track .thumb { transform: translateX(17px); }
+.toggle input:focus-visible + .track { box-shadow: var(--ring); }
+
+/* --- Cartes -------------------------------------------------------------- */
+
+.card {
+  padding: 15px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 9px;
+}
+
+.card-title { font-weight: 600; font-size: 13px; }
+
+.card-icon {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}
+
+.status {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-soft);
+  margin-bottom: 4px;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--text-faint);
+  transform: translateY(-1px);
+}
+
+.status.ok .status-dot { background: var(--success); }
+.status.off .status-dot { background: var(--text-faint); }
+
+.path {
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-faint);
+  word-break: break-all;
+  user-select: text;
+}
+
+.card-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+/* --- Boutons ------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  font-size: 12.5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms ease, border-color 120ms ease, transform 80ms ease;
+}
+
+.btn:hover { background: var(--surface-alt); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: none; box-shadow: var(--ring); }
+.btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+.btn:disabled:hover { background: var(--surface); }
+
+.btn-primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent-soft), var(--accent));
+  color: var(--accent-contrast);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.btn-primary:hover { filter: brightness(1.07); background: linear-gradient(135deg, var(--accent-soft), var(--accent)); }
+
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
+
+.btn-ghost { border-color: transparent; background: transparent; }
+.btn-ghost:hover { background: var(--surface-alt); }
+
+/* --- Pied de fenêtre ----------------------------------------------------- */
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 28px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.footer-spacer { flex: 1; }
+
+/* --- Notifications ------------------------------------------------------- */
+
+.toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 68px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  max-width: 340px;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  font-size: 12px;
+  animation: slide 200ms ease;
+}
+
+.toast.error { border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
+.toast.error .toast-icon { color: var(--danger); }
+.toast.success .toast-icon { color: var(--success); }
+.toast-icon { color: var(--accent); margin-top: 1px; }
+.toast-body { white-space: pre-wrap; user-select: text; }
+
+@keyframes slide {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* --- Boîte de confirmation ---------------------------------------------- */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: 24px;
+  background: rgb(10 10 16 / 45%);
+  backdrop-filter: blur(2px);
+  z-index: 20;
+}
+.backdrop.open { display: grid; }
+
+.modal {
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  animation: rise 160ms ease;
+}
+
+.modal-title { font-weight: 600; font-size: 14px; margin-bottom: 7px; }
+.modal-body { color: var(--text-soft); font-size: 12.5px; white-space: pre-wrap; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" fill="currentColor"/>
+        <path d="M16 9a5 5 0 0 1 0 6"/>
+        <path d="M19.364 18.364a9 9 0 0 0 0-12.728"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <div class="brand-title">Synthèse vocale</div>
+      <div class="brand-sub">Just Tools</div>
+    </div>
+  </div>
+
+  <button class="nav-item" data-page="general" aria-selected="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/>
+      <line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/>
+      <line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/>
+      <line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/>
+    </svg>
+    Général
+  </button>
+
+  <button class="nav-item" data-page="speech">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/>
+      <path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/>
+    </svg>
+    Lecture
+  </button>
+
+  <button class="nav-item" data-page="startup">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>
+    </svg>
+    Démarrage
+  </button>
+
+  <button class="nav-item" data-page="advanced">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/>
+    </svg>
+    Avancé
+  </button>
+
+  <div class="nav-spacer"></div>
+
+  <div class="hotkey-badge">
+    <div class="hotkey-badge-label">Raccourci actif</div>
+    <div class="hotkey-badge-value" id="badge">Ctrl+Alt+S</div>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="scroll">
+
+    <!-- Général -->
+    <section class="page active" id="page-general">
+      <h1 class="page-title">Général</h1>
+      <p class="page-lede">Le raccourci envoie le presse-papiers vers la synthèse vocale de Just Tools, qui démarre la lecture toute seule.</p>
+
+      <div class="field">
+        <label class="field-label" for="hotkey">Raccourci global</label>
+        <button class="hotkey" id="hotkey" type="button">
+          <span class="keys" id="hotkeyKeys"></span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 8h.01"/><path d="M12 12h.01"/><path d="M14 8h.01"/><path d="M16 12h.01"/>
+            <path d="M18 8h.01"/><path d="M6 8h.01"/><path d="M7 16h10"/><path d="M8 12h.01"/>
+            <rect width="20" height="16" x="2" y="4" rx="2"/>
+          </svg>
+        </button>
+        <div class="field-hint" id="hotkeyHint">Cliquez puis composez la combinaison. Au moins un modificateur est requis (Ctrl, Alt, Shift ou Win).</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="baseUrl">Adresse du site</label>
+        <input type="text" id="baseUrl" spellcheck="false" />
+      </div>
+
+      <div class="field">
+        <span class="field-label">Mode d'ouverture</span>
+        <div class="choices" id="launchModes"></div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="appId">Identifiant de la PWA</label>
+        <div class="with-button">
+          <input type="text" id="appId" spellcheck="false" placeholder="Détection automatique" />
+          <button class="btn" id="detectApp" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+              <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+              <circle cx="12" cy="12" r="3"/><path d="m16 16-1.9-1.9"/>
+            </svg>
+            Détecter
+          </button>
+        </div>
+        <div class="field-hint">Requis par le mode « PWA installée », qui réutilise la fenêtre déjà ouverte.</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="profile">Profil Edge</label>
+        <input type="text" id="profile" spellcheck="false" placeholder="Default" />
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="edgePath">Chemin de msedge.exe</label>
+        <div class="with-button">
+          <input type="text" id="edgePath" spellcheck="false" placeholder="Détection automatique" />
+          <button class="btn" id="browseEdge" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/>
+            </svg>
+            Parcourir
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lecture -->
+    <section class="page" id="page-speech">
+      <h1 class="page-title">Lecture</h1>
+      <p class="page-lede">Réglages transmis à la page de synthèse vocale. Les champs laissés vides gardent les valeurs par défaut de la voix du système.</p>
+
+      <div class="card">
+        <label class="toggle">
+          <input type="checkbox" id="autoplay" />
+          <span class="track"><span class="thumb"></span></span>
+          <span class="toggle-text">
+            <span class="toggle-title">Démarrer la lecture dès l'ouverture</span>
+            <span class="toggle-desc">Sans cela, il faut appuyer sur Lecture dans la page.</span>
+          </span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="readerMode" />
+          <span class="track"><span class="thumb"></span></span>
+          <span class="toggle-text">
+            <span class="toggle-title">Interface « lecteur » épurée</span>
+            <span class="toggle-desc">Masque le reste de l'outil pendant l'écoute.</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label class="field-label" for="rate">Débit</label>
+          <input type="text" id="rate" inputmode="decimal" placeholder="1,0" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="pitch">Hauteur</label>
+          <input type="text" id="pitch" inputmode="decimal" placeholder="1,0" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="volume">Volume</label>
+          <input type="text" id="volume" inputmode="decimal" placeholder="1,0" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label class="field-label" for="voice">Voix</label>
+          <input type="text" id="voice" spellcheck="false" placeholder="Voix par défaut" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="lang">Langue</label>
+          <input type="text" id="lang" spellcheck="false" placeholder="fr-FR" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="maxChars">Longueur maximale</label>
+        <input type="text" id="maxChars" inputmode="numeric" />
+        <div class="field-hint">Au-delà, le texte est tronqué. La ligne de commande Windows est limitée à 32 767 caractères.</div>
+      </div>
+
+      <div class="card">
+        <label class="toggle">
+          <input type="checkbox" id="collapse" />
+          <span class="track"><span class="thumb"></span></span>
+          <span class="toggle-text">
+            <span class="toggle-title">Aplatir les espaces et retours à la ligne</span>
+            <span class="toggle-desc">Utile après une copie depuis un PDF ou un OCR.</span>
+          </span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="dehyphenate" />
+          <span class="track"><span class="thumb"></span></span>
+          <span class="toggle-text">
+            <span class="toggle-title">Recoller les mots coupés en fin de ligne</span>
+            <span class="toggle-desc">« exem-⏎ple » devient « exemple ».</span>
+          </span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Démarrage -->
+    <section class="page" id="page-startup">
+      <h1 class="page-title">Démarrage</h1>
+      <p class="page-lede">Le programme reste dans la zone de notification et n'agit qu'au raccourci. Pour qu'il soit disponible en permanence, laissez Windows le lancer à l'ouverture de session.</p>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>
+            </svg>
+          </div>
+          <div class="card-title">Démarrage automatique</div>
+        </div>
+
+        <label class="toggle">
+          <input type="checkbox" id="autostart" />
+          <span class="track"><span class="thumb"></span></span>
+          <span class="toggle-text">
+            <span class="toggle-title">Lancer à l'ouverture de session</span>
+            <span class="toggle-desc">Ajoute une entrée dans le registre de l'utilisateur, sans droits administrateur.</span>
+          </span>
+        </label>
+
+        <div class="status" id="autostartStatus" style="margin-top:10px">
+          <span class="status-dot"></span><span class="status-text">—</span>
+        </div>
+        <div class="path" id="autostartPath"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>
+            </svg>
+          </div>
+          <div class="card-title">Installation</div>
+        </div>
+
+        <div class="status" id="installStatus">
+          <span class="status-dot"></span><span class="status-text">—</span>
+        </div>
+        <div class="path" id="installPath"></div>
+        <div class="field-hint" id="shortcutNote" style="margin-top:6px"></div>
+
+        <div class="field-hint" style="margin-top:9px">
+          L'installation copie le programme à un emplacement stable et l'ajoute au menu Démarrer, où la recherche Windows le trouve.
+        </div>
+
+        <div class="card-actions">
+          <button class="btn btn-primary" id="install" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>
+            </svg>
+            <span id="installLabel">Installer</span>
+          </button>
+          <button class="btn btn-danger" id="uninstall" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 11v6"/><path d="M14 11v6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/>
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            Désinstaller
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Avancé -->
+    <section class="page" id="page-advanced">
+      <h1 class="page-title">Avancé</h1>
+      <p class="page-lede">Chromium refuse de parler tant que la page n'a reçu aucune interaction. Après le lancement, le programme met la fenêtre au premier plan et envoie une frappe F24, que le navigateur compte comme geste utilisateur.</p>
+
+      <div class="card">
+        <label class="toggle">
+          <input type="checkbox" id="focusWindow" />
+          <span class="track"><span class="thumb"></span></span>
+          <span class="toggle-text">
+            <span class="toggle-title">Mettre la fenêtre au premier plan</span>
+            <span class="toggle-desc">Nécessaire pour que la frappe atteigne la page.</span>
+          </span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="activationKey" />
+          <span class="track"><span class="thumb"></span></span>
+          <span class="toggle-text">
+            <span class="toggle-title">Envoyer la frappe d'activation (F24)</span>
+            <span class="toggle-desc">F24 n'existe sur aucun clavier courant : aucun effet de bord dans la page.</span>
+          </span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="beep" />
+          <span class="track"><span class="thumb"></span></span>
+          <span class="toggle-text">
+            <span class="toggle-title">Bip à chaque déclenchement</span>
+            <span class="toggle-desc">Confirme que le raccourci a bien été reçu.</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label class="field-label" for="delay">Délai d'activation (ms)</label>
+          <input type="text" id="delay" inputmode="numeric" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="titleMatch">Titre de la fenêtre</label>
+          <input type="text" id="titleMatch" spellcheck="false" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+              <path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>
+            </svg>
+          </div>
+          <div class="card-title">Fichiers</div>
+        </div>
+        <div class="card-actions" style="margin-top:2px">
+          <button class="btn" id="openConfig" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+              <path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>
+            </svg>
+            Fichier de configuration
+          </button>
+          <button class="btn" id="openLog" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/>
+              <path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/>
+            </svg>
+            Journal
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="footer">
+    <button class="btn" id="test" type="button">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>
+      </svg>
+      Tester maintenant
+    </button>
+    <div class="footer-spacer"></div>
+    <button class="btn btn-ghost" id="cancel" type="button">Annuler</button>
+    <button class="btn btn-primary" id="save" type="button">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+        <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>
+      </svg>
+      Enregistrer
+    </button>
+  </footer>
+</main>
+
+<div class="toasts" id="toasts"></div>
+
+<div class="backdrop" id="backdrop">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="modalNo" type="button">Annuler</button>
+      <button class="btn btn-danger" id="modalYes" type="button">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const send = (payload) => window.chrome.webview.postMessage(JSON.stringify(payload));
+const $ = (id) => document.getElementById(id);
+
+const LAUNCH_MODES = [
+  { value: "app", title: "Fenêtre applicative Edge", desc: "Fonctionne sans rien installer. Une fenêtre par déclenchement." },
+  { value: "pwa", title: "PWA installée", desc: "Réutilise la fenêtre déjà ouverte. Demande un identifiant d'application." },
+  { value: "tab", title: "Onglet ordinaire", desc: "Ouvre un onglet dans la fenêtre Edge courante." },
+];
+
+/* --- Navigation ---------------------------------------------------------- */
+
+document.querySelectorAll(".nav-item").forEach((item) => {
+  item.addEventListener("click", () => {
+    document.querySelectorAll(".nav-item").forEach((other) =>
+      other.setAttribute("aria-selected", String(other === item)));
+    document.querySelectorAll(".page").forEach((page) =>
+      page.classList.toggle("active", page.id === `page-${item.dataset.page}`));
+    document.querySelector(".scroll").scrollTop = 0;
+  });
+});
+
+/* --- Modes d'ouverture --------------------------------------------------- */
+
+$("launchModes").innerHTML = LAUNCH_MODES.map((mode) => `
+  <label class="choice">
+    <input type="radio" name="launchMode" value="${mode.value}" />
+    <span class="choice-dot"></span>
+    <span class="choice-body">
+      <span class="choice-title">${mode.title}</span>
+      <span class="choice-desc">${mode.desc}</span>
+    </span>
+  </label>`).join("");
+
+/* --- Capture du raccourci ------------------------------------------------ */
+
+let hotkey = "Ctrl+Alt+S";
+let capturing = false;
+
+/* Traduit `KeyboardEvent.code` vers les noms que le client sait relire. */
+function keyName(event) {
+  const code = event.code || "";
+  if (/^Key[A-Z]$/.test(code)) return code.slice(3);
+  if (/^Digit[0-9]$/.test(code)) return code.slice(5);
+  if (/^F([1-9]|1[0-9]|2[0-4])$/.test(code)) return code;
+  if (/^Numpad[0-9]$/.test(code)) return "Num" + code.slice(6);
+  const named = {
+    Space: "Space", Enter: "Enter", NumpadEnter: "Enter", Tab: "Tab",
+    Backspace: "Backspace", Escape: "Escape", Insert: "Insert", Delete: "Delete",
+    Home: "Home", End: "End", PageUp: "PageUp", PageDown: "PageDown",
+    ArrowLeft: "Left", ArrowUp: "Up", ArrowRight: "Right", ArrowDown: "Down",
+    Pause: "Pause", PrintScreen: "PrintScreen",
+  };
+  return named[code] || null;
+}
+
+function renderHotkey(value, placeholder) {
+  const target = $("hotkeyKeys");
+  if (placeholder) {
+    target.textContent = "Composez la combinaison…";
+    return;
+  }
+  target.innerHTML = value.split("+").map((part) =>
+    `<kbd>${part}</kbd>`).join('<span class="plus">+</span>');
+  $("badge").textContent = value;
+}
+
+function setHotkey(value) {
+  hotkey = value;
+  renderHotkey(value, false);
+  $("hotkey").classList.remove("invalid");
+  $("hotkeyHint").textContent =
+    "Cliquez puis composez la combinaison. Au moins un modificateur est requis (Ctrl, Alt, Shift ou Win).";
+}
+
+$("hotkey").addEventListener("focus", () => {
+  capturing = true;
+  $("hotkey").classList.add("capturing");
+  renderHotkey(hotkey, true);
+});
+
+$("hotkey").addEventListener("blur", () => {
+  capturing = false;
+  $("hotkey").classList.remove("capturing");
+  renderHotkey(hotkey, false);
+});
+
+$("hotkey").addEventListener("keydown", (event) => {
+  if (!capturing) return;
+  event.preventDefault();
+  event.stopPropagation();
+
+  // Un modificateur seul ne forme pas encore un raccourci.
+  if (["Control", "Alt", "Shift", "Meta"].includes(event.key)) return;
+
+  if (event.key === "Delete" || event.key === "Backspace") {
+    if (!event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+      setHotkey("");
+      return;
+    }
+  }
+
+  const parts = [];
+  if (event.ctrlKey) parts.push("Ctrl");
+  if (event.altKey) parts.push("Alt");
+  if (event.shiftKey) parts.push("Shift");
+  if (event.metaKey) parts.push("Win");
+
+  const name = keyName(event);
+  if (!name) return;
+
+  if (parts.length === 0) {
+    $("hotkey").classList.add("invalid");
+    $("hotkeyHint").textContent =
+      "Ce raccourci serait actif partout : ajoutez Ctrl, Alt, Shift ou Win.";
+    renderHotkey(name, false);
+    hotkey = "";
+    return;
+  }
+
+  parts.push(name);
+  setHotkey(parts.join("+"));
+});
+
+/* --- Champs -------------------------------------------------------------- */
+
+const value = (id) => $(id).value.trim();
+const optional = (id) => (value(id) === "" ? null : value(id));
+
+/* Accepte la virgule décimale, usage français. */
+function decimal(id, label, errors) {
+  const raw = value(id).replace(",", ".");
+  if (raw === "") return null;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) {
+    errors.push(`${label} : « ${value(id)} » n'est pas un nombre.`);
+    $(id).classList.add("invalid");
+    return null;
+  }
+  $(id).classList.remove("invalid");
+  return parsed;
+}
+
+function integer(id, label, errors) {
+  const raw = value(id);
+  if (!/^\d+$/.test(raw)) {
+    errors.push(`${label} doit être un nombre entier.`);
+    $(id).classList.add("invalid");
+    return 0;
+  }
+  $(id).classList.remove("invalid");
+  return Number(raw);
+}
+
+function collect() {
+  const errors = [];
+  const mode = document.querySelector('input[name="launchMode"]:checked');
+
+  if (value("baseUrl") === "") {
+    errors.push("L'adresse du site ne peut pas être vide.");
+    $("baseUrl").classList.add("invalid");
+  } else {
+    $("baseUrl").classList.remove("invalid");
+  }
+
+  if (hotkey === "") {
+    errors.push("Le raccourci global est vide ou incomplet.");
+    $("hotkey").classList.add("invalid");
+  }
+
+  if (mode && mode.value === "pwa" && optional("appId") === null) {
+    errors.push("Le mode « PWA installée » demande un identifiant d'application.");
+    $("appId").classList.add("invalid");
+  } else {
+    $("appId").classList.remove("invalid");
+  }
+
+  const config = {
+    base_url: value("baseUrl"),
+    hotkey,
+    launch_mode: mode ? mode.value : "app",
+    edge_path: optional("edgePath"),
+    app_id: optional("appId"),
+    profile_directory: optional("profile"),
+    autoplay: $("autoplay").checked,
+    reader_mode: $("readerMode").checked,
+    rate: decimal("rate", "Débit", errors),
+    pitch: decimal("pitch", "Hauteur", errors),
+    volume: decimal("volume", "Volume", errors),
+    voice: optional("voice"),
+    lang: optional("lang"),
+    max_chars: integer("maxChars", "La longueur maximale", errors),
+    collapse_whitespace: $("collapse").checked,
+    dehyphenate: $("dehyphenate").checked,
+    focus_window: $("focusWindow").checked,
+    send_activation_key: $("activationKey").checked,
+    activation_delay_ms: integer("delay", "Le délai d'activation", errors),
+    window_title_match: value("titleMatch"),
+    beep: $("beep").checked,
+  };
+
+  if (errors.length > 0) {
+    toast(errors.join("\n"), "error");
+    return null;
+  }
+  return config;
+}
+
+/* --- Réception depuis l'hôte --------------------------------------------- */
+
+window.host = {
+  load(config) {
+    $("baseUrl").value = config.base_url || "";
+    setHotkey(config.hotkey || "");
+    const mode = document.querySelector(`input[name="launchMode"][value="${config.launch_mode}"]`);
+    if (mode) mode.checked = true;
+    $("appId").value = config.app_id || "";
+    $("profile").value = config.profile_directory || "";
+    $("edgePath").value = config.edge_path || "";
+    $("autoplay").checked = !!config.autoplay;
+    $("readerMode").checked = !!config.reader_mode;
+    $("rate").value = config.rate ?? "";
+    $("pitch").value = config.pitch ?? "";
+    $("volume").value = config.volume ?? "";
+    $("voice").value = config.voice || "";
+    $("lang").value = config.lang || "";
+    $("maxChars").value = config.max_chars ?? 12000;
+    $("collapse").checked = !!config.collapse_whitespace;
+    $("dehyphenate").checked = !!config.dehyphenate;
+    $("focusWindow").checked = !!config.focus_window;
+    $("activationKey").checked = !!config.send_activation_key;
+    $("delay").value = config.activation_delay_ms ?? 1200;
+    $("titleMatch").value = config.window_title_match || "";
+    $("beep").checked = !!config.beep;
+  },
+
+  status(state) {
+    $("autostart").checked = state.autostart;
+    const autoStatus = $("autostartStatus");
+    autoStatus.className = "status " + (state.autostart ? "ok" : "off");
+    autoStatus.querySelector(".status-text").textContent = state.autostart
+      ? "Actif"
+      : "Inactif";
+    $("autostartPath").textContent = state.autostart_target || "";
+
+    const installStatus = $("installStatus");
+    installStatus.className = "status " + (state.installed ? "ok" : "off");
+    installStatus.querySelector(".status-text").textContent = state.installed
+      ? (state.running_from_install
+          ? "Installé, et c'est cette copie qui s'exécute"
+          : "Installé, mais une autre copie s'exécute")
+      : "Pas encore installé";
+
+    $("installPath").textContent = state.installed
+      ? state.installed_path
+      : "S'exécute depuis " + state.current_path;
+
+    $("shortcutNote").textContent =
+      state.installed && !state.has_shortcut
+        ? "Le raccourci du menu Démarrer est absent : « Réparer le raccourci » le recrée."
+        : "";
+
+    $("installLabel").textContent = state.installed
+      ? (state.running_from_install ? "Réparer le raccourci" : "Remplacer la copie installée")
+      : "Installer";
+    $("uninstall").disabled = !state.installed;
+  },
+
+  detected(app) {
+    $("appId").value = app.id;
+    if (app.profile) $("profile").value = app.profile;
+    $("appId").classList.remove("invalid");
+    toast(`Application trouvée : ${app.name}`, "success");
+  },
+
+  edgePath(path) { $("edgePath").value = path; },
+
+  toast(text, kind) { toast(text, kind); },
+};
+
+/* --- Notifications ------------------------------------------------------- */
+
+const ICONS = {
+  error: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+  success: '<path d="M20 6 9 17l-5-5"/>',
+  info: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+};
+
+function toast(text, kind = "info") {
+  const node = document.createElement("div");
+  node.className = `toast ${kind}`;
+  node.innerHTML =
+    `<svg class="toast-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+       ${ICONS[kind] || ICONS.info}
+     </svg>
+     <div class="toast-body"></div>`;
+  node.querySelector(".toast-body").textContent = text;
+  $("toasts").appendChild(node);
+  setTimeout(() => node.remove(), kind === "error" ? 9000 : 5000);
+}
+
+/* --- Confirmation -------------------------------------------------------- */
+
+let confirmAction = null;
+
+function askConfirmation(title, body, onYes) {
+  $("modalTitle").textContent = title;
+  $("modalBody").textContent = body;
+  confirmAction = onYes;
+  $("backdrop").classList.add("open");
+  $("modalNo").focus();
+}
+
+$("modalNo").addEventListener("click", () => {
+  $("backdrop").classList.remove("open");
+  confirmAction = null;
+});
+
+$("modalYes").addEventListener("click", () => {
+  $("backdrop").classList.remove("open");
+  if (confirmAction) confirmAction();
+  confirmAction = null;
+});
+
+/* --- Actions ------------------------------------------------------------- */
+
+$("save").addEventListener("click", () => {
+  const config = collect();
+  if (config) send({ type: "save", config, autostart: $("autostart").checked });
+});
+
+$("cancel").addEventListener("click", () => send({ type: "cancel" }));
+
+$("test").addEventListener("click", () => {
+  const config = collect();
+  if (config) send({ type: "test", config });
+});
+
+$("detectApp").addEventListener("click", () => send({ type: "detectApp" }));
+$("browseEdge").addEventListener("click", () => send({ type: "browseEdge" }));
+$("openConfig").addEventListener("click", () => send({ type: "openConfigFile" }));
+$("openLog").addEventListener("click", () => send({ type: "openLog" }));
+$("install").addEventListener("click", () => send({ type: "install" }));
+
+$("autostart").addEventListener("change", (event) =>
+  send({ type: "setAutostart", value: event.target.checked }));
+
+$("uninstall").addEventListener("click", () => {
+  askConfirmation(
+    "Désinstaller ?",
+    "Le raccourci du menu Démarrer, l'entrée de démarrage automatique et la copie installée seront retirés.\n\n" +
+    "Votre configuration et votre journal sont conservés.",
+    () => send({ type: "uninstall" }),
+  );
+});
+
+document.addEventListener("keydown", (event) => {
+  if (capturing) return;
+
+  // Ctrl+1 à Ctrl+4 : passage direct à une section.
+  if (event.ctrlKey && !event.altKey && /^[1-4]$/.test(event.key)) {
+    event.preventDefault();
+    document.querySelectorAll(".nav-item")[Number(event.key) - 1].click();
+    return;
+  }
+
+  if (event.key === "Escape") {
+    if ($("backdrop").classList.contains("open")) {
+      $("backdrop").classList.remove("open");
+      confirmAction = null;
+      return;
+    }
+    send({ type: "cancel" });
+  }
+});
+
+send({ type: "ready" });
+</script>
+</body>
+</html>
