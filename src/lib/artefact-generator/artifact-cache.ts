@@ -31,6 +31,12 @@ export const CACHE_KEYS = {
   SUB_STATS: "sub_stats",
 } as const;
 
+/**
+ * L'étiquette du cache de Next qui garde la liste des sets pour la page du
+ * générateur. À invalider dès que la liste change en base.
+ */
+export const ARTIFACT_SETS_TAG = "artifact-sets";
+
 // Durée de cache (24 heures)
 const CACHE_DURATION = 24 * 60 * 60 * 1000;
 

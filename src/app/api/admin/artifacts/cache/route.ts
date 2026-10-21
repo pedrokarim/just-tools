@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
+import { ARTIFACT_SETS_TAG } from "@/lib/artefact-generator/artifact-cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import {
@@ -84,6 +86,8 @@ export async function POST(request: NextRequest) {
 
     if (action === "refresh") {
       const result = await refreshArtifactCache();
+      // La page du générateur garde la liste un jour : elle doit voir celle-ci.
+      revalidateTag(ARTIFACT_SETS_TAG, { expire: 0 });
 
       return NextResponse.json({
         success: result.success,
@@ -99,6 +103,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "init") {
       await initializeArtifactService();
+      revalidateTag(ARTIFACT_SETS_TAG, { expire: 0 });
 
       return NextResponse.json({
         success: true,
