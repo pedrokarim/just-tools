@@ -68,3 +68,6 @@ temp
 # (la source du service worker est scripts/sw-template.js)
 /public/sw.js
 /public/version.json
+
+# Dossiers de travail locaux (topologie du serveur, plans de migration).
+docs/local/
