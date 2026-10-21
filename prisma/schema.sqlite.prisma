@@ -99,10 +99,9 @@ model loginAttempt {
 
 /// Les sessions applicatives d'Ascencia ID.
 ///
-/// Pourquoi une table et pas la mémoire : Just Tools est déployé sur Vercel,
-/// donc en serverless. Un magasin en mémoire repart vide à chaque démarrage à
-/// froid, et l'utilisateur se retrouve déconnecté au hasard — un symptôme qui
-/// ressemble à un caprice plutôt qu'à une panne, donc très mal diagnostiqué.
+/// Pourquoi une table et pas la mémoire : un magasin en mémoire repart vide à
+/// chaque redémarrage du conteneur, donc à chaque déploiement, et tous les
+/// utilisateurs se retrouvent déconnectés d'un coup.
 ///
 /// `data` est du texte et non du `Json` : le schéma SQLite de développement ne
 /// connaît pas le type `Json`, et une colonne qui n'existe que dans une des

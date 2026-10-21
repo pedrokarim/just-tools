@@ -14,9 +14,8 @@ node_modules
 .next
 out
 
-# Propre au poste ou à Vercel.
+# Propre au poste.
 .git
-.vercel
 .claude
 .vscode
 .idea

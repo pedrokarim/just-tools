@@ -3,15 +3,16 @@
 /**
  * Applique les scripts SQL de `prisma/sql/`, dans l'ordre, une seule fois.
  *
- * ── Pourquoi ce script existe ───────────────────────────────────────────────
+ * Se lance à la main, depuis le poste, quand un fichier s'ajoute à
+ * `prisma/sql/` : `DIRECT_URL=… bun run db:apply`. Ni l'installation, ni le
+ * build, ni le démarrage du conteneur ne touchent la base.
  *
- * `prisma db push` compare le schéma au vivant et applique la différence. En
- * production, `migrate-production.js` l'appelait avec `--accept-data-loss` —
- * parce que `VERCEL` vaut toujours 1 sur Vercel, donc **à chaque déploiement**.
+ * ── Pourquoi pas `prisma db push` ─────────────────────────────────────────
  *
- * Un champ renommé, un modèle retiré, et la colonne part sans un mot. Pire :
- * le script avalait l'erreur pour ne pas faire échouer le build. Une perte de
- * données pouvait donc passer inaperçue de bout en bout.
+ * `db push` compare le schéma au vivant et applique la différence : un champ
+ * renommé, un modèle retiré, et la colonne part sans un mot. L'ancien
+ * `postinstall` le lançait avec `--accept-data-loss` à chaque déploiement,
+ * en avalant l'erreur.
  *
  * Ici, chaque changement est un fichier SQL qu'on relit avant de l'écrire. Rien
  * n'est déduit, rien n'est destructeur par accident.
@@ -24,8 +25,8 @@
  * · chacun s'écrit **idempotent** malgré tout (`IF NOT EXISTS`) — la table de
  *   suivi peut manquer sur une base restaurée, et un script qui ne supporte
  *   pas d'être rejoué transforme une restauration en incident ;
- * · un échec **arrête** le déploiement. Une migration ratée qu'on ignore est
- *   une base dans un état que personne ne connaît.
+ * · un échec **arrête** le script, et le déploiement attend. Une migration
+ *   ratée qu'on ignore est une base dans un état que personne ne connaît.
  */
 
 const fs = require('fs');

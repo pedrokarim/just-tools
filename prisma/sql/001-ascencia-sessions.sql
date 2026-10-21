@@ -1,9 +1,8 @@
 -- Les sessions applicatives d'Ascencia ID.
 --
--- Pourquoi une table : Just Tools tourne sur Vercel, donc en serverless. Un
--- magasin de sessions en mémoire repart vide à chaque démarrage à froid, et
--- l'utilisateur se retrouve déconnecté au hasard — un symptôme qui ressemble à
--- un caprice plutôt qu'à une panne.
+-- Pourquoi une table : un magasin de sessions en mémoire repart vide à chaque
+-- redémarrage du conteneur, donc à chaque déploiement, et tous les
+-- utilisateurs se retrouvent déconnectés d'un coup.
 --
 -- Purement additif. Ne touche à aucune table existante.
 

@@ -64,7 +64,6 @@ function getVersionInfo() {
   const gitAvailable = tryGit("git rev-parse --git-dir") !== null;
 
   const commitSha =
-    process.env.VERCEL_GIT_COMMIT_SHA ||
     process.env.GITHUB_SHA ||
     tryGit("git rev-parse HEAD") ||
     null;

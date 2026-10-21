@@ -46,9 +46,9 @@ try {
     console.log('3. Exécuter: bun run db:migrate (ou db:push pour SQLite)');
 
     if (databaseType === 'postgresql') {
-        console.log('\n🔗 Pour PostgreSQL sur Vercel:');
-        console.log('- Créer une base de données PostgreSQL sur Vercel');
-        console.log('- Copier la DATABASE_URL de Vercel dans votre .env');
+        console.log('\n🔗 Pour PostgreSQL:');
+        console.log('- Renseigner DATABASE_URL et DIRECT_URL dans votre .env');
+        console.log('- Appliquer les scripts SQL: bun run db:apply');
     }
 
 } catch (error) {

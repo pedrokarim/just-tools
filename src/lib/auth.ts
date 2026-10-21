@@ -85,8 +85,8 @@ export function getAscencia(): AscenciaServer {
      * surcharge évite d'avoir à tordre une variable qui ne parle pas de ça.
      */
     redirectUri: redirectUri(),
-    // Obligatoire ici : Vercel est serverless, la mémoire ne survit pas d'une
-    // invocation à l'autre (voir `ascencia-session-store.ts`).
+    // Obligatoire ici : la mémoire ne survit pas à un redéploiement du
+    // conteneur (voir `ascencia-session-store.ts`).
     /*
      * Les scopes sont explicites, et `ascencia.perms` n'est pas décoratif.
      *

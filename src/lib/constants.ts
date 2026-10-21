@@ -120,7 +120,7 @@ export const PROJECT_CONFIG = {
       "Lucide React",
       "Sonner",
     ],
-    deployment: ["Vercel", "Docker", "GitHub Actions"],
+    deployment: ["Docker", "GitHub Actions"],
   },
 
   // Configuration des outils (importée depuis tools-metadata.tsx)

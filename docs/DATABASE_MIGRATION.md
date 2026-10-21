@@ -2,7 +2,7 @@
 
 Ce projet supporte maintenant deux types de bases de données :
 - **SQLite** : Pour le développement local
-- **PostgreSQL** : Pour la production sur Vercel
+- **PostgreSQL** : Pour la production
 
 ## 🚀 Démarrage Rapide
 
@@ -52,7 +52,7 @@ src/lib/
 
 Créez un fichier `.env.local` avec :
 
-> **Note importante** : Pour PostgreSQL, vous devez définir à la fois `DATABASE_URL` et `DIRECT_URL`. Sur Vercel, ces deux variables auront généralement la même valeur, mais `DIRECT_URL` est nécessaire pour les migrations Prisma.
+> **Note importante** : Pour PostgreSQL, vous devez définir à la fois `DATABASE_URL` et `DIRECT_URL`. Elles ont souvent la même valeur, mais `DIRECT_URL` est nécessaire pour les migrations Prisma.
 
 ```env
 # Pour SQLite (développement)
@@ -82,38 +82,18 @@ AUTHORIZED_USERS=123456789012345678
 | `bun run db:push` | Push du schéma (SQLite) |
 | `bun run db:studio` | Interface Prisma Studio |
 
-## 🌐 Déploiement sur Vercel
+## 🌐 Production
 
-### 1. Créer une base de données PostgreSQL
+La production tourne sur PostgreSQL (Neon), dans un conteneur Docker sur le
+serveur ascencia-prod. Le déploiement est décrit dans
+[DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.md).
 
-Sur Vercel :
-1. Allez dans votre projet
-2. Onglet "Storage"
-3. Créez une base de données PostgreSQL
-4. Copiez la `DATABASE_URL`
-
-### 2. Configurer les variables d'environnement
-
-Dans Vercel :
-```env
-DATABASE_URL=postgresql://username:password@host:port/database?schema=public
-DIRECT_URL=postgresql://username:password@host:port/database?schema=public
-AUTH_SECRET=your-secret
-DISCORD_CLIENT_ID=your-client-id
-DISCORD_CLIENT_SECRET=your-client-secret
-AUTHORIZED_USERS=123456789012345678
-```
-
-### 3. Déployer
+Les changements de schéma ne passent ni par `prisma migrate` ni par
+`prisma db push` : chaque changement est un fichier numéroté et idempotent dans
+`prisma/sql/`, appliqué à la main depuis le poste :
 
 ```bash
-# Basculer vers PostgreSQL
-bun run db:switch:postgresql
-
-# Commit et push
-git add .
-git commit -m "Switch to PostgreSQL for production"
-git push origin main
+DIRECT_URL=… bun run db:apply
 ```
 
 ## 🔄 Migration des Données

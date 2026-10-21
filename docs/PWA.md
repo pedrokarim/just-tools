@@ -1,4 +1,4 @@
-# PWA Update System (Vercel)
+# PWA Update System
 
 ## Overview
 
@@ -79,7 +79,7 @@ This avoids common cases where users stay on old code after deploy.
 
 ---
 
-## Vercel Notes
+## HTTP Cache Notes
 
 `next.config.ts` sets:
 
@@ -87,7 +87,7 @@ This avoids common cases where users stay on old code after deploy.
 - `/version.json` -> `Cache-Control: no-cache, no-store, must-revalidate`
 - `/manifest.json` -> `Cache-Control: no-cache`
 
-This is important on Vercel/CDN so SW update checks are not blocked by HTTP cache.
+This is important behind nginx and Cloudflare so SW update checks are not blocked by HTTP cache.
 
 ---
 

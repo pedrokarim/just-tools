@@ -127,17 +127,14 @@ presse-papiers vers l'outil via un raccourci clavier global.
    cd just-tools
    ```
 
-2. **Installer les dépendances**
+2. **Installer les dépendances et générer le client Prisma**
    ```bash
-   # Avec Bun (recommandé)
    bun install
-   
-   # Ou avec npm
-   npm install
-   
-   # Ou avec yarn
-   yarn install
+   bun run db:generate
    ```
+
+   L'installation ne touche jamais la base. Quand un fichier s'ajoute à
+   `prisma/sql/`, l'appliquer à la main : `bun run db:apply`.
 
 3. **Lancer le serveur de développement**
    ```bash
@@ -262,6 +259,7 @@ Le site tourne dans un conteneur Docker, derrière nginx et Cloudflare :
 1. Un push sur `main` construit l'image avec GitHub Actions et la publie sur GHCR
 2. Sur le serveur, `./deploy.sh` tire l'image et redémarre le conteneur
 3. Les secrets vivent dans le `.env` du serveur, jamais dans l'image
+4. Les scripts SQL de `prisma/sql/` s'appliquent à part, depuis le poste, avec `bun run db:apply`
 
 Le détail est dans [docs/DOCKER_DEPLOYMENT.md](./docs/DOCKER_DEPLOYMENT.md).
 
@@ -313,7 +311,6 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 - [Lucide](https://lucide.dev/) pour les icônes
 - [Next.js](https://nextjs.org/) pour le framework React
 - [Framer Motion](https://www.framer.com/motion/) pour les animations
-- [Vercel](https://vercel.com/) pour l'hébergement
 
 ## ✨ Nouvelles Fonctionnalités
 

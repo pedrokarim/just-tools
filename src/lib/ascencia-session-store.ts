@@ -6,15 +6,11 @@ import { prisma } from "./prisma";
  *
  * ── Pourquoi pas la mémoire ────────────────────────────────────────────────
  *
- * L'adaptateur Next d'Ascencia ID range les jetons en mémoire par défaut. Ça
- * convient à un processus unique et durable ; Just Tools est déployé sur
- * Vercel, donc en **serverless** : chaque démarrage à froid repart d'une
- * mémoire vide.
- *
- * Le symptôme n'aurait pas ressemblé à une panne — l'utilisateur se serait
- * retrouvé déconnecté au hasard, sans erreur nulle part. C'est le genre de
- * défaut qu'on met des heures à croire, parce qu'il n'est pas reproductible à
- * volonté. Mieux vaut la table.
+ * L'adaptateur Next d'Ascencia ID range les jetons en mémoire par défaut. Just
+ * Tools tourne dans un seul processus, mais ce processus est remplacé à chaque
+ * déploiement (`deploy.sh` recrée le conteneur) : en mémoire, chaque mise en
+ * ligne déconnecterait tout le monde, sans erreur nulle part. Mieux vaut la
+ * table.
  *
  * ── Ce que la table contient ───────────────────────────────────────────────
  *

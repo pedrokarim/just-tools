@@ -12,16 +12,15 @@
 # Bun ÉPINGLÉ, comme pour DNA et sharex-manager : toute montée de version se
 # fait ici, sciemment.
 ARG BUN_VERSION=1.3.14
-# La version de Node de Vercel aujourd'hui (`vercel project inspect`).
+# La version de Node sur laquelle le site tournait jusqu'ici.
 ARG NODE_VERSION=22
 
 # ── Dépendances ─────────────────────────────────────────────────────────────
 FROM oven/bun:${BUN_VERSION} AS deps
 WORKDIR /app
 COPY package.json bun.lock ./
-# `--ignore-scripts` : le `postinstall` (scripts/migrate-production.js)
-# appliquerait les migrations SQL si une URL de base traînait dans
-# l'environnement. Un build ne touche jamais une base.
+# `--ignore-scripts` : aucun script d'installation des dépendances ne tourne
+# dans l'image ; ce qui doit être généré l'est explicitement plus bas.
 RUN bun install --frozen-lockfile --ignore-scripts
 
 # ── Build ───────────────────────────────────────────────────────────────────
@@ -54,8 +53,8 @@ ENV NEXT_PUBLIC_SITE_NAME=$NEXT_PUBLIC_SITE_NAME \
     NODE_ENV=production \
     NODE_OPTIONS=--max-old-space-size=4096
 
-# Le client Prisma est généré explicitement, puisque `postinstall` n'a pas
-# tourné. Debian ici comme à l'exécution : le moteur produit vise
+# Le client Prisma est généré explicitement, aucun script d'installation
+# n'ayant tourné. Debian ici comme à l'exécution : le moteur produit vise
 # `debian-openssl-3.0.x`, celui de l'image d'exécution.
 RUN bunx prisma generate
 RUN bun run build

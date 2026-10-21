@@ -26,7 +26,7 @@ Ce dossier contient toute la documentation du projet Just-Tools.
 ### Pour le déploiement
 1. **Local** : Suivre [ADMIN_SETUP.md](./ADMIN_SETUP.md)
 2. **Docker** : Suivre [DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.md)
-3. **Vercel** : Suivre [DATABASE_MIGRATION.md](./DATABASE_MIGRATION.md)
+3. **Base de données** : Suivre [DATABASE_MIGRATION.md](./DATABASE_MIGRATION.md)
 
 ### Pour les tests
 1. Consulter [TEST_README.md](./TEST_README.md)
@@ -49,7 +49,6 @@ just-tools/
 - [Documentation Next.js](https://nextjs.org/docs)
 - [Documentation Prisma](https://www.prisma.io/docs)
 - [Documentation Auth.js](https://authjs.dev/)
-- [Documentation Vercel](https://vercel.com/docs)
 
 ---
 
