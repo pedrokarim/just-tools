@@ -1,7 +1,4 @@
-import type { AscenciaServer } from "@ascencia/id-server/next";
-import { getAscencia } from "@/lib/auth";
-
-type Handlers = AscenciaServer["handlers"];
+import { getAscencia, withPublicOrigin } from "@/lib/auth";
 
 /**
  * Les routes d'authentification : `signin`, `callback`, `signout`, `session`.
@@ -11,14 +8,16 @@ type Handlers = AscenciaServer["handlers"];
  * qui dit ce qu'il fait vaut mieux qu'un nom hérité.
  *
  * Le client est demandé à chaque requête, pas à l'import : sinon le build,
- * qui charge ce module, exigerait le secret client (voir `getAscencia`).
+ * qui charge ce module, exigerait le secret client (voir `getAscencia`). Et la
+ * requête lui est passée avec l'adresse publique du site, sur laquelle il
+ * construit ses redirections (voir `withPublicOrigin`).
  */
-export function GET(...args: Parameters<Handlers["GET"]>) {
-  return getAscencia().handlers.GET(...args);
+export function GET(request: Request) {
+  return getAscencia().handlers.GET(withPublicOrigin(request));
 }
 
-export function POST(...args: Parameters<Handlers["POST"]>) {
-  return getAscencia().handlers.POST(...args);
+export function POST(request: Request) {
+  return getAscencia().handlers.POST(withPublicOrigin(request));
 }
 
 /*

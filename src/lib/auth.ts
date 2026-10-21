@@ -53,6 +53,25 @@ export function assertAuthConfig(): void {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
+/** L'adresse de retour déclarée chez l'IdP (voir `redirectUri` ci-dessous). */
+const redirectUri = () => process.env.ASCENCIA_REDIRECT_URI ?? `${siteUrl}/api/auth/callback`;
+
+/**
+ * La requête, ramenée à l'adresse publique du site.
+ *
+ * Le SDK construit ses redirections finales (après connexion, après
+ * déconnexion) sur l'origine de la requête. Derrière nginx, le serveur
+ * autonome de Next la reconstruit avec sa propre adresse d'écoute :
+ * `https://0.0.0.0:3000/admin`, que le navigateur refuse. L'origine publique
+ * est celle de l'adresse de retour déclarée chez l'IdP : juste en production
+ * comme en local.
+ */
+export function withPublicOrigin(request: Request): Request {
+  const url = new URL(request.url);
+  const publicUrl = new URL(url.pathname + url.search, new URL(redirectUri()).origin);
+  return new Request(publicUrl, request);
+}
+
 let server: AscenciaServer | undefined;
 
 /**
@@ -81,7 +100,7 @@ export function getAscencia(): AscenciaServer {
      * En développement local, l'IdP occupe 3000 et Just Tools 3001 : la
      * surcharge évite d'avoir à tordre une variable qui ne parle pas de ça.
      */
-    redirectUri: process.env.ASCENCIA_REDIRECT_URI ?? `${siteUrl}/api/auth/callback`,
+    redirectUri: redirectUri(),
     // Obligatoire ici : Vercel est serverless, la mémoire ne survit pas d'une
     // invocation à l'autre (voir `ascencia-session-store.ts`).
     /*
