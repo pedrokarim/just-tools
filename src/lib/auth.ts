@@ -32,50 +32,75 @@ import { prismaSessionStore } from "./ascencia-session-store";
 function required(name: string): string {
   const value = process.env[name];
   if (!value) {
-    // Échouer au démarrage plutôt qu'à la première connexion : une variable
-    // oubliée doit se voir au déploiement, pas le jour où quelqu'un se connecte.
     throw new Error(`[auth] ${name} est absent de l'environnement.`);
   }
   return value;
 }
 
+/**
+ * Vérifie que la configuration d'Ascencia ID est complète.
+ *
+ * Appelée par `src/instrumentation.ts`, donc au démarrage du serveur : une
+ * variable oubliée doit se voir au déploiement, pas le jour où quelqu'un se
+ * connecte. Jamais pendant le build : l'image se construit sans le secret
+ * client, qui n'a rien à faire dans une couche Docker.
+ */
+export function assertAuthConfig(): void {
+  required("ASCENCIA_ISSUER");
+  required("ASCENCIA_CLIENT_ID");
+  required("ASCENCIA_CLIENT_SECRET");
+}
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-export const ascencia: AscenciaServer = createAscenciaServer({
-  issuer: required("ASCENCIA_ISSUER"),
-  clientId: required("ASCENCIA_CLIENT_ID"),
-  clientSecret: required("ASCENCIA_CLIENT_SECRET"),
-  /*
-   * Dérivée de l'URL du site, surchargeable par `ASCENCIA_REDIRECT_URI`.
-   *
-   * Cette valeur doit correspondre **au caractère près** à une URI enregistrée
-   * dans la console : la comparaison est exacte, jamais un préfixe, et c'est ce
-   * qui empêche un open redirect. La faire dépendre de `NEXT_PUBLIC_SITE_URL`
-   * est pratique en production, et piégeux ailleurs — cette variable sert aussi
-   * aux liens de partage et aux images, donc quelqu'un peut la changer sans
-   * penser à l'authentification.
-   *
-   * En développement local, l'IdP occupe 3000 et Just Tools 3001 : la
-   * surcharge évite d'avoir à tordre une variable qui ne parle pas de ça.
-   */
-  redirectUri: process.env.ASCENCIA_REDIRECT_URI ?? `${siteUrl}/api/auth/callback`,
-  // Obligatoire ici : Vercel est serverless, la mémoire ne survit pas d'une
-  // invocation à l'autre (voir `ascencia-session-store.ts`).
-  /*
-   * Les scopes sont explicites, et `ascencia.perms` n'est pas décoratif.
-   *
-   * C'est lui qui fait émettre la revendication `perms` du jeton — celle que
-   * `context.can()` lit. Sans lui, `can()` rend **false pour tout**, sans
-   * erreur ni avertissement : l'application refuse tout le monde et rien
-   * n'explique pourquoi. C'est ce qui est arrivé au premier essai.
-   *
-   * Le SDK l'a désormais dans ses défauts, mais les déclarer ici reste plus
-   * sûr : un défaut se déplace d'une version à l'autre, une liste écrite non.
-   */
-  scopes: ["openid", "profile", "email", "ascencia.roles", "ascencia.perms"],
-  sessionStore: prismaSessionStore(),
-  defaultRedirect: "/admin",
-});
+let server: AscenciaServer | undefined;
+
+/**
+ * Le client Ascencia ID, construit au premier usage et non à l'import.
+ *
+ * Construit à l'import, il exigeait ses variables dès que Next chargeait une
+ * route qui en dépend pour collecter ses données, c'est-à-dire pendant le
+ * build. Sur Vercel, le secret était présent au build ; dans une image Docker,
+ * il ne doit pas l'être.
+ */
+export function getAscencia(): AscenciaServer {
+  server ??= createAscenciaServer({
+    issuer: required("ASCENCIA_ISSUER"),
+    clientId: required("ASCENCIA_CLIENT_ID"),
+    clientSecret: required("ASCENCIA_CLIENT_SECRET"),
+    /*
+     * Dérivée de l'URL du site, surchargeable par `ASCENCIA_REDIRECT_URI`.
+     *
+     * Cette valeur doit correspondre **au caractère près** à une URI enregistrée
+     * dans la console : la comparaison est exacte, jamais un préfixe, et c'est ce
+     * qui empêche un open redirect. La faire dépendre de `NEXT_PUBLIC_SITE_URL`
+     * est pratique en production, et piégeux ailleurs — cette variable sert aussi
+     * aux liens de partage et aux images, donc quelqu'un peut la changer sans
+     * penser à l'authentification.
+     *
+     * En développement local, l'IdP occupe 3000 et Just Tools 3001 : la
+     * surcharge évite d'avoir à tordre une variable qui ne parle pas de ça.
+     */
+    redirectUri: process.env.ASCENCIA_REDIRECT_URI ?? `${siteUrl}/api/auth/callback`,
+    // Obligatoire ici : Vercel est serverless, la mémoire ne survit pas d'une
+    // invocation à l'autre (voir `ascencia-session-store.ts`).
+    /*
+     * Les scopes sont explicites, et `ascencia.perms` n'est pas décoratif.
+     *
+     * C'est lui qui fait émettre la revendication `perms` du jeton — celle que
+     * `context.can()` lit. Sans lui, `can()` rend **false pour tout**, sans
+     * erreur ni avertissement : l'application refuse tout le monde et rien
+     * n'explique pourquoi. C'est ce qui est arrivé au premier essai.
+     *
+     * Le SDK l'a désormais dans ses défauts, mais les déclarer ici reste plus
+     * sûr : un défaut se déplace d'une version à l'autre, une liste écrite non.
+     */
+    scopes: ["openid", "profile", "email", "ascencia.roles", "ascencia.perms"],
+    sessionStore: prismaSessionStore(),
+    defaultRedirect: "/admin",
+  });
+  return server;
+}
 
 /**
  * Le contexte de la requête courante, ou `null`.
@@ -89,7 +114,7 @@ export const ascencia: AscenciaServer = createAscenciaServer({
  */
 export async function auth(): Promise<AscenciaContext | null> {
   const jar = await cookies();
-  return ascencia.getContext(jar);
+  return getAscencia().getContext(jar);
 }
 
 export interface AscenciaProfile {
@@ -108,7 +133,7 @@ export interface AscenciaProfile {
  */
 export async function getProfile(): Promise<AscenciaProfile | null> {
   const jar = await cookies();
-  const token = await ascencia.getAccessToken(jar);
+  const token = await getAscencia().getAccessToken(jar);
   if (!token) return null;
 
   try {
