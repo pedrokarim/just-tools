@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-password-generator.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Générateur de Mots de Passe - Just Tools",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     title: "Générateur de Mots de Passe - Créez des mots de passe sécurisés",
     description:
       "Outil gratuit pour générer des mots de passe sécurisés et aléatoires.",
-    images: ["/og-password-generator.png"],
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: "/tools/password-generator",

@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   title: "À Propos - Just Tools",
   description:
     "Découvrez l'histoire et la mission de Just Tools - Suite d'outils de développement gratuits créée par Ahmed Karim pour Ascencia",
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {

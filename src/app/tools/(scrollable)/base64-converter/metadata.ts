@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-base64.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Convertisseur Base64 - Just Tools",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Convertisseur Base64 - Encodez et décodez du texte",
     description: "Outil gratuit pour encoder et décoder du texte en Base64.",
-    images: ["/og-base64.png"],
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: "/tools/base64-converter",

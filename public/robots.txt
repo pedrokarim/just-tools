@@ -1,26 +1,15 @@
+# Just Tools – consignes aux robots.
+#
+# Un seul groupe, pour tous. L'ancien fichier en avait un par moteur : un robot
+# n'applique que le groupe qui le nomme, donc Googlebot et Bingbot ignoraient
+# les `Disallow` du groupe général, et les autres robots ne pouvaient pas
+# charger /_next/, dont les scripts construisent chaque outil.
+#
+# Pas de `Crawl-delay` : Google l'ignore, et il ne fait que ralentir les autres.
+
 User-agent: *
 Allow: /
-
-# Sitemap
-Sitemap: https://just-tools.ascencia.re/sitemap.xml
-
-# Crawl-delay
-Crawl-delay: 1
-
-# Disallow admin or private areas (if any)
 Disallow: /api/
-Disallow: /_next/
 Disallow: /admin/
 
-# Allow all tools
-Allow: /tools/
-Allow: /tools/*
-
-# Optimize for search engines
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 1
-
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 1 
+Sitemap: https://just-tools.ascencia.re/sitemap.xml

@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-pattern-editor.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Éditeur de Motifs - Just Tools",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Éditeur de Motifs - Créez des motifs répétitifs interactifs",
     description: "Outil gratuit pour créer des motifs répétitifs interactifs.",
-    images: ["/og-pattern-editor.png"],
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: "/tools/pattern-editor",

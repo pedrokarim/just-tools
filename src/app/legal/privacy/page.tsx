@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Politique de Confidentialité",
   description:
     "Politique de confidentialité et protection des données de Just Tools",
+  alternates: { canonical: "/legal/privacy" },
 };
 
 export default function PrivacyPage() {

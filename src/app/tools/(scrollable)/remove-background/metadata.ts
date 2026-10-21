@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-remove-background.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Suppression d'Arrière-plan - Just Tools",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     title: "Suppression d'Arrière-plan - Enlevez le fond de vos images",
     description:
       "Outil gratuit pour supprimer automatiquement l'arrière-plan de vos images avec l'IA.",
-    images: ["/og-remove-background.png"],
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: "/tools/remove-background",

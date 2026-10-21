@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Conditions Générales d'Utilisation",
   description:
     "Conditions générales d'utilisation de Just Tools - Suite d'outils de développement gratuits",
+  alternates: { canonical: "/legal/terms" },
 };
 
 export default function TermsPage() {

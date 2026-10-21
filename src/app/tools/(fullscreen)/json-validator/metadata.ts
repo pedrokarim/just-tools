@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-json-validator.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Validateur JSON - Just Tools",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Validateur JSON - Validez et formatez vos fichiers JSON",
     description: "Outil gratuit pour valider et formater vos fichiers JSON.",
-    images: ["/og-json-validator.png"],
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: "/tools/json-validator",

@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-markdown-editor.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Éditeur Markdown - Just Tools",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     title: "Éditeur Markdown - Éditez et prévisualisez du Markdown",
     description:
       "Outil gratuit pour éditer et prévisualiser du Markdown en temps réel.",
-    images: ["/og-markdown-editor.png"],
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: "/tools/markdown-editor",

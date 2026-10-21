@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-code-formatter.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Formateur de Code - Just Tools",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     title: "Formateur de Code - Formatez votre code automatiquement",
     description:
       "Outil gratuit pour formater automatiquement votre code dans différents langages.",
-    images: ["/og-code-formatter.png"],
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: "/tools/code-formatter",

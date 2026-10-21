@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-text-to-speech.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Synthèse Vocale - Just Tools",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     title: "Synthèse Vocale - Convertissez votre texte en parole",
     description:
       "Outil gratuit de synthèse vocale avec des voix naturelles et des paramètres personnalisables.",
-    images: ["/og-text-to-speech.png"],
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: "/tools/text-to-speech",

@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-color-palette.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Générateur de Palette - Just Tools",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
       "Générateur de Palette - Créez des palettes de couleurs harmonieuses",
     description:
       "Outil gratuit pour créer des palettes de couleurs harmonieuses.",
-    images: ["/og-color-palette.png"],
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: "/tools/color-palette",

@@ -104,8 +104,6 @@ export const metadata: Metadata = {
   },
   verification: {
     google: "i_GLyVEAubN9keZoMX6Kk8-T8XyldPJ8zXc1atDYv-k",
-    yandex: "your-yandex-verification-code",
-    yahoo: "your-yahoo-verification-code",
   },
   category: "technology",
 };

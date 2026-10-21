@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Tous nos outils",
   description:
     "Découvrez notre collection complète d'outils de développement gratuits",
+  alternates: { canonical: "/tools" },
 };
 
 export default function ToolsPage() {

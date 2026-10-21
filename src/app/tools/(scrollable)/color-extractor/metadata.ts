@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-color-extractor.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Extracteur de Couleurs - Just Tools",
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
       "Extracteur de Couleurs - Extrayez les couleurs dominantes d'une image",
     description:
       "Outil gratuit pour extraire les couleurs dominantes d'une image.",
-    images: ["/og-color-extractor.png"],
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: "/tools/color-extractor",

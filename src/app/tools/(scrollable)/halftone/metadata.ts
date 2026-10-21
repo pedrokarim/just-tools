@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-halftone.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Effet de Trame - Just Tools",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     title: "Effet de Trame - Ajoutez des effets halftone à vos images",
     description:
       "Outil gratuit pour ajouter des effets de trame halftone à vos images.",
-    images: ["/og-halftone.png"],
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: "/tools/halftone",
