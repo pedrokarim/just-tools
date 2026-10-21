@@ -5,9 +5,9 @@
     "": {
       "name": "just-tools",
       "dependencies": {
-        "@ascencia/id-core": "0.1.0-rc.1",
-        "@ascencia/id-rbac": "0.1.0-rc.1",
-        "@ascencia/id-server": "0.1.0-rc.1",
+        "@ascencia/id-core": "0.1.0-rc.2",
+        "@ascencia/id-rbac": "0.1.0-rc.2",
+        "@ascencia/id-server": "0.1.0-rc.2",
         "@ascencia/sarutobi-react": "^0.1.0-rc.4",
         "@dnd-kit/core": "^6.3.1",
         "@dnd-kit/sortable": "^10.0.0",
@@ -85,11 +85,11 @@
 
     "@asamuzakjp/css-color": ["@asamuzakjp/css-color@3.2.0", "", { "dependencies": { "@csstools/css-calc": "^2.1.3", "@csstools/css-color-parser": "^3.0.9", "@csstools/css-parser-algorithms": "^3.0.4", "@csstools/css-tokenizer": "^3.0.3", "lru-cache": "^10.4.3" } }, "sha512-K1A6z8tS3XsmCMM86xoWdn7Fkdn9m6RSVtocUrJYIwZnFVkng/PvkEoWtOWmP+Scc6saYWHWZYbndEEXxl24jw=="],
 
-    "@ascencia/id-core": ["@ascencia/id-core@0.1.0-rc.1", "", { "dependencies": { "@ascencia/id-rbac": "0.1.0-rc.1" } }, "sha512-Eal/Bq04v6IZ87Y5hdRe+kfrv3HVfH4PvhJULoEwu8VMbdYizJB6WA+g09RM7lpUheITTFl1g/uOU9UGHVy50A=="],
+    "@ascencia/id-core": ["@ascencia/id-core@0.1.0-rc.2", "", { "dependencies": { "@ascencia/id-rbac": "0.1.0-rc.2" } }, "sha512-panFN7uFcmc98CSnm6kN3bIGOepevg4Wq4me8xYolTT0qoqWWUZsp9En7eNdQ36VBsqC8UMmFPhFOWHiQUNUUA=="],
 
-    "@ascencia/id-rbac": ["@ascencia/id-rbac@0.1.0-rc.1", "", {}, "sha512-s3P2VX4UR3R/6dvh3sRTWqrzTj87aqBixbjSTNniSfndWsUjg88HJu5U9cLSxjwg4G0ymeHjY2akFi818NICSA=="],
+    "@ascencia/id-rbac": ["@ascencia/id-rbac@0.1.0-rc.2", "", {}, "sha512-VmBWUVlYlQ7n4ZCsSvodrS3Tse0/N6LEqcX/JpJD0l19CjFVTntnQ817KFfOlSwkui34WotuFOSQW6cf0lSO0g=="],
 
-    "@ascencia/id-server": ["@ascencia/id-server@0.1.0-rc.1", "", { "dependencies": { "@ascencia/id-core": "0.1.0-rc.1", "@ascencia/id-rbac": "0.1.0-rc.1", "jose": "^6.2.10" }, "peerDependencies": { "express": "^5.1.0", "hono": "^4.10.0" }, "optionalPeers": ["express", "hono"] }, "sha512-yGvohgKwXijVIg7C+Eox0n93oDSkFtaZiFfGC91Aj6gX/DSFEoCPs+2nKaQ3BKTIsmHNIXwTQ+JQaD1ita/jhw=="],
+    "@ascencia/id-server": ["@ascencia/id-server@0.1.0-rc.2", "", { "dependencies": { "@ascencia/id-core": "0.1.0-rc.2", "@ascencia/id-rbac": "0.1.0-rc.2", "jose": "^6.2.10" }, "peerDependencies": { "elysia": "^1.4.0", "express": "^5.1.0", "hono": "^4.10.0" }, "optionalPeers": ["elysia", "express", "hono"] }, "sha512-Qx9u55CFV8uJBepWlm6PVbntivgQMmBhDOFXSu6q+i2huLkIHXA5Xuk1fAWh+5XnM6pR2nkFyQW5FGesuneZpQ=="],
 
     "@ascencia/sarutobi-js": ["@ascencia/sarutobi-js@0.1.0-rc.4", "", {}, "sha512-p4d+QR2VHJ8UA4LJBOwEqMKtp69C5yLXoh61U/tqCRwRwVzvfkLN7wIfwnFlpanxU7HRaFHkR8JXXKlQKZVqHg=="],
 
