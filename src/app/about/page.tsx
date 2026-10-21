@@ -12,7 +12,7 @@ import {
 import { Navbar } from "@/components/navbar";
 
 export const metadata: Metadata = {
-  title: "À Propos - Just Tools",
+  title: "À propos",
   description:
     "Découvrez l'histoire et la mission de Just Tools - Suite d'outils de développement gratuits créée par Ahmed Karim pour Ascencia",
   alternates: { canonical: "/about" },
