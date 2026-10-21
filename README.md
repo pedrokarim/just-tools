@@ -257,11 +257,13 @@ npm run lint     # Alternative avec npm
 
 ## 🚀 Déploiement
 
-Le projet est optimisé pour le déploiement sur Vercel :
+Le site tourne dans un conteneur Docker, derrière nginx et Cloudflare :
 
-1. Connectez votre repository à Vercel
-2. Les paramètres de build sont automatiquement détectés
-3. Déploiement automatique à chaque push
+1. Un push sur `main` construit l'image avec GitHub Actions et la publie sur GHCR
+2. Sur le serveur, `./deploy.sh` tire l'image et redémarre le conteneur
+3. Les secrets vivent dans le `.env` du serveur, jamais dans l'image
+
+Le détail est dans [docs/DOCKER_DEPLOYMENT.md](./docs/DOCKER_DEPLOYMENT.md).
 
 ### Variables d'Environnement
 

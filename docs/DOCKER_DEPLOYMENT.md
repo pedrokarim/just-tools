@@ -1,240 +1,78 @@
-# Guide de Déploiement Docker - Just Tools (avec Bun)
+# Déploiement – Just Tools
 
-Ce guide vous explique comment déployer l'application Just Tools sur un serveur Linux en utilisant Docker avec Bun pour des performances optimales.
+Le site tourne dans un conteneur Docker sur un serveur Linux, derrière nginx et
+Cloudflare. L'image est construite par GitHub Actions et publiée sur GHCR ; le
+serveur ne compile jamais.
 
-## 📋 Prérequis
-
-- Docker installé sur votre serveur Linux (version récente avec Docker Compose intégré)
-- Git (pour cloner le projet)
-
-**Note** : Cette configuration utilise Bun au lieu de npm pour des performances améliorées. Docker Compose est maintenant intégré dans Docker.
-
-## 🚀 Déploiement Rapide
-
-### 1. Cloner le projet
-```bash
-git clone <votre-repo>
-cd just-tools
+```
+push sur main ──► GitHub Actions ──► ghcr.io/pedrokarim/just-tools:main (et :<sha complet>)
+                                              │
+serveur : docker compose pull && up -d ◄──────┘
 ```
 
-### 2. Rendre le script de déploiement exécutable
-```bash
-chmod +x deploy.sh
-```
+## L'image
 
-### 3. Configurer l'environnement (optionnel)
-```bash
-./deploy.sh setup
-```
+Le `Dockerfile` a trois étapes : dépendances (Bun), build (Bun), exécution
+(`node:22-bookworm-slim`, sortie `standalone` de Next).
 
-### 4. Construire et démarrer l'application
-```bash
-./deploy.sh build
-./deploy.sh start
-```
+Trois règles, chacune pour une raison :
 
-L'application sera accessible sur `http://votre-serveur:3000` (ou le port configuré dans `.env`)
+- **aucun `.env` dans l'image** : `.dockerignore` les exclut tous. Les secrets
+  se donnent au conteneur, au démarrage ;
+- **aucune migration au build ni au démarrage** : `bun install` tourne avec
+  `--ignore-scripts`, et le conteneur ne lance que `node server.js`. Une
+  migration qui part toute seule d'un build est exactement ce que
+  `scripts/apply-sql.js` a été écrit pour empêcher ;
+- **`sharp` installé** : sans lui, `next/image` renvoie l'image d'origine
+  quelle que soit la largeur demandée.
 
-## 🔧 Commandes Disponibles
+## Les variables
 
-Le script `deploy.sh` offre plusieurs commandes :
+| Quand | Variables | Où |
+|---|---|---|
+| Build | `NEXT_PUBLIC_SITE_NAME`, `NEXT_PUBLIC_SITE_DESCRIPTION`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_FALLBACK_URL`, `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_ASCENCIA_ISSUER`, `NEXT_PUBLIC_SARUTOBI_SITE_ID` | Variables du dépôt GitHub (*Settings → Secrets and variables → Actions → Variables*). Elles finissent dans le JavaScript public : ce ne sont pas des secrets |
+| Exécution | `DATABASE_URL`, `DIRECT_URL`, `ASCENCIA_ISSUER`, `ASCENCIA_CLIENT_ID`, `ASCENCIA_CLIENT_SECRET` | Le `.env` du serveur (`chmod 600`), jamais GitHub |
 
-```bash
-./deploy.sh setup    # Configurer l'environnement (.env)
-./deploy.sh build    # Construire l'image Docker
-./deploy.sh start    # Démarrer l'application
-./deploy.sh stop     # Arrêter l'application
-./deploy.sh restart  # Redémarrer l'application
-./deploy.sh logs     # Afficher les logs
-./deploy.sh clean    # Nettoyer les images et conteneurs
-./deploy.sh help     # Afficher l'aide
-```
+Le serveur refuse de démarrer si une variable d'Ascencia ID manque
+(`src/instrumentation.ts`) : l'erreur se voit au déploiement, pas à la première
+connexion.
 
-## 🐳 Déploiement Manuel avec Docker
+## Déployer
 
-Si vous préférez utiliser Docker directement :
-
-### Construction de l'image
-```bash
-docker build -t just-tools .
-```
-
-### Lancement du conteneur
-```bash
-docker run -d \
-  --name just-tools-app \
-  -p 3000:3000 \
-  -e NODE_ENV=production \
-  --restart unless-stopped \
-  just-tools
-```
-
-## 🐳 Déploiement avec Docker Compose
-
-### Lancement
-```bash
-docker compose up -d
-```
-
-### Arrêt
-```bash
-docker compose down
-```
-
-### Voir les logs
-```bash
-docker compose logs -f
-```
-
-## 🔒 Configuration de Production
-
-### Variables d'environnement
-
-Vous pouvez créer un fichier `.env` pour configurer l'application. Utilisez la commande `./deploy.sh setup` pour créer automatiquement le fichier à partir de `env.example` :
+Sur le serveur, dans le dossier qui contient `compose.prod.yml` et le `.env` :
 
 ```bash
-./deploy.sh setup
+./deploy.sh            # dernière image `main`
+./deploy.sh <sha>      # une version précise, SHA complet du commit : c'est le retour arrière
 ```
 
-Exemple de configuration dans `.env` :
-```env
-# Configuration du serveur
-PORT=3000
+Le script attend que la sonde du conteneur passe au vert, puis interroge la base
+une fois (`/api/health?db=1`).
 
-# Configuration de l'environnement
-NODE_ENV=production
+## Les migrations SQL
 
-# Configuration de l'application
-NEXT_PUBLIC_APP_NAME=Just Tools
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
+Elles ne tournent plus à chaque build. Quand un fichier s'ajoute à
+`prisma/sql/`, l'appliquer depuis un poste, avec l'URL directe de la base :
 
-### Reverse Proxy avec Nginx
-
-Pour une configuration de production, il est recommandé d'utiliser Nginx comme reverse proxy :
-
-```nginx
-server {
-    listen 80;
-    server_name votre-domaine.com;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-
-## 📊 Monitoring et Logs
-
-### Vérifier l'état du conteneur
 ```bash
-docker ps
-docker stats just-tools-app
+DIRECT_URL="postgresql://…" node scripts/apply-sql.js
 ```
 
-### Health Check
-L'application expose un endpoint de santé sur `/api/health` qui retourne :
-```json
-{
-  "status": "healthy",
-  "timestamp": "2024-01-01T12:00:00.000Z",
-  "uptime": 3600
-}
-```
+Jamais de `prisma db push` en production.
 
-### Logs en temps réel
+## La sonde de santé
+
+`/api/health` répond sur le processus seul ; `/api/health?db=1` lit aussi la
+base. La première sert à Docker toutes les 30 secondes, la seconde rarement :
+la base est chez Neon, et une requête toutes les 30 secondes l'empêcherait de
+se mettre en veille. nginx réserve la route à la machine elle-même.
+
+## Tester l'image en local
+
 ```bash
-docker compose logs -f just-tools
+docker run --rm -p 3000:3000 --env-file ../just-tools-prod.env ghcr.io/pedrokarim/just-tools:main
 ```
 
-## 🔧 Maintenance
-
-### Mise à jour de l'application
-```bash
-# Arrêter l'application
-./deploy.sh stop
-
-# Récupérer les dernières modifications
-git pull
-
-# Reconstruire et redémarrer
-./deploy.sh build
-./deploy.sh start
-```
-
-### Nettoyage
-```bash
-# Nettoyer les images et conteneurs inutilisés
-./deploy.sh clean
-```
-
-## 🛠️ Dépannage
-
-### Problèmes courants
-
-1. **Port déjà utilisé**
-   ```bash
-   # Vérifier quel processus utilise le port 3000
-   sudo netstat -tulpn | grep :3000
-   
-   # Tuer le processus si nécessaire
-   sudo kill -9 <PID>
-   ```
-
-2. **Permissions Docker**
-   ```bash
-   # Ajouter l'utilisateur au groupe docker
-   sudo usermod -aG docker $USER
-   # Redémarrer la session
-   ```
-
-3. **Espace disque insuffisant**
-   ```bash
-   # Nettoyer Docker
-   docker system prune -a
-   ```
-
-### Logs d'erreur
-```bash
-# Voir les logs d'erreur
-docker compose logs --tail=100 just-tools | grep ERROR
-```
-
-## 📈 Optimisations
-
-### Limites de ressources
-Le `docker-compose.yml` inclut des limites de ressources :
-- Mémoire : 512MB max, 256MB réservé
-- CPU : 0.5 core max, 0.25 core réservé
-
-### Optimisations de l'image
-- Utilisation d'images Alpine Linux légères avec Bun
-- Build multi-stage pour réduire la taille
-- Utilisateur non-root pour la sécurité
-- Bun pour des installations et exécutions plus rapides
-
-## 🔐 Sécurité
-
-- L'application s'exécute avec un utilisateur non-root
-- Headers de sécurité configurés dans Next.js
-- Health check pour détecter les problèmes
-- Limites de ressources pour éviter les abus
-
-## 📞 Support
-
-En cas de problème :
-1. Vérifiez les logs : `./deploy.sh logs`
-2. Consultez la documentation Next.js
-3. Vérifiez la configuration Docker
-
----
-
-**Note** : Ce guide suppose que vous déployez sur un serveur Linux. Pour d'autres systèmes, certaines commandes peuvent nécessiter des ajustements. 
+Le fichier d'environnement se garde **hors du dépôt**. La connexion à l'admin
+ne fonctionne pas sur `localhost` : l'URL de rappel enregistrée chez Ascencia
+ID est celle du site.
