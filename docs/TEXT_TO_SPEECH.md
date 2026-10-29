@@ -86,7 +86,7 @@ visible :
    `launchQueue`, qui route vers la bonne page ou émet l'évènement
    `just-tools:launch` que l'outil écoute. Le document conservant son interaction
    passée, la lecture démarre sans obstacle.
-2. **Frappe système** — le client [`tts-hotkey`](../tts-hotkey/README.md) envoie
+2. **Frappe système** — le module Synthèse vocale d'Atelier envoie
    une frappe F24 après avoir mis la fenêtre au premier plan. Une vraie frappe au
    niveau du système compte comme geste utilisateur.
 3. **Superposition** — si la lecture est refusée malgré tout (erreur
@@ -96,7 +96,7 @@ visible :
 
 ## Client de raccourci clavier
 
-Le sous-projet Rust [`tts-hotkey/`](../tts-hotkey/README.md) enregistre un
-raccourci global (`Ctrl+Alt+S` par défaut), lit le presse-papiers et ouvre cette
+Le module Synthèse vocale d'[Atelier](https://github.com/pedrokarim/atelier)
+enregistre un raccourci global (`Ctrl+Alt+S` par défaut), lit le presse-papiers et ouvre cette
 URL dans Edge. Cas d'usage d'origine : récupérer par OCR le texte affiché à
 l'écran, le copier, puis le faire lire d'une frappe.

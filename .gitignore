@@ -56,9 +56,6 @@ scripts/temp-*
 temp
 .claude
 
-# sous-projet Rust (client de raccourci clavier)
-/tts-hotkey/target
-
 # atelier de design (non versionné)
 /design/
 

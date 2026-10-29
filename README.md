@@ -110,8 +110,8 @@ Toute la documentation du projet est disponible dans le dossier [`docs/`](./docs
 - Import fichier, OCR d'images, traduction intégrée
 
 Voir [`docs/TEXT_TO_SPEECH.md`](./docs/TEXT_TO_SPEECH.md) pour les paramètres
-d'URL, et [`tts-hotkey/`](./tts-hotkey/) pour le client Windows qui envoie le
-presse-papiers vers l'outil via un raccourci clavier global.
+d'URL. Le raccourci clavier global qui envoie le presse-papiers vers l'outil
+est le module Synthèse vocale d'[Atelier](https://github.com/pedrokarim/atelier).
 
 ## 🏃‍♂️ Démarrage Rapide
 
