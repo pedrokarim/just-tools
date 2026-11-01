@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useCallback, useRef, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -9,42 +8,48 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  type DragEndEvent } from "@dnd-kit/core";
+  type DragEndEvent,
+} from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  useSortable } from "@dnd-kit/sortable";
+  useSortable,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import {
+  Circle,
+  CopyPlus,
+  Diamond,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Hexagon,
+  Lock,
+  Minus,
+  Pencil,
+  Plus,
+  Square,
+  Trash2,
+  Unlock,
+} from "lucide-react";
 import { useHalftoneStore, type HalftoneLayer } from "@/lib/halftone-store";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { ScrollArea } from "@/components/ui/scroll-area";
-
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
-  ContextMenuTrigger } from "@/components/ui/context-menu";
-import {
-  Eye,
-  EyeOff,
-  Lock,
-  Unlock,
-  GripVertical,
-  Plus,
-  Copy,
-  Trash2,
-  Circle,
-  Square,
-  Diamond,
-  Hexagon,
-  Minus,
-  Layers } from "lucide-react";
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { SelectField, SliderField } from "./panel-parts";
 
-const BLEND_MODES: { value: GlobalCompositeOperation; label: string }[] = [
+const BLEND_MODES: readonly {
+  value: GlobalCompositeOperation;
+  label: string;
+}[] = [
   { value: "source-over", label: "Normal" },
   { value: "multiply", label: "Multiplier" },
   { value: "screen", label: "Écran" },
@@ -67,14 +72,60 @@ const SHAPE_ICONS: Record<string, typeof Circle> = {
   line: Minus,
 };
 
+const ROW_BUTTON =
+  "text-fg-subtle hover:text-fg flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xs pointer-coarse:size-11";
+
+/** Le champ de renommage, monté le temps de la saisie. */
+function LayerNameInput({
+  name,
+  onSubmit,
+  onCancel,
+}: {
+  name: string;
+  onSubmit: (name: string) => void;
+  onCancel: () => void;
+}) {
+  const [draft, setDraft] = useState(name);
+  // Échap retire le champ, ce qui le fait perdre le focus : ce blur n'est pas
+  // une validation.
+  const cancelled = useRef(false);
+
+  return (
+    <Input
+      autoFocus
+      aria-label="Nom du calque"
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onFocus={(event) => event.target.select()}
+      onBlur={() => {
+        if (!cancelled.current) onSubmit(draft);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") onSubmit(draft);
+        if (event.key === "Escape") {
+          cancelled.current = true;
+          onCancel();
+        }
+      }}
+      className="h-8 min-w-0 flex-1 px-2 text-[0.8125rem] pointer-coarse:h-11"
+    />
+  );
+}
+
 // --- Composant d'un calque dans la liste (sortable) ---
 
 function SortableLayerItem({
   layer,
   isActive,
+  isRenaming,
+  onStartRename,
+  onStopRename,
 }: {
   layer: HalftoneLayer;
   isActive: boolean;
+  isRenaming: boolean;
+  onStartRename: () => void;
+  onStopRename: () => void;
 }) {
   const {
     selectLayer,
@@ -85,10 +136,6 @@ function SortableLayerItem({
     deleteLayer,
     layers,
   } = useHalftoneStore();
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(layer.name);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const {
     attributes,
@@ -104,20 +151,16 @@ function SortableLayerItem({
     transition,
   };
 
-  const handleDoubleClick = useCallback(() => {
-    if (layer.locked) return;
-    setEditName(layer.name);
-    setIsEditing(true);
-    setTimeout(() => inputRef.current?.select(), 0);
-  }, [layer.name, layer.locked]);
-
-  const handleRenameSubmit = useCallback(() => {
-    const trimmed = editName.trim();
-    if (trimmed && trimmed !== layer.name) {
-      renameLayer(layer.id, trimmed);
-    }
-    setIsEditing(false);
-  }, [editName, layer.id, layer.name, renameLayer]);
+  const handleRenameSubmit = useCallback(
+    (name: string) => {
+      const trimmed = name.trim();
+      if (trimmed && trimmed !== layer.name) {
+        renameLayer(layer.id, trimmed);
+      }
+      onStopRename();
+    },
+    [layer.id, layer.name, renameLayer, onStopRename]
+  );
 
   const ShapeIcon = SHAPE_ICONS[layer.settings.shape] ?? Circle;
   const canDelete = layers.length > 1;
@@ -128,125 +171,131 @@ function SortableLayerItem({
         <div
           ref={setNodeRef}
           style={style}
-          className={`
-            group flex items-center gap-1.5 px-2 py-1.5 cursor-pointer select-none
-            border-b border-border/40 transition-colors
-            ${isActive ? "bg-blue-500/10 dark:bg-blue-500/20 border-l-2 border-l-blue-500" : "border-l-2 border-l-transparent hover:bg-muted/50"}
-            ${isDragging ? "opacity-50 z-50" : ""}
-            ${!layer.visible ? "opacity-50" : ""}
-          `}
-          onClick={() => selectLayer(layer.id)}
+          className={cn(
+            "rounded-field flex min-h-10 min-w-0 items-center gap-0.5 px-1",
+            isActive
+              ? "bg-primary-soft text-primary-soft-fg"
+              : "text-fg hover:bg-surface",
+            isDragging && "relative z-10 opacity-50"
+          )}
         >
-          {/* Drag handle */}
           <button
-            className="touch-none text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing"
+            type="button"
+            className={cn(ROW_BUTTON, "cursor-grab touch-none active:cursor-grabbing")}
             {...attributes}
             {...listeners}
+            aria-label={`Déplacer ${layer.name}`}
           >
-            <GripVertical className="h-3.5 w-3.5" />
+            <GripVertical size={14} aria-hidden="true" />
           </button>
 
-          {/* Icône forme */}
-          <div
-            className="flex-shrink-0 w-6 h-6 rounded flex items-center justify-center"
-            style={{
-              backgroundColor: layer.settings.couleurs[0] + "20",
-            }}
-          >
-            <ShapeIcon
-              className="h-3.5 w-3.5"
-              style={{ color: layer.settings.couleurs[0] }}
+          {isRenaming ? (
+            <LayerNameInput
+              name={layer.name}
+              onSubmit={handleRenameSubmit}
+              onCancel={onStopRename}
             />
-          </div>
-
-          {/* Nom */}
-          <div className="flex-1 min-w-0" onDoubleClick={handleDoubleClick}>
-            {isEditing ? (
-              <Input
-                ref={inputRef}
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                onBlur={handleRenameSubmit}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleRenameSubmit();
-                  if (e.key === "Escape") setIsEditing(false);
-                }}
-                className="h-5 px-1 py-0 text-xs border-blue-500"
-                autoFocus
+          ) : (
+            <button
+              type="button"
+              title={layer.name}
+              aria-current={isActive ? "true" : undefined}
+              onClick={() => selectLayer(layer.id)}
+              onDoubleClick={() => {
+                if (!layer.locked) onStartRename();
+              }}
+              className={cn(
+                "flex min-h-8 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-xs text-left",
+                !layer.visible && "opacity-50"
+              )}
+            >
+              <ShapeIcon size={14} className="shrink-0" aria-hidden="true" />
+              {/* La couleur du calque : une donnée, affichée telle quelle. */}
+              <span
+                aria-hidden="true"
+                className="border-border-strong size-3.5 shrink-0 rounded-xs border"
+                style={{ backgroundColor: layer.settings.couleurs[0] }}
               />
-            ) : (
-              <span className="text-xs truncate block">
+              <span className="min-w-0 truncate text-[0.8125rem]">
                 {layer.name}
               </span>
-            )}
-          </div>
-
-          {/* Boutons visibilité & verrouillage */}
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleLayerLock(layer.id);
-              }}
-            >
-              {layer.locked ? (
-                <Lock className="h-3 w-3" />
-              ) : (
-                <Unlock className="h-3 w-3" />
-              )}
             </button>
-          </div>
+          )}
 
           <button
-            className={`p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground ${
-              !layer.visible
-                ? "opacity-100"
-                : "opacity-0 group-hover:opacity-100"
-            } transition-opacity`}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleLayerVisibility(layer.id);
-            }}
+            type="button"
+            className={ROW_BUTTON}
+            aria-label={
+              layer.locked
+                ? `Déverrouiller ${layer.name}`
+                : `Verrouiller ${layer.name}`
+            }
+            aria-pressed={layer.locked}
+            title={layer.locked ? "Déverrouiller" : "Verrouiller"}
+            onClick={() => toggleLayerLock(layer.id)}
+          >
+            {layer.locked ? (
+              <Lock size={14} aria-hidden="true" />
+            ) : (
+              <Unlock size={14} aria-hidden="true" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            className={ROW_BUTTON}
+            aria-label={
+              layer.visible ? `Masquer ${layer.name}` : `Afficher ${layer.name}`
+            }
+            aria-pressed={!layer.visible}
+            title={layer.visible ? "Masquer" : "Afficher"}
+            onClick={() => toggleLayerVisibility(layer.id)}
           >
             {layer.visible ? (
-              <Eye className="h-3 w-3" />
+              <Eye size={14} aria-hidden="true" />
             ) : (
-              <EyeOff className="h-3 w-3" />
+              <EyeOff size={14} aria-hidden="true" />
             )}
           </button>
         </div>
       </ContextMenuTrigger>
 
-      <ContextMenuContent>
+      {/* Après « Renommer », le focus doit rester dans le champ, pas revenir ici. */}
+      <ContextMenuContent
+        onCloseAutoFocus={(event) => {
+          if (isRenaming) event.preventDefault();
+        }}
+      >
+        <ContextMenuItem disabled={layer.locked} onClick={onStartRename}>
+          <Pencil aria-hidden="true" />
+          Renommer
+        </ContextMenuItem>
         <ContextMenuItem onClick={() => duplicateLayer(layer.id)}>
-          <Copy className="h-3.5 w-3.5 mr-2" />
+          <CopyPlus aria-hidden="true" />
           Dupliquer
         </ContextMenuItem>
         <ContextMenuItem
-          onClick={() => canDelete && deleteLayer(layer.id)}
+          variant="destructive"
           disabled={!canDelete}
-          className={!canDelete ? "opacity-50" : "text-destructive"}
+          onClick={() => canDelete && deleteLayer(layer.id)}
         >
-          <Trash2 className="h-3.5 w-3.5 mr-2" />
+          <Trash2 aria-hidden="true" />
           Supprimer
         </ContextMenuItem>
         <ContextMenuSeparator />
-        <ContextMenuItem
-          onClick={() => toggleLayerVisibility(layer.id)}
-        >
+        <ContextMenuItem onClick={() => toggleLayerVisibility(layer.id)}>
           {layer.visible ? (
-            <EyeOff className="h-3.5 w-3.5 mr-2" />
+            <EyeOff aria-hidden="true" />
           ) : (
-            <Eye className="h-3.5 w-3.5 mr-2" />
+            <Eye aria-hidden="true" />
           )}
           {layer.visible ? "Masquer" : "Afficher"}
         </ContextMenuItem>
         <ContextMenuItem onClick={() => toggleLayerLock(layer.id)}>
           {layer.locked ? (
-            <Unlock className="h-3.5 w-3.5 mr-2" />
+            <Unlock aria-hidden="true" />
           ) : (
-            <Lock className="h-3.5 w-3.5 mr-2" />
+            <Lock aria-hidden="true" />
           )}
           {layer.locked ? "Déverrouiller" : "Verrouiller"}
         </ContextMenuItem>
@@ -262,10 +311,15 @@ export function LayerPanel() {
     layers,
     activeLayerId,
     addLayer,
+    duplicateLayer,
+    deleteLayer,
     reorderLayers,
     setLayerOpacity,
     setLayerBlendMode,
   } = useHalftoneStore();
+
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const stopRename = useCallback(() => setRenamingId(null), []);
 
   const activeLayer = layers.find((l) => l.id === activeLayerId);
 
@@ -294,69 +348,18 @@ export function LayerPanel() {
   const reversedLayers = [...layers].reverse();
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b">
-        <div className="flex items-center gap-1.5">
-          <Layers className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Calques</span>
-          <span className="text-xs text-muted-foreground">
-            ({layers.length})
-          </span>
+    <div className="flex min-w-0 flex-col gap-4">
+      <div className="flex min-w-0 flex-col gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-fg-muted min-w-0 text-sm tabular-nums">
+            {layers.length}&nbsp;{layers.length > 1 ? "calques" : "calque"}
+          </p>
+          <Button variant="secondary" size="sm" onClick={addLayer}>
+            <Plus aria-hidden="true" />
+            Ajouter
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6"
-          onClick={addLayer}
-        >
-          <Plus className="h-3.5 w-3.5" />
-        </Button>
-      </div>
 
-      {/* Barre opacité / blend mode du calque actif */}
-      {activeLayer && (
-        <div className="px-3 py-2 border-b space-y-2">
-          {/* Blend mode */}
-          <div className="flex items-center gap-2">
-            <select
-              className="flex-1 h-7 text-xs bg-muted/50 border border-border rounded px-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              value={activeLayer.blendMode}
-              onChange={(e) =>
-                setLayerBlendMode(
-                  activeLayer.id,
-                  e.target.value as GlobalCompositeOperation
-                )
-              }
-            >
-              {BLEND_MODES.map((mode) => (
-                <option key={mode.value} value={mode.value}>
-                  {mode.label}
-                </option>
-              ))}
-            </select>
-            <div className="flex items-center gap-1 min-w-[60px]">
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {Math.round(activeLayer.opacity * 100)}%
-              </span>
-            </div>
-          </div>
-          {/* Opacity slider */}
-          <Slider
-            value={[activeLayer.opacity * 100]}
-            min={0}
-            max={100}
-            step={1}
-            onValueChange={([v]) =>
-              setLayerOpacity(activeLayer.id, v / 100)
-            }
-            className="w-full"
-          />
-        </div>
-      )}
-
-      {/* Liste des calques */}
-      <ScrollArea className="flex-1">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -366,25 +369,73 @@ export function LayerPanel() {
             items={reversedLayers.map((l) => l.id)}
             strategy={verticalListSortingStrategy}
           >
-            <AnimatePresence initial={false}>
+            <div className="flex min-w-0 flex-col gap-0.5">
               {reversedLayers.map((layer) => (
-                <motion.div
+                <SortableLayerItem
                   key={layer.id}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <SortableLayerItem
-                    layer={layer}
-                    isActive={layer.id === activeLayerId}
-                  />
-                </motion.div>
+                  layer={layer}
+                  isActive={layer.id === activeLayerId}
+                  isRenaming={layer.id === renamingId}
+                  onStartRename={() => setRenamingId(layer.id)}
+                  onStopRename={stopRename}
+                />
               ))}
-            </AnimatePresence>
+            </div>
           </SortableContext>
         </DndContext>
-      </ScrollArea>
+      </div>
+
+      {activeLayer && (
+        <div className="border-border flex min-w-0 flex-col gap-4 border-t pt-4">
+          <SelectField
+            label="Mode de fusion"
+            value={activeLayer.blendMode}
+            options={BLEND_MODES}
+            onChange={(blendMode) =>
+              setLayerBlendMode(activeLayer.id, blendMode)
+            }
+          />
+          <SliderField
+            label="Opacité du calque"
+            unit="%"
+            displayFactor={100}
+            value={activeLayer.opacity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(opacity) => setLayerOpacity(activeLayer.id, opacity)}
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={activeLayer.locked}
+              onClick={() => setRenamingId(activeLayer.id)}
+            >
+              <Pencil aria-hidden="true" />
+              Renommer
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => duplicateLayer(activeLayer.id)}
+            >
+              <CopyPlus aria-hidden="true" />
+              Dupliquer
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={layers.length <= 1}
+              onClick={() => deleteLayer(activeLayer.id)}
+              className="text-danger hover:text-danger"
+            >
+              <Trash2 aria-hidden="true" />
+              Supprimer
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

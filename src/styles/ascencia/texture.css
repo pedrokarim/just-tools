@@ -1,0 +1,305 @@
+/* Copie conforme de `@ascencia/id-ui` (styles/texture.css), ne pas modifier ici.
+
+   Le paquet n'étant pas publié sur npm, Just Tools embarque ses jetons et ses
+   matières tels quels. Toute évolution se fait dans le dépôt d'Ascencia ID,
+   puis se recopie : deux versions qui divergent, c'est deux identités. */
+
+/* ==========================================================================
+   Ascencia ID — matières et mouvement de la direction « Basalte ».
+
+   Deux textures, une règle de mouvement.
+
+   GRAIN      un bruit fractal SVG en `data:` (~400 octets), appliqué en
+              `multiply`. C'est lui qui empêche les aplats de faire « écran »
+              et donne la sensation de papier. Coût : nul, il ne repeint jamais.
+   COURBES    des courbes de niveau, en dégradés répétés. Elles ne sont
+              JAMAIS décoratives au hasard : elles convergent toujours vers un
+              sommet situé sous l'élément, ce qui crée la montée.
+   MOUVEMENT  tout va vers le haut, et s'amortit (`--ease-rise`). C'est la
+              règle unique dont découlent toutes les animations du système.
+   ========================================================================== */
+
+@layer components {
+  /* ------------------------------------------------------------------ grain */
+
+  .asc-grain {
+    position: relative;
+  }
+
+  .asc-grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: var(--asc-grain-opacity);
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.55'/></svg>");
+  }
+
+  /* En sombre, `multiply` mange tout : on passe en `screen` avec une opacité
+     plus basse. Sans ça la page vire au noir bouché. */
+  :root[data-theme='dark'] .asc-grain::after {
+    mix-blend-mode: screen;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .asc-grain::after {
+      mix-blend-mode: screen;
+    }
+  }
+
+  /* Variante plein écran, à poser une seule fois près de la racine. */
+  .asc-grain-page::after {
+    position: fixed;
+  }
+
+  /* --------------------------------------------------------------- courbes */
+
+  /* Courbes de niveau serrées, sommet sous le bas du bloc. */
+  .asc-contours {
+    background-image: repeating-radial-gradient(
+      ellipse 62% 48% at 50% 118%,
+      transparent 0 13px,
+      var(--asc-contour-color) 13px 14.4px
+    );
+  }
+
+  /* Version large, pour les grandes surfaces (fond de page, hero). */
+  .asc-contours-wide {
+    background-image: repeating-radial-gradient(
+      ellipse 55% 100% at 50% 132%,
+      transparent 0 15px,
+      var(--asc-contour-color) 15px 16.6px
+    );
+  }
+
+  /* Version resserrée, pour l'en-tête d'une carte. */
+  .asc-contours-tight {
+    background-image: repeating-radial-gradient(
+      ellipse 58% 90% at 50% 128%,
+      transparent 0 9px,
+      var(--asc-contour-color) 9px 10px
+    );
+  }
+
+  /* Les courbes s'estompent vers le haut : elles ne doivent jamais passer
+     derrière du texte à pleine intensité. */
+  .asc-contours-fade {
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 60%);
+    mask-image: linear-gradient(180deg, transparent, #000 60%);
+  }
+
+  /* Fond de page complet : sommet + courbes + estompe. */
+  .asc-summit {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .asc-summit::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: repeating-radial-gradient(
+      ellipse 55% 100% at 50% 132%,
+      transparent 0 15px,
+      var(--asc-contour-color) 15px 16.6px
+    );
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 55%);
+    mask-image: linear-gradient(180deg, transparent, #000 55%);
+  }
+
+  /* La chaleur de la braise, au sommet du relief.
+     Une lueur diffuse, jamais un halo : `blur` sur un dégradé radial déjà
+     transparent aux bords, à poser dans un conteneur `relative`. Elle se
+     place par `top`, parce que le sommet n'est pas au centre de l'écran —
+     il est au-dessus du texte, là où se trouve la marque. */
+  .asc-ember-glow {
+    position: absolute;
+    top: 26%;
+    left: 50%;
+    z-index: -1;
+    width: min(35rem, 80vw);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--asc-primary) 16%, transparent),
+      transparent 62%
+    );
+    filter: blur(40px);
+  }
+}
+
+/* ------------------------------------------------------------------ mouvement */
+
+@keyframes asc-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes asc-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes asc-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes asc-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes asc-step-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes asc-scale-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* La braise respire — uniquement sur un écran d'attente, jamais pendant
+   la saisie. Un seul élément animé par écran : c'est la règle. */
+@keyframes asc-ember-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes asc-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes asc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Succès : la courbe supérieure se trace, puis la braise s'allume. */
+@keyframes asc-draw {
+  from {
+    stroke-dashoffset: var(--asc-draw-length, 100);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Radix expose la hauteur du contenu dans une variable : c'est le seul moyen
+   d'animer un dépliage de hauteur inconnue sans mesurer en JavaScript. */
+@keyframes asc-accordion-down {
+  from { height: 0; opacity: 0; }
+  to { height: var(--radix-accordion-content-height); opacity: 1; }
+}
+
+@keyframes asc-accordion-up {
+  from { height: var(--radix-accordion-content-height); opacity: 1; }
+  to { height: 0; opacity: 0; }
+}
+
+@keyframes asc-collapsible-down {
+  from { height: 0; opacity: 0; }
+  to { height: var(--radix-collapsible-content-height); opacity: 1; }
+}
+
+@keyframes asc-collapsible-up {
+  from { height: var(--radix-collapsible-content-height); opacity: 1; }
+  to { height: 0; opacity: 0; }
+}
+
+@layer components {
+  .asc-animate-rise {
+    animation: asc-rise var(--animate-duration-card) var(--ease-rise) both;
+  }
+
+  .asc-animate-step-in {
+    animation: asc-step-in var(--animate-duration-step) var(--ease-rise) both;
+  }
+
+  .asc-animate-fade {
+    animation: asc-fade-in var(--animate-duration-fast) ease-out both;
+  }
+
+  .asc-animate-ember {
+    animation: asc-ember-breathe 3s ease-in-out infinite;
+  }
+
+  .asc-animate-spin {
+    animation: asc-spin 0.8s linear infinite;
+  }
+
+  .asc-animate-shimmer {
+    background-image: linear-gradient(
+      90deg,
+      var(--asc-skeleton) 0%,
+      color-mix(in srgb, var(--asc-skeleton) 55%, var(--asc-bg)) 50%,
+      var(--asc-skeleton) 100%
+    );
+    background-size: 200% 100%;
+    animation: asc-shimmer 1.6s ease-in-out infinite;
+  }
+
+  /* Branchements Radix : `data-state` pilote l'entrée et la sortie. */
+  .asc-anim-overlay[data-state='open'] {
+    animation: asc-fade-in var(--animate-duration-fast) ease-out;
+  }
+  .asc-anim-overlay[data-state='closed'] {
+    animation: asc-fade-out var(--animate-duration-fast) ease-in;
+  }
+  .asc-anim-content[data-state='open'] {
+    animation: asc-scale-in var(--animate-duration-card) var(--ease-rise);
+  }
+  .asc-anim-content[data-state='closed'] {
+    animation: asc-fade-out var(--animate-duration-instant) ease-in;
+  }
+}

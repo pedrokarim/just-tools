@@ -1,226 +1,111 @@
 import { Metadata } from "next";
-import Image from "next/image";
+import { Github, Globe } from "lucide-react";
+import { AscenciaLockup } from "@/components/brand/ascencia-mark";
 import {
-  Github,
-  Globe,
-  Heart,
-  Code,
-  Users,
-  Zap,
-  Shield,
-  Star } from "lucide-react";
-import { Navbar } from "@/components/navbar";
+  ReadingColumn,
+  ReadingSection,
+  SiteShell,
+} from "@/components/site/site-shell";
+import { Button } from "@/components/ui/button";
+import { PROJECT_CONFIG } from "@/lib/constants";
+import { tools } from "@/lib/tools-metadata";
 
 export const metadata: Metadata = {
   title: "À propos",
   description:
-    "Découvrez l'histoire et la mission de Just Tools - Suite d'outils de développement gratuits créée par Ahmed Karim pour Ascencia",
+    "L'histoire de Just Tools, suite d'outils de développement gratuits et open source créée par Ahmed Karim pour Ascencia, et les technologies qui la font tourner.",
   alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 py-12 max-w-6xl pt-24">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-8">
-            <Image
-              src="/assets/images/icon-512.png"
-              alt="Just Tools Logo"
-              width={120}
-              height={120}
-              className="rounded-2xl"
-            />
-          </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-            À Propos de Just Tools
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Une suite d'outils de développement gratuits créée avec passion pour
-            simplifier le quotidien des développeurs et améliorer leur
-            productivité.
+    <SiteShell>
+      <ReadingColumn
+        title="À propos de Just Tools"
+        lead={`${tools.length} outils de développement gratuits, créés pour simplifier le quotidien de celles et ceux qui écrivent du code.`}
+      >
+        <ReadingSection id="mission" title="Pourquoi Just Tools">
+          <p>
+            Just Tools est né d&apos;une idée simple&nbsp;: réunir au même
+            endroit les petits outils dont on a besoin tous les jours, gratuits
+            et accessibles à tous les développeurs, quel que soit leur niveau.
           </p>
-        </div>
+          <p>
+            La productivité ne devrait pas dépendre d&apos;une barrière
+            financière ou technique. Il n&apos;y a donc ni compte à créer, ni
+            abonnement, ni limite d&apos;usage, et tes fichiers sont traités
+            dans ton navigateur plutôt que sur un serveur.
+          </p>
+        </ReadingSection>
 
-        {/* Mission Section */}
-        <div className="border border-border bg-card rounded-xl p-8 mb-12">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-foreground mb-6">
-                Notre Mission
-              </h2>
-              <p className="text-lg text-muted-foreground mb-6">
-                Just Tools est né d'une vision simple : créer une collection
-                d'outils pratiques, gratuits et accessibles à tous les
-                développeurs, quel que soit leur niveau d'expérience.
-              </p>
-              <p className="text-lg text-muted-foreground mb-6">
-                Nous croyons que la productivité ne devrait pas être limitée par
-                des barrières financières ou techniques. C'est pourquoi nous
-                développons des outils modernes, intuitifs et performants.
-              </p>
-              <div className="flex items-center text-primary">
-                <Heart className="w-5 h-5 mr-2" />
-                <span className="font-medium">
-                  Développé avec passion pour la communauté
-                </span>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-secondary p-6 rounded-lg text-center">
-                <Zap className="w-8 h-8 text-foreground mx-auto mb-3" />
-                <h3 className="font-semibold text-foreground mb-2">Rapide</h3>
-                <p className="text-sm text-muted-foreground">
-                  Performance optimisée
-                </p>
-              </div>
-              <div className="bg-secondary p-6 rounded-lg text-center">
-                <Shield className="w-8 h-8 text-foreground mx-auto mb-3" />
-                <h3 className="font-semibold text-foreground mb-2">Sécurisé</h3>
-                <p className="text-sm text-muted-foreground">Données locales</p>
-              </div>
-              <div className="bg-secondary p-6 rounded-lg text-center">
-                <Code className="w-8 h-8 text-foreground mx-auto mb-3" />
-                <h3 className="font-semibold text-foreground mb-2">Moderne</h3>
-                <p className="text-sm text-muted-foreground">
-                  Technologies récentes
-                </p>
-              </div>
-              <div className="bg-secondary p-6 rounded-lg text-center">
-                <Users className="w-8 h-8 text-foreground mx-auto mb-3" />
-                <h3 className="font-semibold text-foreground mb-2">
-                  Communautaire
-                </h3>
-                <p className="text-sm text-muted-foreground">Open source</p>
-              </div>
-            </div>
+        <ReadingSection id="createur" title="Qui est derrière">
+          <p>
+            Just Tools est créé par {PROJECT_CONFIG.creator.name} (
+            {PROJECT_CONFIG.creator.alias}), développeur et entrepreneur, pour
+            répondre aux besoins quotidiens de la communauté des développeurs.
+            Le projet est open source sous licence{" "}
+            {PROJECT_CONFIG.project.license}&nbsp;: tu peux lire le code, le
+            réutiliser et y contribuer.
+          </p>
+          <div className="flex flex-wrap gap-3 pt-1">
+            <Button asChild variant="secondary">
+              <a
+                href={PROJECT_CONFIG.creator.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="!text-fg !no-underline"
+              >
+                <Github aria-hidden="true" />
+                GitHub
+              </a>
+            </Button>
+            <Button asChild variant="secondary">
+              <a
+                href={PROJECT_CONFIG.company.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="!text-fg !no-underline"
+              >
+                <Globe aria-hidden="true" />
+                Ascencia
+              </a>
+            </Button>
           </div>
-        </div>
+        </ReadingSection>
 
-        {/* Creator Section */}
-        <div className="border border-border bg-card rounded-xl p-8 mb-12">
-          <h2 className="text-3xl font-bold text-foreground mb-8 text-center">
-            Le Créateur
-          </h2>
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="text-center md:text-left">
-              <h3 className="text-2xl font-bold text-foreground mb-4">
-                Ahmed Karim (PedroKarim)
-              </h3>
-              <p className="text-lg text-muted-foreground mb-6">
-                Développeur passionné et entrepreneur, Ahmed Karim a créé Just
-                Tools pour répondre aux besoins quotidiens de la communauté des
-                développeurs. Avec une expertise en développement web moderne et
-                une vision centrée sur l'expérience utilisateur, il s'efforce de
-                créer des outils qui font vraiment la différence.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                <a
-                  href="https://ascencia.re"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
-                >
-                  <Globe className="w-5 h-5 mr-2" />
-                  Ascencia
-                </a>
-                <a
-                  href="https://github.com/pedrokarim"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center px-6 py-3 border border-border text-foreground rounded-lg hover:bg-secondary transition-colors"
-                >
-                  <Github className="w-5 h-5 mr-2" />
-                  GitHub
-                </a>
-              </div>
-            </div>
-            <div className="bg-secondary p-8 rounded-xl">
-              <h4 className="text-xl font-semibold text-foreground mb-4">
-                Compétences & Technologies
-              </h4>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  "Next.js 15",
-                  "TypeScript",
-                  "React 19",
-                  "Tailwind CSS",
-                  "Node.js",
-                  "PostgreSQL",
-                ].map((tech) => (
-                  <div key={tech} className="flex items-center">
-                    <Star className="w-4 h-4 text-muted-foreground mr-2" />
-                    <span className="text-muted-foreground">{tech}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <ReadingSection id="technologies" title="Comment c'est construit">
+          <p>
+            Le site repose sur Next.js 15, React 19 et TypeScript, avec Tailwind
+            CSS 4 et des composants Radix. Il s&apos;installe comme une
+            application grâce à son service worker, et les outils
+            s&apos;exécutent côté navigateur.
+          </p>
+          <p>
+            Son identité visuelle est celle d&apos;Ascencia ID&nbsp;: mêmes
+            couleurs, mêmes typographies, mêmes règles d&apos;interface que le
+            reste de l&apos;écosystème.
+          </p>
+        </ReadingSection>
 
-        {/* Stats Section */}
-        <div className="border border-border bg-card rounded-xl p-8 mb-12">
-          <h2 className="text-3xl font-bold text-foreground mb-8 text-center">
-            Just Tools en Chiffres
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-foreground mb-2">10</div>
-              <div className="text-muted-foreground">Outils Disponibles</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-foreground mb-2">
-                100%
-              </div>
-              <div className="text-muted-foreground">Gratuit</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-foreground mb-2">MIT</div>
-              <div className="text-muted-foreground">Licence Open Source</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-foreground mb-2">
-                24/7
-              </div>
-              <div className="text-muted-foreground">Disponible</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Technologies Section */}
-        <div className="border border-border bg-card rounded-xl p-8">
-          <h2 className="text-3xl font-bold text-foreground mb-8 text-center">
-            Technologies Utilisées
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-xl font-semibold text-foreground mb-4">
-                Frontend
-              </h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>Next.js 15 avec App Router</li>
-                <li>React 19 et TypeScript</li>
-                <li>Tailwind CSS 4</li>
-                <li>shadcn/ui pour les composants</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-foreground mb-4">
-                Backend & Outils
-              </h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>API Routes Next.js</li>
-                <li>Service Worker pour PWA</li>
-                <li>Jotai & Zustand pour l'état</li>
-                <li>Lucide React pour les icônes</li>
-                <li>Sonner pour les notifications</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        <section
+          aria-label="Ascencia"
+          className="border-border flex flex-wrap items-center gap-x-5 gap-y-3 border-t pt-8"
+        >
+          <a
+            href={PROJECT_CONFIG.company.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Ascencia, le site"
+            className="rounded-sm"
+          >
+            <AscenciaLockup size={26} />
+          </a>
+          <p className="text-fg-muted min-w-0 flex-1 basis-64 text-sm leading-relaxed">
+            Just Tools est un projet de l&apos;écosystème Ascencia, aux côtés de
+            ses autres services et de son compte unique.
+          </p>
+        </section>
+      </ReadingColumn>
+    </SiteShell>
   );
 }

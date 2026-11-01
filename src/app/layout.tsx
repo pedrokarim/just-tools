@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Sora } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
 import { ThemeProvider } from "next-themes";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { LaunchHandler } from "@/components/launch-handler";
+import { ToolSearchProvider } from "@/components/site/tool-search";
 import Script from "next/script";
 import { PROJECT_CONFIG } from "@/lib/constants";
-import { getToolsCount } from "@/lib/tools-metadata";
+import { getToolsCount, tools } from "@/lib/tools-metadata";
+import { RAIL_INIT_SCRIPT } from "@/lib/tool-rail";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 // Réexport local : le paquet publié n'embarque pas sa directive « use client ».
 // Voir le commentaire dans ce module.
@@ -17,13 +19,20 @@ import { SarutobiProvider } from "@/components/sarutobi-provider";
 // Import d'initialisation Prisma (s'exécute automatiquement côté serveur)
 import "@/lib/prisma";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Les trois familles d'Ascencia ID. `next/font` les télécharge à la construction
+// et les sert depuis le site : aucune requête vers Google côté visiteur.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const sora = Sora({
+  variable: "--font-sora",
+  subsets: ["latin"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains",
   subsets: ["latin"],
 });
 
@@ -37,7 +46,7 @@ export const metadata: Metadata = {
     default: `${siteName} - ${siteDescription}`,
     template: `%s | ${siteName}`,
   },
-  description: `Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien. ${toolsCount} outils gratuits pour les développeurs.`,
+  description: `Collection d'outils de développement pratiques et créatifs pour simplifier ton quotidien. ${toolsCount} outils gratuits pour les développeurs.`,
   keywords: [
     "outils de développement",
     "convertisseur base64",
@@ -73,7 +82,7 @@ export const metadata: Metadata = {
     locale: "fr_FR",
     url: baseUrl,
     title: `${siteName} - ${siteDescription}`,
-    description: `Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien. ${toolsCount} outils gratuits pour les développeurs.`,
+    description: `Collection d'outils de développement pratiques et créatifs pour simplifier ton quotidien. ${toolsCount} outils gratuits pour les développeurs.`,
     siteName: siteName,
     images: [
       {
@@ -87,7 +96,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: `${siteName} - ${siteDescription}`,
-    description: `Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien. ${toolsCount} outils gratuits pour les développeurs.`,
+    description: `Collection d'outils de développement pratiques et créatifs pour simplifier ton quotidien. ${toolsCount} outils gratuits pour les développeurs.`,
     images: ["/og-image.png"],
     creator: "@PedroKarim",
   },
@@ -114,10 +123,13 @@ const jsonLd = {
   "@type": "WebApplication",
   name: siteName,
   description:
-    "Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien",
+    "Suite d'outils de développement gratuits et open source, qui tournent dans le navigateur",
   url: baseUrl,
+  inLanguage: "fr",
   applicationCategory: "DeveloperApplication",
   operatingSystem: "Web Browser",
+  isAccessibleForFree: true,
+  license: PROJECT_CONFIG.project.licenseUrl,
   offers: {
     "@type": "Offer",
     price: "0",
@@ -134,22 +146,11 @@ const jsonLd = {
     name: "Ascencia",
     url: "https://ascencia.re",
   },
-  featureList: [
-    "Convertisseur Base64",
-    "Formateur de Code",
-    "Générateur de Palette",
-    "Validateur JSON",
-    "Générateur de Mots de Passe",
-    "Éditeur Markdown",
-    "Éditeur de Motifs",
-    "Effet de Trame",
-    "Extracteur de Couleurs",
-    "Synthèse Vocale",
-  ],
+  sameAs: [PROJECT_CONFIG.project.github],
+  featureList: tools.map((tool) => tool.name),
   screenshot: `${baseUrl}/assets/images/icon-512.png`,
-  softwareVersion: "1.0.0",
+  softwareVersion: PROJECT_CONFIG.version,
   datePublished: "2025-08-15",
-  dateModified: "2025-08-15",
 };
 
 export default function RootLayout({
@@ -158,7 +159,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    // Les variables de police sont posées sur <html>, pas sur <body> : les jetons
+    // `--font-*` se résolvent à la racine, et y seraient sinon indéfinis.
+    <html
+      lang="fr"
+      suppressHydrationWarning
+      className={`${inter.variable} ${sora.variable} ${jetbrainsMono.variable}`}
+    >
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link
@@ -178,35 +185,39 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/assets/images/icon-maskable-192.png" />
         <link rel="manifest" href="/manifest.json" />
         {/* La barre du navigateur doit reprendre le fond de la page, pas la
-            couleur d'accent. Les valeurs suivent `--background` (globals.css).
+            couleur d'accent. Les valeurs suivent `--asc-bg-page` (tokens.css).
             Le suivi se fait sur la préférence système : un thème choisi à la
             main dans l'app ne la repeint pas, ce qui demanderait du JS. */}
         <meta
           name="theme-color"
           media="(prefers-color-scheme: light)"
-          content="#fafafa"
+          content="#f7f3ec"
         />
         <meta
           name="theme-color"
           media="(prefers-color-scheme: dark)"
-          content="#0f111a"
+          content="#0c0b0e"
         />
-        <meta name="msapplication-TileColor" content="#2563eb" />
+        <meta name="msapplication-TileColor" content="#17171a" />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=5"
         />
 
-        {/* Données structurées JSON-LD */}
-        <Script
-          id="structured-data"
+        {/* Pose l'état du rail d'outils avant le premier rendu. */}
+        <script dangerouslySetInnerHTML={{ __html: RAIL_INIT_SCRIPT }} />
+
+        {/* Données structurées JSON-LD. Une balise simple et pas `next/script` :
+            celui-ci les injecte après coup, et elles restaient invisibles pour qui
+            lit le HTML brut, moteurs de recherche et agents compris. */}
+        <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, "\u003c"),
+          }}
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body>
         {/* Sarutobi — Product Analytics auto-hébergé (sarutobi.ascencia.re).
             Le provider ne rend que ses enfants : il n'introduit aucune frontière
             de rendu, et les enfants restent des Server Components.
@@ -218,16 +229,18 @@ export default function RootLayout({
           excludePaths={["/admin/**"]}
         >
           <ThemeProvider
-            attribute="class"
+            attribute="data-theme"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
             <NuqsAdapter>
-              <Providers>{children}</Providers>
+              <Providers>
+                <ToolSearchProvider>{children}</ToolSearchProvider>
+              </Providers>
               <LaunchHandler />
               <AnalyticsTracker />
-              <Toaster richColors position="top-right" />
+              <Toaster position="top-right" />
             </NuqsAdapter>
           </ThemeProvider>
         </SarutobiProvider>

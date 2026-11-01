@@ -743,12 +743,20 @@ export function useTtsPlayer({
   useEffect(() => {
     if (!blocked) return;
 
-    const handler = () => {
+    const handler = (event: Event) => {
+      // Les boutons de la superposition décident eux-mêmes : sans cette garde, la
+      // lecture repartait au `pointerdown`, avant que « Annuler » reçoive son clic.
+      if (
+        event.target instanceof Element &&
+        event.target.closest("[data-tts-unblock-prompt]")
+      ) {
+        return;
+      }
       retryBlocked();
     };
 
-    window.addEventListener("pointerdown", handler, { once: true });
-    window.addEventListener("keydown", handler, { once: true });
+    window.addEventListener("pointerdown", handler);
+    window.addEventListener("keydown", handler);
 
     return () => {
       window.removeEventListener("pointerdown", handler);

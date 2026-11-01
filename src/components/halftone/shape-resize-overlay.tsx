@@ -196,7 +196,7 @@ export function ShapeResizeOverlay({
               width={boxW}
               height={boxH}
               fill="none"
-              stroke="rgba(59, 130, 246, 0.7)"
+              className="stroke-primary"
               strokeWidth={strokeWidth}
               strokeDasharray={dashArray}
             />
@@ -208,7 +208,7 @@ export function ShapeResizeOverlay({
               width={boxW}
               height={boxH}
               fill="transparent"
-              style={{ pointerEvents: "all", cursor: "move" }}
+              style={{ pointerEvents: "all", cursor: "move", touchAction: "none" }}
               onPointerDown={(e) => handlePointerDown(e, "move")}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
@@ -222,13 +222,13 @@ export function ShapeResizeOverlay({
                 y={h.y - handleSize / 2}
                 width={handleSize}
                 height={handleSize}
-                fill="white"
-                stroke="rgba(59, 130, 246, 0.9)"
+                className="fill-elevated stroke-primary"
                 strokeWidth={strokeWidth}
                 rx={1 / zoom}
                 style={{
                   pointerEvents: "all",
                   cursor: HANDLE_CURSORS[h.id],
+                  touchAction: "none",
                 }}
                 onPointerDown={(e) => handlePointerDown(e, "resize", h.id)}
                 onPointerMove={handlePointerMove}

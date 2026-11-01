@@ -2,6 +2,7 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Loader2, RefreshCw, Zap } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const loadingVariants = cva(
@@ -9,16 +10,16 @@ const loadingVariants = cva(
   {
     variants: {
       size: {
-        sm: "py-4 px-6",
-        md: "py-8 px-12",
-        lg: "py-12 px-16",
-        xl: "py-16 px-20",
+        sm: "px-4 py-4",
+        md: "px-6 py-8",
+        lg: "px-8 py-12",
+        xl: "px-8 py-16",
       },
       variant: {
-        default: "text-muted-foreground",
-        primary: "text-primary",
-        secondary: "text-secondary-foreground",
-        muted: "text-muted-foreground/70",
+        default: "text-fg-muted",
+        primary: "text-link",
+        secondary: "text-fg",
+        muted: "text-fg-subtle",
       },
     },
     defaultVariants: {
@@ -28,13 +29,13 @@ const loadingVariants = cva(
   }
 );
 
-const iconVariants = cva("animate-spin", {
+const iconVariants = cva("asc-animate-spin", {
   variants: {
     size: {
-      sm: "h-4 w-4",
-      md: "h-6 w-6",
-      lg: "h-8 w-8",
-      xl: "h-12 w-12",
+      sm: "size-4",
+      md: "size-5",
+      lg: "size-6",
+      xl: "size-8",
     },
   },
   defaultVariants: {
@@ -46,9 +47,9 @@ const textVariants = cva("font-medium", {
   variants: {
     size: {
       sm: "text-sm",
-      md: "text-base",
-      lg: "text-lg",
-      xl: "text-xl",
+      md: "text-sm",
+      lg: "text-base",
+      xl: "text-lg",
     },
   },
   defaultVariants: {
@@ -56,13 +57,13 @@ const textVariants = cva("font-medium", {
   },
 });
 
-const subtextVariants = cva("text-muted-foreground/80", {
+const subtextVariants = cva("text-fg-subtle", {
   variants: {
     size: {
       sm: "text-xs",
       md: "text-sm",
-      lg: "text-base",
-      xl: "text-lg",
+      lg: "text-sm",
+      xl: "text-base",
     },
   },
   defaultVariants: {
@@ -86,7 +87,7 @@ function Loading({
   className,
   size,
   variant,
-  message = "Chargement...",
+  message = "Chargement…",
   submessage,
   icon = "spinner",
   customIcon,
@@ -102,6 +103,7 @@ function Loading({
 
     const iconProps = {
       className: cn(iconVariants({ size })),
+      "aria-hidden": true,
     };
 
     switch (icon) {
@@ -118,11 +120,11 @@ function Loading({
   const containerClasses = cn(
     loadingVariants({ size, variant, className }),
     centered && "mx-auto",
-    fullScreen && "min-h-screen w-full"
+    fullScreen && "min-h-dvh w-full"
   );
 
   return (
-    <div className={containerClasses} {...props}>
+    <div role="status" className={containerClasses} {...props}>
       {getIcon()}
       <div className="space-y-1">
         {message && <div className={cn(textVariants({ size }))}>{message}</div>}
@@ -142,16 +144,13 @@ export interface AdminLoadingProps
 
 function AdminLoading({
   mode = "full",
-  message = "Chargement des données...",
-  submessage = "Veuillez patienter",
+  message = "Chargement des données…",
   ...props
 }: AdminLoadingProps) {
   return (
     <Loading
-      size={mode === "compact" ? "sm" : "lg"}
-      variant="primary"
+      size={mode === "compact" ? "sm" : "md"}
       message={message}
-      submessage={submessage}
       icon="spinner"
       {...props}
     />
@@ -173,9 +172,9 @@ function LoadingOverlay({
   return (
     <div
       className={cn(
-        "absolute inset-0 z-50 flex items-center justify-center",
-        overlay && "bg-background/80 backdrop-blur-sm",
-        blur && "backdrop-blur-sm",
+        "absolute inset-0 z-(--z-sticky) flex items-center justify-center",
+        overlay && "bg-bg-page/80",
+        blur && "backdrop-blur-[3px]",
         className
       )}
     >
@@ -185,36 +184,39 @@ function LoadingOverlay({
 }
 
 // Composant pour les boutons de chargement
-export interface LoadingButtonProps extends React.ComponentProps<"button"> {
+export type LoadingButtonProps = React.ComponentProps<typeof Button> & {
   loading?: boolean;
   loadingText?: string;
-  variant?: string;
-  size?: string;
-  children: React.ReactNode;
-}
+};
 
+/**
+ * Le `Button` du système, avec son état d'attente.
+ *
+ * `variant` et `size` lui sont bien transmis : un `<button>` nu les recevait
+ * comme de simples attributs HTML, et tout sortait en primaire.
+ */
 function LoadingButton({
   loading = false,
-  loadingText = "Chargement...",
+  loadingText = "Chargement…",
   children,
   disabled,
-  className,
   ...props
 }: LoadingButtonProps) {
   return (
-    <button
-      className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
-        "bg-primary text-primary-foreground hover:bg-primary/90",
-        "disabled:pointer-events-none disabled:opacity-50",
-        className
-      )}
+    <Button
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...props}
     >
-      {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-      {loading ? loadingText : children}
-    </button>
+      {loading ? (
+        <>
+          <Loader2 className="asc-animate-spin" aria-hidden />
+          {loadingText}
+        </>
+      ) : (
+        children
+      )}
+    </Button>
   );
 }
 

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Éditeur de Motifs - Créez des motifs répétitifs interactifs",
+  title: "Éditeur de Motifs - Crée des motifs répétitifs interactifs",
   description:
     "Outil gratuit pour créer des motifs répétitifs interactifs. Interface plein écran avec contrôles avancés pour des designs uniques.",
   keywords: [
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     "design patterns",
   ],
   openGraph: {
-    title: "Éditeur de Motifs - Créez des motifs répétitifs interactifs",
+    title: "Éditeur de Motifs - Crée des motifs répétitifs interactifs",
     description: "Outil gratuit pour créer des motifs répétitifs interactifs.",
     url: "https://just-tools.ascencia.re/tools/pattern-editor",
     type: "website",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Éditeur de Motifs - Créez des motifs répétitifs interactifs",
+    title: "Éditeur de Motifs - Crée des motifs répétitifs interactifs",
     description: "Outil gratuit pour créer des motifs répétitifs interactifs.",
     images: ["/og-image.png"],
   },

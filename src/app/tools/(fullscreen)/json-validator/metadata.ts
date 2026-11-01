@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Validateur JSON - Validez et formatez vos fichiers JSON",
+  title: "Validateur JSON - Valide et reformate tes fichiers JSON",
   description:
-    "Outil gratuit pour valider et formater vos fichiers JSON. Interface simple et intuitive pour vérifier la syntaxe et améliorer la lisibilité.",
+    "Outil gratuit pour valider et formater tes fichiers JSON. Interface simple et intuitive pour vérifier la syntaxe et améliorer la lisibilité.",
   keywords: [
     "validateur json",
     "formateur json",
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
     "beautifier json",
   ],
   openGraph: {
-    title: "Validateur JSON - Validez et formatez vos fichiers JSON",
-    description: "Outil gratuit pour valider et formater vos fichiers JSON.",
+    title: "Validateur JSON - Valide et reformate tes fichiers JSON",
+    description: "Outil gratuit pour valider et formater tes fichiers JSON.",
     url: "https://just-tools.ascencia.re/tools/json-validator",
     type: "website",
     images: [
@@ -30,8 +30,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Validateur JSON - Validez et formatez vos fichiers JSON",
-    description: "Outil gratuit pour valider et formater vos fichiers JSON.",
+    title: "Validateur JSON - Valide et reformate tes fichiers JSON",
+    description: "Outil gratuit pour valider et formater tes fichiers JSON.",
     images: ["/og-image.png"],
   },
   alternates: {

@@ -2,19 +2,18 @@
 
 import { useMemo, useState } from "react";
 import ReactCountryFlag from "react-country-flag";
+import { CopyButton } from "@/components/site/copy-button";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue } from "@/components/ui/select";
-import { Check, Clipboard, Link2, RotateCcw, X } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { LANGUAGES } from "@/lib/language-data";
 import { LANGUAGE_TO_COUNTRY, type TtsSettings } from "@/lib/tts-store";
 import type { SpeechOverrides } from "@/hooks/use-tts-player";
@@ -29,10 +28,42 @@ interface SettingsPanelProps {
   /** Lève la surcharge d'un réglage précis quand l'utilisateur y touche. */
   onClearOverride: (keys: (keyof SpeechOverrides)[]) => void;
   onReset: () => void;
-  onCopyLink: () => void;
-  linkCopied: boolean;
+  /** Construit le lien de lecture automatique au moment de la copie. */
+  getShareLink: () => string;
   canCopyLink: boolean;
 }
+
+const formatNumber = (value: number) =>
+  value.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+
+const formatRate = (value: number) => `${formatNumber(value)}x`;
+
+const formatVolume = (value: number) => `${Math.round(value * 100)} %`;
+
+const SLIDERS: {
+  key: "rate" | "pitch" | "volume";
+  label: string;
+  min: number;
+  max: number;
+  format: (value: number) => string;
+}[] = [
+  { key: "rate", label: "Vitesse", min: 0.5, max: 2, format: formatRate },
+  { key: "pitch", label: "Hauteur", min: 0.5, max: 2, format: formatNumber },
+  { key: "volume", label: "Volume", min: 0, max: 1, format: formatVolume },
+];
+
+const SHORTCUTS = [
+  { action: "Lire", keys: "Ctrl + Entrée" },
+  { action: "Lire ou mettre en pause", keys: "Ctrl + Espace" },
+  { action: "Reculer ou avancer de 10 s", keys: "Ctrl + flèches" },
+];
+
+const SECTION_CLASS = "border-border flex flex-col gap-4 border-t pt-5";
+
+const HINT_CLASS = "text-fg-muted text-xs leading-relaxed";
+
+/** Une voix au nom très long ne doit pas pousser la liste hors de l'écran. */
+const SELECT_CONTENT_CLASS = "max-w-[calc(100vw-2rem)]";
 
 export function SettingsPanel({
   settings,
@@ -42,8 +73,7 @@ export function SettingsPanel({
   onClearOverrides,
   onClearOverride,
   onReset,
-  onCopyLink,
-  linkCopied,
+  getShareLink,
   canCopyLink,
 }: SettingsPanelProps) {
   const [selectedLanguage, setSelectedLanguage] = useState("all");
@@ -59,14 +89,13 @@ export function SettingsPanel({
     return voices.filter((voice) => voice.lang.startsWith(selectedLanguage));
   }, [voices, selectedLanguage]);
 
-  const hasOverrides = Boolean(
-    overrides &&
-      (overrides.rate !== undefined ||
-        overrides.pitch !== undefined ||
-        overrides.volume !== undefined ||
-        overrides.voice ||
-        overrides.lang)
-  );
+  const activeOverrides = [
+    overrides?.voice && `voix ${overrides.voice}`,
+    overrides?.lang && `langue ${overrides.lang}`,
+    overrides?.rate !== undefined && `vitesse ${formatRate(overrides.rate)}`,
+    overrides?.pitch !== undefined && `hauteur ${formatNumber(overrides.pitch)}`,
+    overrides?.volume !== undefined && `volume ${formatVolume(overrides.volume)}`,
+  ].filter(Boolean);
 
   const effective = {
     rate: overrides?.rate ?? settings.rate,
@@ -75,69 +104,29 @@ export function SettingsPanel({
   };
 
   return (
-    <div className="space-y-5">
-      {hasOverrides && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
-          <div className="flex items-start justify-between gap-2">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-200">
-                <Link2 className="h-4 w-4" />
-                Réglages imposés par l&apos;URL
-              </div>
-              <p className="text-xs text-amber-700 dark:text-amber-300">
-                Actifs pour cette session seulement, vos réglages enregistrés ne
-                sont pas modifiés.
-              </p>
-              <div className="flex flex-wrap gap-1 pt-1">
-                {overrides?.voice && (
-                  <Badge variant="outline" className="text-[10px]">
-                    voix : {overrides.voice}
-                  </Badge>
-                )}
-                {overrides?.lang && (
-                  <Badge variant="outline" className="text-[10px]">
-                    langue : {overrides.lang}
-                  </Badge>
-                )}
-                {overrides?.rate !== undefined && (
-                  <Badge variant="outline" className="text-[10px]">
-                    vitesse : {overrides.rate}x
-                  </Badge>
-                )}
-                {overrides?.pitch !== undefined && (
-                  <Badge variant="outline" className="text-[10px]">
-                    hauteur : {overrides.pitch}
-                  </Badge>
-                )}
-                {overrides?.volume !== undefined && (
-                  <Badge variant="outline" className="text-[10px]">
-                    volume : {overrides.volume}
-                  </Badge>
-                )}
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 shrink-0 p-0"
-              onClick={onClearOverrides}
-              title="Revenir à mes réglages"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
+    <div className="flex flex-col gap-5">
+      {activeOverrides.length > 0 && (
+        <div className="border-warning/30 bg-warning-soft text-warning-soft-fg rounded-field flex min-w-0 flex-col items-start gap-2 border p-3">
+          <p className="text-sm font-medium">Réglages imposés par le lien</p>
+          <p className="min-w-0 text-[0.8125rem] leading-snug break-words">
+            Pour cette session&nbsp;: {activeOverrides.join(", ")}. Tes réglages
+            enregistrés ne changent pas.
+          </p>
+          <Button variant="outline" size="sm" onClick={onClearOverrides}>
+            Revenir à mes réglages
+          </Button>
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label>Langue</Label>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="tts-language">Langue</Label>
         <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-          <SelectTrigger>
-            <SelectValue placeholder="Sélectionner une langue" />
+          <SelectTrigger id="tts-language" className="w-full">
+            <SelectValue placeholder="Choisis une langue" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className={SELECT_CONTENT_CLASS}>
             <SelectItem value="all">
-              🌍 Toutes les langues ({voices.length} voix)
+              Toutes les langues ({voices.length}&nbsp;voix)
             </SelectItem>
             {availableLanguages.map((lang) => {
               const count = voices.filter((voice) =>
@@ -148,7 +137,7 @@ export function SettingsPanel({
 
               return (
                 <SelectItem key={lang} value={lang}>
-                  <div className="flex items-center space-x-2">
+                  <span className="flex min-w-0 items-center gap-2">
                     {countryCode ? (
                       <ReactCountryFlag
                         countryCode={countryCode}
@@ -160,13 +149,12 @@ export function SettingsPanel({
                         }}
                       />
                     ) : (
-                      <span className="text-lg">🌐</span>
+                      // Garde l'alignement des libellés quand le drapeau manque.
+                      <span aria-hidden="true" className="w-5 shrink-0" />
                     )}
                     <span>{info?.name || lang.toUpperCase()}</span>
-                    <span className="text-muted-foreground">
-                      ({count} voix)
-                    </span>
-                  </div>
+                    <span className="text-fg-subtle">({count}&nbsp;voix)</span>
+                  </span>
                 </SelectItem>
               );
             })}
@@ -174,8 +162,8 @@ export function SettingsPanel({
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label>Voix</Label>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="tts-voice">Voix</Label>
         <Select
           value={
             filteredVoices.some((voice) => voice.name === settings.selectedVoice)
@@ -188,142 +176,117 @@ export function SettingsPanel({
             onSettingsChange((prev) => ({ ...prev, selectedVoice: value }));
           }}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Sélectionner une voix" />
+          <SelectTrigger
+            id="tts-voice"
+            className="w-full"
+            title={settings.selectedVoice || undefined}
+          >
+            <SelectValue placeholder="Choisis une voix" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className={SELECT_CONTENT_CLASS}>
             {filteredVoices.map((voice) => (
               <SelectItem key={voice.name} value={voice.name}>
                 {voice.name} ({voice.lang})
-                {voice.localService ? "" : " ⚡"}
+                {voice.localService ? "" : ", en ligne"}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground">
-          ⚡ = voix en ligne (plus naturelle, nécessite une connexion)
+        <p className={HINT_CLASS}>
+          Les voix «&nbsp;en ligne&nbsp;» sont plus naturelles, mais demandent une
+          connexion.
         </p>
       </div>
 
-      <Separator />
-
-      <div className="space-y-2">
-        <Label className="flex justify-between">
-          Vitesse
-          <span className="font-bold text-emerald-600">{effective.rate}x</span>
-        </Label>
-        <Slider
-          value={[effective.rate]}
-          onValueChange={([value]) => {
-            onClearOverride(["rate"]);
-            onSettingsChange((prev) => ({ ...prev, rate: value }));
-          }}
-          min={0.5}
-          max={2}
-          step={0.1}
-        />
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>Lent</span>
-          <span>Normal</span>
-          <span>Rapide</span>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="flex justify-between">
-          Hauteur
-          <span className="font-bold text-emerald-600">{effective.pitch}</span>
-        </Label>
-        <Slider
-          value={[effective.pitch]}
-          onValueChange={([value]) => {
-            onClearOverride(["pitch"]);
-            onSettingsChange((prev) => ({ ...prev, pitch: value }));
-          }}
-          min={0.5}
-          max={2}
-          step={0.1}
-        />
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>Grave</span>
-          <span>Normal</span>
-          <span>Aigu</span>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="flex justify-between">
-          Volume
-          <span className="font-bold text-emerald-600">{effective.volume}</span>
-        </Label>
-        <Slider
-          value={[effective.volume]}
-          onValueChange={([value]) => {
-            onClearOverride(["volume"]);
-            onSettingsChange((prev) => ({ ...prev, volume: value }));
-          }}
-          min={0}
-          max={1}
-          step={0.1}
-        />
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>Silencieux</span>
-          <span>Normal</span>
-          <span>Fort</span>
-        </div>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Clipboard className="h-4 w-4 text-emerald-500" />
-            <span className="text-sm">Récupération automatique</span>
+      <div className={SECTION_CLASS}>
+        {SLIDERS.map(({ key, label, min, max, format }) => (
+          <div key={key} className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <Label htmlFor={`tts-${key}`}>{label}</Label>
+              <span className="text-fg font-mono text-sm tabular-nums">
+                {format(effective[key])}
+              </span>
+            </div>
+            <Slider
+              id={`tts-${key}`}
+              aria-label={label}
+              value={[effective[key]]}
+              onValueChange={([value]) => {
+                onClearOverride([key]);
+                onSettingsChange((prev) => ({ ...prev, [key]: value }));
+              }}
+              min={min}
+              max={max}
+              step={0.1}
+            />
           </div>
-          <Switch
-            checked={settings.clipboardAutoRead}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              onSettingsChange((prev) => ({
-                ...prev,
-                clipboardAutoRead: event.target.checked,
-              }))
-            }
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Récupère le texte du presse-papiers lors d&apos;un copier/coller dans
-          la page.
+        ))}
+      </div>
+
+      <div className="border-border flex flex-col gap-1 border-t pt-4">
+        <Switch
+          label="Récupération automatique"
+          checked={settings.clipboardAutoRead}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+            onSettingsChange((prev) => ({
+              ...prev,
+              clipboardAutoRead: event.target.checked,
+            }))
+          }
+        />
+        <p className={HINT_CLASS}>
+          Reprend le contenu du presse-papiers à chaque copier ou coller dans la
+          page.
         </p>
       </div>
 
-      <Separator />
-
-      <div className="space-y-2">
-        <Button
-          variant="outline"
+      <div className="border-border flex flex-col gap-2 border-t pt-5">
+        <CopyButton
+          variant="secondary"
           className="w-full"
-          onClick={onCopyLink}
+          value={getShareLink}
           disabled={!canCopyLink}
-        >
-          {linkCopied ? (
-            <Check className="mr-2 h-4 w-4 text-emerald-500" />
-          ) : (
-            <Link2 className="mr-2 h-4 w-4" />
-          )}
-          {linkCopied ? "Lien copié" : "Copier le lien de lecture auto"}
-        </Button>
-        <p className="text-xs text-muted-foreground">
-          Génère une URL qui recharge ce texte et démarre la lecture
-          automatiquement — c&apos;est le format utilisé par le client de
-          raccourci clavier.
+          label="Copier le lien de lecture"
+          copiedLabel="Lien copié"
+        />
+        <p className={HINT_CLASS}>
+          Ce lien ouvre l&apos;outil avec ton texte et lance la lecture.
         </p>
       </div>
 
-      <Button variant="outline" className="w-full" onClick={onReset}>
-        <RotateCcw className="mr-2 h-4 w-4" />
-        Réinitialiser
-      </Button>
+      <section
+        aria-labelledby="tts-shortcuts-title"
+        className="border-border flex flex-col gap-2.5 border-t pt-5 pointer-coarse:hidden"
+      >
+        <h2
+          id="tts-shortcuts-title"
+          className="text-fg font-sans text-sm font-medium tracking-normal"
+        >
+          Raccourcis clavier
+        </h2>
+        <dl className="flex flex-col gap-1.5 text-xs">
+          {SHORTCUTS.map(({ action, keys }) => (
+            <div
+              key={keys}
+              className="flex min-w-0 items-center justify-between gap-3"
+            >
+              <dt className="text-fg-muted min-w-0">{action}</dt>
+              <dd className="shrink-0">
+                <kbd className="border-border bg-surface text-fg-muted rounded-xs border px-1.5 py-0.5 font-mono">
+                  {keys}
+                </kbd>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <div className="border-border border-t pt-3">
+        <Button variant="ghost" className="w-full" onClick={onReset}>
+          <RotateCcw aria-hidden="true" />
+          Réinitialiser
+        </Button>
+      </div>
     </div>
   );
 }

@@ -39,6 +39,11 @@ vi.mock("@/components/admin/nav-user", () => ({
   NavUser: () => <div data-testid="nav-user">NavUser</div>,
 }));
 
+// Le logo passe par `next/image`, sans intérêt ici.
+vi.mock("@/components/brand/just-tools-lockup", () => ({
+  JustToolsMark: () => <div data-testid="just-tools-mark" />,
+}));
+
 describe("AdminSidebar Component", () => {
   it("should render without crashing", () => {
     render(<AdminSidebar />);
@@ -53,7 +58,7 @@ describe("AdminSidebar Component", () => {
   it("should display admin panel title", () => {
     render(<AdminSidebar />);
 
-    expect(screen.getByText("Admin Panel")).toBeInTheDocument();
+    expect(screen.getByText("Administration")).toBeInTheDocument();
     expect(screen.getByText("Just Tools")).toBeInTheDocument();
   });
 
@@ -61,7 +66,7 @@ describe("AdminSidebar Component", () => {
     render(<AdminSidebar />);
 
     // Vérifier que tous les éléments de navigation principaux sont présents
-    expect(screen.getByTestId("nav-item-dashboard")).toBeInTheDocument();
+    expect(screen.getByTestId("nav-item-tableau de bord")).toBeInTheDocument();
     expect(screen.getByTestId("nav-item-visiteurs")).toBeInTheDocument();
     expect(screen.getByTestId("nav-item-pages")).toBeInTheDocument();
     expect(screen.getByTestId("nav-item-connexions")).toBeInTheDocument();
@@ -116,9 +121,9 @@ describe("AdminSidebar Component", () => {
   it("should have proper icon in header", () => {
     render(<AdminSidebar />);
 
-    // Vérifier que l'icône BarChart3 est utilisée dans le header
+    // Le logo de Just Tools est dans le header
     const header = screen.getByTestId("sidebar-header");
-    expect(header).toBeInTheDocument();
+    expect(header).toContainElement(screen.getByTestId("just-tools-mark"));
   });
 
   it("should maintain navigation order", () => {
@@ -131,7 +136,7 @@ describe("AdminSidebar Component", () => {
 
     // Vérifier l'ordre des éléments de navigation
     const expectedOrder = [
-      "nav-item-dashboard",
+      "nav-item-tableau de bord",
       "nav-item-visiteurs",
       "nav-item-pages",
       "nav-item-connexions",

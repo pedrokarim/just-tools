@@ -70,8 +70,8 @@ export function ReaderText({
   const cursor = Math.floor(position);
 
   // Le mot courant n'est affiché que s'il est cohérent avec la position :
-  // certaines voix n'émettent aucun `boundary`, on se rabat alors sur un
-  // simple dégradé lu / non lu.
+  // certaines voix n'émettent aucun `boundary`, on se rabat alors sur la
+  // simple distinction entre le lu et le non lu.
   const highlight = useMemo(() => {
     if (
       wordRange &&
@@ -162,19 +162,21 @@ export function ReaderText({
         onSeekChar && "cursor-text",
         className
       )}
-      title={onSeekChar ? "Cliquez dans le texte pour y déplacer la lecture" : undefined}
+      title={onSeekChar ? "Clique dans le texte pour y déplacer la lecture" : undefined}
     >
       <p className={textClassName}>
-        <span className="text-muted-foreground/60">{before}</span>
+        <span className="text-fg-subtle">{before}</span>
         {word && (
           <span
             ref={wordRef}
-            className="rounded bg-emerald-400/30 px-0.5 font-medium text-foreground ring-1 ring-emerald-500/40"
+            // Le surlignage déborde par une ombre et ne change ni la graisse ni
+            // le rembourrage : le texte ne bouge pas à chaque mot prononcé.
+            className="bg-primary-soft text-primary-soft-fg rounded-xs shadow-[0_0_0_2px_var(--asc-primary-soft)]"
           >
             {word}
           </span>
         )}
-        <span className="text-foreground">{after}</span>
+        <span className="text-fg">{after}</span>
       </p>
     </div>
   );

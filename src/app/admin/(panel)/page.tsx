@@ -9,19 +9,29 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent } from "@/components/ui/chart";
-import { Users, Eye, TrendingUp, Activity } from "lucide-react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Trash2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow } from "@/components/ui/table";
 import { LoadingButton } from "@/components/ui/loading";
-import { StatCard, LoadingCard } from "@/components/ui/loading-card";
-import { AnimatedCounter } from "@/components/ui/animated-counter";
+import { StatCard, StatGrid, LoadingCard } from "@/components/ui/loading-card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AdminSection,
+  EmptyState,
+  formatInteger,
+  formatPercent,
+  PageHeader } from "@/components/admin/admin-page";
 
 interface AnalyticsStats {
   totalViews: number;
@@ -32,20 +42,24 @@ interface AnalyticsStats {
   viewsByHour: Array<{ hour: string; count: number }>;
 }
 
-// Configuration des graphiques shadcn
-const viewsByHourConfig = {
+// Une seule série sur les deux graphiques, et la même mesure : la même couleur.
+const viewsConfig = {
   count: {
     label: "Vues",
-    color: "#2563eb",
+    color: "var(--color-chart-1)",
   },
 } satisfies ChartConfig;
 
-const viewsByPageConfig = {
-  count: {
-    label: "Vues",
-    color: "#60a5fa",
-  },
-} satisfies ChartConfig;
+const CHART_HEIGHT = "h-64";
+
+/** Un chemin tient dans la largeur réservée à l'axe ; l'infobulle le donne entier. */
+function shortenPath(path: string): string {
+  return path.length > 18 ? `${path.slice(0, 17)}…` : path;
+}
+
+function formatHour(hour: string | number): string {
+  return `${hour} h`;
+}
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<AnalyticsStats | null>(null);
@@ -126,197 +140,250 @@ export default function AdminDashboard() {
     }
   };
 
-  // Plus de loading full, on affiche toujours la structure
-
-  // Plus de gestion d'erreur séparée, on affiche toujours la structure
+  const hourlyViews = stats?.viewsByHour ?? [];
+  const pageViews = stats?.viewsByPage ?? [];
+  // L'API complète les 24 heures par des zéros : une liste pleine peut être vide.
+  const hasHourlyViews = hourlyViews.some((entry) => entry.count > 0);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Vue d'ensemble de l'activité de votre site
-          </p>
-        </div>
+    <>
+      <PageHeader
+        title="Tableau de bord"
+        description="Vue d'ensemble de l'activité du site."
+        actions={
+          <>
+            <Select
+              value={autoRefreshInterval}
+              onValueChange={(value) => {
+                setAutoRefreshInterval(value);
+              }}
+            >
+              <SelectTrigger
+                size="sm"
+                className="w-52"
+                aria-label="Actualisation automatique"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">Actualisation manuelle</SelectItem>
+                <SelectItem value="10">Toutes les 10&nbsp;s</SelectItem>
+                <SelectItem value="30">Toutes les 30&nbsp;s</SelectItem>
+                <SelectItem value="60">Toutes les minutes</SelectItem>
+                <SelectItem value="300">Toutes les 5&nbsp;min</SelectItem>
+              </SelectContent>
+            </Select>
 
-        <div className="flex items-center gap-2">
-          <Select
-            value={autoRefreshInterval}
-            onValueChange={(value) => {
-              setAutoRefreshInterval(value);
-            }}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="0">Désactivé</SelectItem>
-              <SelectItem value="10">10 secondes</SelectItem>
-              <SelectItem value="30">30 secondes</SelectItem>
-              <SelectItem value="60">1 minute</SelectItem>
-              <SelectItem value="300">5 minutes</SelectItem>
-            </SelectContent>
-          </Select>
+            <LoadingButton
+              variant="outline"
+              size="sm"
+              onClick={() => fetchStats(false)}
+              loading={refreshing}
+              loadingText="Actualisation…"
+            >
+              <RefreshCw aria-hidden />
+              Actualiser
+            </LoadingButton>
 
-          <Separator orientation="vertical" className="h-6 bg-border" />
+            <LoadingButton
+              variant="destructive"
+              size="sm"
+              onClick={clearAdminData}
+              loading={clearing}
+              loadingText="Nettoyage…"
+            >
+              <Trash2 aria-hidden />
+              Nettoyer les données admin
+            </LoadingButton>
+          </>
+        }
+      />
 
-          <LoadingButton
-            variant="outline"
-            size="sm"
-            onClick={() => fetchStats(false)}
-            loading={refreshing}
-            loadingText="Actualisation..."
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Actualiser
-          </LoadingButton>
-
-          <Separator orientation="vertical" className="h-6 bg-border" />
-
-          <LoadingButton
-            variant="destructive"
-            size="sm"
-            onClick={clearAdminData}
-            loading={clearing}
-            loadingText="Nettoyage..."
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Nettoyer données admin
-          </LoadingButton>
-        </div>
-      </div>
-
-      {/* Cartes de statistiques */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Chiffres clés */}
+      <StatGrid>
         <StatCard
-          title="Total des vues"
+          title="Vues au total"
           value={stats?.totalViews || 0}
-          description={`+${stats?.last24hViews || 0} ces dernières 24h`}
-          icon={<Eye className="h-4 w-4 text-muted-foreground" />}
           isLoading={loading}
         />
-
         <StatCard
           title="Visiteurs uniques"
           value={stats?.uniqueVisitors || 0}
-          description={`+${
-            stats?.last24hNewVisitors || 0
-          } nouveaux aujourd'hui`}
-          icon={<Users className="h-4 w-4 text-muted-foreground" />}
           isLoading={loading}
         />
-
         <StatCard
-          title="Vues 24h"
+          title="Vues sur 24&nbsp;h"
           value={stats?.last24hViews || 0}
-          description="Vues des dernières 24 heures"
-          icon={<Activity className="h-4 w-4 text-muted-foreground" />}
           isLoading={loading}
         />
-
         <StatCard
-          title="Nouveaux visiteurs"
+          title="Nouveaux visiteurs sur 24&nbsp;h"
           value={stats?.last24hNewVisitors || 0}
-          description="Nouveaux visiteurs aujourd'hui"
-          icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
           isLoading={loading}
         />
-      </div>
+      </StatGrid>
 
       {/* Graphiques */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Vues par heure */}
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2">
         <LoadingCard
-          title="Vues par heure (24h)"
-          description="Activité des dernières 24 heures"
+          title="Vues par heure"
+          description="Activité des dernières 24 heures."
           isLoading={loading}
+          fallback={<Skeleton className={CHART_HEIGHT} />}
         >
-          <ChartContainer
-            config={viewsByHourConfig}
-            className="min-h-[300px] w-full"
-          >
-            <LineChart data={stats?.viewsByHour || []}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="hour" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Line
-                type="monotone"
-                dataKey="count"
-                stroke="var(--color-count)"
-                strokeWidth={2}
-              />
-            </LineChart>
-          </ChartContainer>
+          {hasHourlyViews ? (
+            <ChartContainer
+              config={viewsConfig}
+              className={`aspect-auto w-full ${CHART_HEIGHT}`}
+            >
+              <LineChart
+                data={hourlyViews}
+                margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
+              >
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="hour"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  minTickGap={24}
+                  tickFormatter={formatHour}
+                />
+                <YAxis
+                  width={36}
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                />
+                <ChartTooltip
+                  content={<ChartTooltipContent labelFormatter={formatHour} />}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  stroke="var(--color-count)"
+                  strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              </LineChart>
+            </ChartContainer>
+          ) : (
+            <EmptyState
+              title="Aucune vue sur 24 heures"
+              description="La courbe se dessinera dès la prochaine visite."
+            />
+          )}
         </LoadingCard>
 
-        {/* Vues par page */}
         <LoadingCard
           title="Pages les plus visitées"
-          description="Top 5 des pages les plus populaires"
+          description="Les cinq premières, en nombre de vues."
           isLoading={loading}
+          fallback={<Skeleton className={CHART_HEIGHT} />}
         >
-          <ChartContainer
-            config={viewsByPageConfig}
-            className="min-h-[300px] w-full"
-          >
-            <BarChart data={stats?.viewsByPage?.slice(0, 5) || []}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="pagePath" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="count" fill="var(--color-count)" radius={4} />
-            </BarChart>
-          </ChartContainer>
+          {pageViews.length > 0 ? (
+            <ChartContainer
+              config={viewsConfig}
+              className={`aspect-auto w-full ${CHART_HEIGHT}`}
+            >
+              <BarChart
+                data={pageViews.slice(0, 5)}
+                layout="vertical"
+                margin={{ top: 0, right: 8, bottom: 0, left: 0 }}
+              >
+                <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+                <XAxis
+                  type="number"
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="pagePath"
+                  width={124}
+                  interval={0}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={shortenPath}
+                />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      className="max-w-64"
+                      labelClassName="break-all"
+                    />
+                  }
+                />
+                <Bar
+                  dataKey="count"
+                  fill="var(--color-count)"
+                  radius={4}
+                  isAnimationActive={false}
+                />
+              </BarChart>
+            </ChartContainer>
+          ) : (
+            <EmptyState
+              title="Aucune page visitée"
+              description="Le classement apparaîtra dès la première visite."
+            />
+          )}
         </LoadingCard>
       </div>
 
       {/* Tableau des pages */}
-      <LoadingCard
+      <AdminSection
         title="Détail des pages"
-        description="Statistiques détaillées par page"
-        isLoading={loading}
+        description="Les dix pages les plus vues et leur part de l'audience."
       >
-        <div className="space-y-4">
-          {stats?.viewsByPage?.map((page, index) => (
-            <div
-              key={page.pagePath}
-              className="flex items-center justify-between p-4 border rounded-lg"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-blue-600">
+        {loading ? (
+          <Skeleton className="rounded-card h-48" />
+        ) : pageViews.length === 0 ? (
+          <EmptyState
+            framed
+            title="Aucune page à détailler"
+            description="Les pages apparaîtront ici dès la première visite."
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12 text-end">Rang</TableHead>
+                <TableHead>Page</TableHead>
+                <TableHead className="text-end">Vues</TableHead>
+                <TableHead className="text-end">Part</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pageViews.map((page, index) => (
+                <TableRow key={page.pagePath}>
+                  <TableCell className="text-fg-subtle text-end tabular-nums">
                     {index + 1}
-                  </span>
-                </div>
-                <div>
-                  <p className="font-medium">{page.pagePath}</p>
-                  <p className="text-sm text-muted-foreground">
-                    <AnimatedCounter value={page.count} duration={1000} /> vues
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-medium">
-                  <AnimatedCounter
-                    value={
+                  </TableCell>
+                  <TableCell
+                    className="max-w-[28rem] truncate font-mono text-[0.8125rem]"
+                    title={page.pagePath}
+                  >
+                    {page.pagePath}
+                  </TableCell>
+                  <TableCell className="text-end tabular-nums">
+                    {formatInteger(page.count)}
+                  </TableCell>
+                  <TableCell className="text-fg-muted text-end tabular-nums">
+                    {formatPercent(
                       stats?.totalViews
                         ? (page.count / stats.totalViews) * 100
                         : 0
-                    }
-                    duration={1200}
-                    decimals={1}
-                    suffix="%"
-                  />
-                </p>
-              </div>
-            </div>
-          )) || []}
-        </div>
-      </LoadingCard>
-    </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </AdminSection>
+    </>
   );
 }

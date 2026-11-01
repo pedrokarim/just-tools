@@ -1,21 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Shield, CheckCircle, XCircle, Clock, Globe, AlertTriangle, RefreshCw } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow } from "@/components/ui/table";
 import { usePagination } from "@/hooks/use-pagination";
 import { PaginationControls } from "@/components/admin/pagination-controls";
 import { AdminLoading } from "@/components/ui/loading";
-import { Button } from "@/components/ui/button";
+import { StatCard, StatGrid } from "@/components/ui/loading-card";
+import {
+  EmptyState,
+  formatLocation,
+  formatPercent,
+  PageHeader,
+  RefreshButton,
+  RelativeTime } from "@/components/admin/admin-page";
 
 interface LoginAttempt {
   id: number;
@@ -53,7 +58,7 @@ export default function LoginsPage() {
     fetchLoginAttempts();
     // La fonction n'est volontairement pas dans les dépendances : elle est
     // recréée à chaque rendu, donc l'y mettre relancerait l'effet en boucle.
-    // Elle modifie de surcroît `refreshing`, dont elle dépend — la boucle
+    // Elle modifie de surcroît `refreshing`, dont elle dépend : la boucle
     // serait immédiate. L'effet doit se déclencher sur la pagination seule, et
     // la fonction lue à ce moment porte déjà les bonnes valeurs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,211 +96,133 @@ export default function LoginsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Tentatives de connexion
-            </h1>
-            <p className="text-muted-foreground">
-              Suivi des tentatives de connexion Discord
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-center min-h-[400px]">
-          <AdminLoading
-            mode="full"
-            message="Chargement des tentatives de connexion..."
-            submessage="Récupération des données de sécurité"
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Tentatives de connexion
-          </h1>
-          <p className="text-muted-foreground">
-            Suivi des tentatives de connexion Discord
-          </p>
-        </div>
-
-        <Button
-          onClick={fetchLoginAttempts}
-          disabled={refreshing}
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2"
-        >
-          <RefreshCw
-            className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+    <>
+      <PageHeader
+        title="Connexions"
+        description="Les tentatives de connexion au panneau, réussies ou refusées."
+        actions={
+          <RefreshButton
+            onClick={fetchLoginAttempts}
+            busy={refreshing}
+            disabled={loading}
           />
-          {refreshing ? "Actualisation..." : "Actualiser"}
-        </Button>
-      </div>
+        }
+      />
 
-      {/* Statistiques générales */}
-      {stats && (
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total des tentatives
-              </CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalAttempts}</div>
-              <p className="text-xs text-muted-foreground">
-                Tentatives au total
-              </p>
-            </CardContent>
-          </Card>
+      {loading ? (
+        <AdminLoading message="Chargement des tentatives…" />
+      ) : (
+        <>
+          {/* Statistiques générales */}
+          {stats && (
+            <StatGrid>
+              <StatCard title="Tentatives au total" value={stats.totalAttempts} />
+              <StatCard
+                title="Réussies"
+                value={stats.successfulAttempts}
+                description={`${formatPercent(stats.successRate)} de réussite`}
+              />
+              <StatCard title="Refusées" value={stats.failedAttempts} />
+              <StatCard title="Sur 24&nbsp;h" value={stats.last24hAttempts} />
+            </StatGrid>
+          )}
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Connexions réussies
-              </CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {stats.successfulAttempts}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {stats.successRate.toFixed(1)}% de réussite
-              </p>
-            </CardContent>
-          </Card>
+          {/* Liste des tentatives */}
+          {loginAttempts.length === 0 ? (
+            <EmptyState
+              framed
+              title="Aucune tentative enregistrée"
+              description="Les connexions et les refus se consultent aussi dans le journal d'audit d'Ascencia ID."
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Compte</TableHead>
+                  <TableHead>État</TableHead>
+                  <TableHead>Motif</TableHead>
+                  <TableHead>Lieu</TableHead>
+                  <TableHead>Adresse IP</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loginAttempts.map((attempt) => {
+                  const account = attempt.username || "Utilisateur inconnu";
+                  const details = [
+                    attempt.email,
+                    attempt.discordId && `ID : ${attempt.discordId}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ");
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Tentatives échouées
-              </CardTitle>
-              <XCircle className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {stats.failedAttempts}
-              </div>
-              <p className="text-xs text-muted-foreground">Accès refusés</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Dernières 24h
-              </CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.last24hAttempts}</div>
-              <p className="text-xs text-muted-foreground">
-                Tentatives récentes
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Liste des tentatives */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Détail des tentatives</CardTitle>
-          <CardDescription>
-            Historique des tentatives de connexion Discord
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {loginAttempts.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Aucune tentative de connexion enregistrée
-              </div>
-            ) : (
-              loginAttempts.map((attempt) => (
-                <div
-                  key={attempt.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage
-                        src={attempt.avatar}
-                        alt={attempt.username || "Utilisateur"}
-                      />
-                      <AvatarFallback>
-                        {attempt.username?.charAt(0).toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <p className="font-medium">
-                          {attempt.username || "Utilisateur inconnu"}
-                        </p>
-                        <Badge
-                          variant={attempt.success ? "default" : "destructive"}
-                        >
-                          {attempt.success ? "Réussi" : "Échoué"}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        {attempt.discordId && (
-                          <span>ID: {attempt.discordId}</span>
-                        )}
-                        {attempt.email && <span>{attempt.email}</span>}
-                        {attempt.country && (
-                          <div className="flex items-center space-x-1">
-                            <Globe className="h-3 w-3" />
-                            <span>{attempt.country}</span>
-                            {attempt.city && <span>({attempt.city})</span>}
+                  return (
+                    <TableRow key={attempt.id}>
+                      <TableCell>
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <Avatar className="size-7">
+                            <AvatarImage src={attempt.avatar} alt="" />
+                            <AvatarFallback className="text-fg-muted text-xs font-semibold">
+                              {attempt.username?.charAt(0).toUpperCase() || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <div
+                              className="max-w-56 truncate font-medium"
+                              title={account}
+                            >
+                              {account}
+                            </div>
+                            {details && (
+                              <div
+                                className="text-fg-muted max-w-56 truncate text-xs"
+                                title={details}
+                              >
+                                {details}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      {attempt.reason && (
-                        <div className="flex items-center space-x-1 text-xs text-orange-600 mt-1">
-                          <AlertTriangle className="h-3 w-3" />
-                          <span>{attempt.reason}</span>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right text-sm text-muted-foreground">
-                    <div>{attempt.ipAddress}</div>
-                    <div>
-                      {formatDistanceToNow(new Date(attempt.timestamp), {
-                        addSuffix: true,
-                        locale: fr,
-                      })}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={attempt.success ? "success" : "destructive"}
+                        >
+                          {attempt.success ? "Réussie" : "Refusée"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell
+                        className="text-fg-muted max-w-64 truncate"
+                        title={attempt.reason}
+                      >
+                        {attempt.reason || "–"}
+                      </TableCell>
+                      <TableCell className="text-fg-muted">
+                        {formatLocation(attempt.country, attempt.city) ?? "–"}
+                      </TableCell>
+                      <TableCell className="text-fg-muted font-mono text-xs tabular-nums">
+                        {attempt.ipAddress || "–"}
+                      </TableCell>
+                      <TableCell className="text-fg-muted">
+                        <RelativeTime value={attempt.timestamp} />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
 
-      {/* Pagination */}
-      {stats && stats.totalAttempts > 0 && (
-        <div className="mt-6">
-          <PaginationControls
-            pagination={pagination}
-            pageSizeOptions={[10, 25, 50, 100]}
-          />
-        </div>
+          {/* Pagination */}
+          {stats && stats.totalAttempts > 0 && (
+            <PaginationControls
+              pagination={pagination}
+              pageSizeOptions={[10, 25, 50, 100]}
+            />
+          )}
+        </>
       )}
-    </div>
+    </>
   );
 }

@@ -1,37 +1,181 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type PointerEvent,
+} from "react";
 import { useAtom } from "jotai";
+import {
+  Circle,
+  Download,
+  Eraser,
+  Eye,
+  FilePlus,
+  Grid,
+  MoreHorizontal,
+  PanelRightClose,
+  PanelRightOpen,
+  Pencil,
+  Redo2,
+  RotateCcw,
+  Save,
+  Settings,
+  Square,
+  Trash2,
+  Undo2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { PatternPreview, renderPattern } from "@/components/pattern-preview";
+import { PointsGrid } from "@/components/points-grid";
+import { PreviewModal } from "@/components/preview-modal";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
-import { patternEditorAtom, savedPatternsAtom, selectedPatternAtom, setGridSizeAtom, toggleCellWithHistoryAtom, clearGridAtom, savePatternAtom, loadPatternAtom, deletePatternAtom, updatePatternAtom, undoAtom, redoAtom, setGridModeAtom, setEditModeAtom, resetConfigurationAtom, type Pattern } from "@/lib/pattern-store";
-import { Save, Download, Trash2, RotateCcw, Grid, Eye, Undo2, Redo2, Settings, FileText, Square, Circle, Layers, Pencil, Scissors } from "lucide-react";
-import { toast } from "sonner";
-import { PointsGrid } from "@/components/points-grid";
-import { PreviewModal } from "@/components/preview-modal";
-import { motion, AnimatePresence } from "framer-motion";
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import {
+  clearGridAtom,
+  deletePatternAtom,
+  loadPatternAtom,
+  patternEditorAtom,
+  redoAtom,
+  resetConfigurationAtom,
+  savedPatternsAtom,
+  savePatternAtom,
+  selectedPatternAtom,
+  setEditModeAtom,
+  setGridModeAtom,
+  setGridSizeAtom,
+  toggleCellWithHistoryAtom,
+  undoAtom,
+  updatePatternAtom,
+  type GridMode,
+  type Pattern,
+} from "@/lib/pattern-store";
+import { cn } from "@/lib/utils";
+
+/** La clé de `patternEditorAtom` : son absence signale une toute première visite. */
+const EDITOR_STORAGE_KEY = "just-tools-editor-state";
+const EXPORT_REPEAT_COUNT = 8;
+const EXAMPLE_GRID_SIZE = 16;
+const EXAMPLE_TILE_SIZE = 8;
+const EXAMPLE_BACKGROUND = "#fff7ed";
+const EXAMPLE_FOREGROUND = "#c2410c";
+
+const GRID_MODES = [
+  { value: "pixel", label: "Pixels", icon: Square },
+  { value: "points", label: "Points", icon: Circle },
+] as const;
+
+/** Un treillis de losanges, qui montre d'emblée ce que donne un motif répété. */
+function buildExampleCells() {
+  const center = (EXAMPLE_TILE_SIZE - 1) / 2;
+  return Array.from({ length: EXAMPLE_GRID_SIZE }, (_, row) =>
+    Array.from({ length: EXAMPLE_GRID_SIZE }, (_, col) => {
+      const distance =
+        Math.abs((row % EXAMPLE_TILE_SIZE) - center) +
+        Math.abs((col % EXAMPLE_TILE_SIZE) - center);
+      return distance === 3 || distance === 7;
+    })
+  );
+}
+
+/** La grille de pixels, dessinée à la souris comme au doigt. */
+function PixelGrid() {
+  const [editorState] = useAtom(patternEditorAtom);
+  const [, toggleCell] = useAtom(toggleCellWithHistoryAtom);
+  // Un tracé garde la valeur de sa première cellule : repasser sur une cellule
+  // ne l'inverse pas, et le tracé ne produit pas de damier.
+  const stroke = useRef<{ value: boolean; lastCell: string } | null>(null);
+
+  const { cells, backgroundColor, foregroundColor, showGrid, editMode } =
+    editorState;
+  const size = cells.length;
+  const tracks = `repeat(${size}, minmax(0, 1fr))`;
+
+  const locateCell = (event: PointerEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const row = Math.floor(((event.clientY - rect.top) / rect.height) * size);
+    const col = Math.floor(((event.clientX - rect.left) / rect.width) * size);
+    return row >= 0 && row < size && col >= 0 && col < size
+      ? { row, col, id: `${row}-${col}` }
+      : null;
+  };
+
+  const paint = (row: number, col: number, value: boolean) => {
+    if (cells[row]?.[col] !== value) toggleCell(row, col);
+  };
+
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    const cell = locateCell(event);
+    if (!cell || event.button !== 0) return;
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const value = editMode === "delete" ? false : !cells[cell.row]?.[cell.col];
+    stroke.current = { value, lastCell: cell.id };
+    paint(cell.row, cell.col, value);
+  };
+
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!stroke.current) return;
+    const cell = locateCell(event);
+    if (!cell || cell.id === stroke.current.lastCell) return;
+
+    stroke.current.lastCell = cell.id;
+    paint(cell.row, cell.col, stroke.current.value);
+  };
+
+  const endStroke = () => {
+    stroke.current = null;
+  };
+
+  return (
+    <div
+      role="img"
+      aria-label="Grille de pixels du motif"
+      className="grid size-full cursor-crosshair touch-none select-none"
+      style={{ gridTemplateColumns: tracks, gridTemplateRows: tracks }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={endStroke}
+      onPointerCancel={endStroke}
+    >
+      {cells.flatMap((row, rowIndex) =>
+        row.map((cell, colIndex) => (
+          <div
+            key={`${rowIndex}-${colIndex}`}
+            className={cn(showGrid && "border-border-strong/50 border-e border-b")}
+            style={{
+              backgroundColor: cell ? foregroundColor : backgroundColor,
+            }}
+          />
+        ))
+      )}
+    </div>
+  );
+}
 
 export default function PatternEditor() {
   const [editorState, setEditorState] = useAtom(patternEditorAtom);
   const [savedPatterns] = useAtom(savedPatternsAtom);
   const [selectedPattern, setSelectedPattern] = useAtom(selectedPatternAtom);
   const [, setGridSize] = useAtom(setGridSizeAtom);
-  const [, toggleCell] = useAtom(toggleCellWithHistoryAtom);
   const [, clearGrid] = useAtom(clearGridAtom);
   const [, savePattern] = useAtom(savePatternAtom);
   const [, loadPattern] = useAtom(loadPatternAtom);
@@ -46,39 +190,52 @@ export default function PatternEditor() {
   const [patternName, setPatternName] = useState("");
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [showPanel, setShowPanel] = useState(true);
 
-  // Gestion du dessin
-  const handleMouseDown = (row: number, col: number) => {
-    setEditorState((prev) => ({ ...prev, isDrawing: true }));
-    toggleCell(row, col);
-  };
-
-  const handleMouseEnter = (row: number, col: number) => {
-    if (editorState.isDrawing) {
-      toggleCell(row, col);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setEditorState((prev) => ({ ...prev, isDrawing: false }));
-  };
-
-  // Sauvegarder un motif
-  const handleSave = () => {
-    if (!patternName.trim()) {
-      toast.error("Veuillez entrer un nom pour le motif");
+  // À la toute première visite, l'éditeur s'ouvre sur un motif plutôt que sur une
+  // grille blanche. Un visiteur qui a déjà un état enregistré n'est pas touché.
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(EDITOR_STORAGE_KEY) !== null) return;
+    } catch {
       return;
     }
 
+    const cells = buildExampleCells();
+    setEditorState((prev) => ({
+      ...prev,
+      cells,
+      backgroundColor: EXAMPLE_BACKGROUND,
+      foregroundColor: EXAMPLE_FOREGROUND,
+      history: [{ cells, selectedPoints: [], lines: [] }],
+      historyIndex: 0,
+    }));
+  }, [setEditorState]);
+
+  const handleModeChange = (mode: GridMode) => {
+    if (mode === editorState.gridMode) return;
+    setGridMode(mode);
+    toast.info(
+      mode === "pixel"
+        ? "Grille en pixels : dessin et historique remis à zéro."
+        : "Grille en points : dessin et historique remis à zéro."
+    );
+  };
+
+  const handleSave = (event: FormEvent) => {
+    event.preventDefault();
+
     if (selectedPattern) {
       updatePattern(selectedPattern.id);
-      toast.success("Motif mis à jour !");
+      toast.success("Motif mis à jour.");
     } else {
-      savePattern(patternName);
-      toast.success("Motif sauvegardé !");
+      const name = patternName.trim();
+      if (!name) {
+        toast.error("Donne un nom à ton motif pour le sauvegarder.");
+        return;
+      }
+      savePattern(name);
+      toast.success("Motif sauvegardé.");
     }
 
     setPatternName("");
@@ -86,556 +243,397 @@ export default function PatternEditor() {
     setSelectedPattern(null);
   };
 
-  // Charger un motif
-  const handleLoad = (pattern: Pattern) => {
-    loadPattern(pattern);
-    setSelectedPattern(pattern);
-    toast.success(`Motif "${pattern.name}" chargé !`);
+  const closeSaveDialog = () => {
+    setShowSaveDialog(false);
+    setPatternName("");
   };
 
-  // Supprimer un motif
   const handleDelete = (patternId: string) => {
     deletePattern(patternId);
     if (selectedPattern?.id === patternId) {
       setSelectedPattern(null);
     }
-    toast.success("Motif supprimé !");
   };
 
-  // Exporter le motif
-  const handleExport = async () => {
-    if (!canvasRef.current) return;
+  // Le motif repart de zéro : il ne doit plus écraser celui qui était chargé.
+  const handleNew = () => {
+    clearGrid();
+    setSelectedPattern(null);
+  };
 
-    setIsExporting(true);
+  const handleReset = () => {
+    resetConfiguration();
+    setSelectedPattern(null);
+  };
+
+  const handleExport = () => {
     try {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+      const canvas = document.createElement("canvas");
+      renderPattern(canvas, editorState, EXPORT_REPEAT_COUNT);
 
-      // Créer un canvas temporaire pour le motif répété
-      const tempCanvas = document.createElement("canvas");
-      const tempCtx = tempCanvas.getContext("2d");
-      if (!tempCtx) return;
-
-      const cellSize = 20;
-      const patternSize = editorState.gridSize * cellSize;
-      const repeatCount = 8; // 8x8 répétitions
-      const totalSize = patternSize * repeatCount;
-
-      tempCanvas.width = totalSize;
-      tempCanvas.height = totalSize;
-
-      // Dessiner le motif répété
-      for (let i = 0; i < repeatCount; i++) {
-        for (let j = 0; j < repeatCount; j++) {
-          // Dessiner chaque cellule du motif
-          for (let row = 0; row < editorState.gridSize; row++) {
-            for (let col = 0; col < editorState.gridSize; col++) {
-              const x = i * patternSize + col * cellSize;
-              const y = j * patternSize + row * cellSize;
-
-              tempCtx.fillStyle = editorState.cells[row][col]
-                ? editorState.foregroundColor
-                : editorState.backgroundColor;
-              tempCtx.fillRect(x, y, cellSize, cellSize);
-
-              // Ajouter une bordure subtile
-              tempCtx.strokeStyle = "#e5e7eb";
-              tempCtx.lineWidth = 0.5;
-              tempCtx.strokeRect(x, y, cellSize, cellSize);
-            }
-          }
-        }
-      }
-
-      // Créer le lien de téléchargement
       const link = document.createElement("a");
       link.download = `pattern-${Date.now()}.png`;
-      link.href = tempCanvas.toDataURL();
+      link.href = canvas.toDataURL();
       link.click();
 
-      toast.success("Motif exporté avec succès !");
+      toast.success("Motif exporté.");
     } catch {
-      toast.error("Erreur lors de l'export");
-    } finally {
-      setIsExporting(false);
+      toast.error("L'export a échoué. Réessaie avec une grille plus petite.");
     }
   };
 
-  // Mettre à jour la prévisualisation
-  useEffect(() => {
-    if (!canvasRef.current || editorState.gridMode === "points") return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const cellSize = editorState.previewScale;
-    const canvasSize = editorState.gridSize * cellSize;
-
-    canvas.width = canvasSize;
-    canvas.height = canvasSize;
-
-    // Dessiner le motif
-    for (let row = 0; row < editorState.gridSize; row++) {
-      for (let col = 0; col < editorState.gridSize; col++) {
-        const x = col * cellSize;
-        const y = row * cellSize;
-
-        ctx.fillStyle = editorState.cells[row][col]
-          ? editorState.foregroundColor
-          : editorState.backgroundColor;
-        ctx.fillRect(x, y, cellSize, cellSize);
-
-        // Ajouter la grille si activée
-        if (editorState.showGrid) {
-          ctx.strokeStyle = "#d1d5db";
-          ctx.lineWidth = 0.5;
-          ctx.strokeRect(x, y, cellSize, cellSize);
-        }
-      }
-    }
-  }, [
-    editorState.cells,
-    editorState.backgroundColor,
-    editorState.foregroundColor,
-    editorState.showGrid,
-    editorState.previewScale,
-    editorState.gridMode,
-    // Manquait : le tracé s'appuie dessus, mais le canvas ne se redessinait pas
-    // quand la taille de grille changeait.
-    editorState.gridSize,
-  ]);
-
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-background">
-      {/* Barre d'outils principale */}
-      <div className="bg-white dark:bg-card border-b border-slate-200 dark:border-slate-700 px-4 py-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Separator orientation="vertical" className="h-6" />
+    <div className="flex h-full min-h-0 min-w-0 flex-col">
+      <div className="border-border flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b px-3 py-2 lg:px-4">
+        <div role="group" aria-label="Historique" className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Annuler"
+            title="Annuler"
+            onClick={() => undo()}
+            disabled={editorState.historyIndex === 0}
+          >
+            <Undo2 aria-hidden="true" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Rétablir"
+            title="Rétablir"
+            onClick={() => redo()}
+            disabled={
+              editorState.historyIndex === editorState.history.length - 1
+            }
+          >
+            <Redo2 aria-hidden="true" />
+          </Button>
+        </div>
 
-            {/* Fichier */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Fichier
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setShowSaveDialog(true)}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Sauvegarder
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExport} disabled={isExporting}>
-                  <Download className="h-4 w-4 mr-2" />
-                  {isExporting ? "Export..." : "Exporter"}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => clearGrid()}>
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Nouveau
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => resetConfiguration()}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Reset Configuration
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+        <div role="group" aria-label="Outil" className="flex items-center gap-1">
+          <Button
+            variant={editorState.editMode === "draw" ? "soft" : "ghost"}
+            size="sm"
+            aria-pressed={editorState.editMode === "draw"}
+            onClick={() => setEditMode("draw")}
+          >
+            <Pencil aria-hidden="true" />
+            <span className="max-sm:sr-only">Dessiner</span>
+          </Button>
+          <Button
+            variant={editorState.editMode === "delete" ? "soft" : "ghost"}
+            size="sm"
+            aria-pressed={editorState.editMode === "delete"}
+            onClick={() => setEditMode("delete")}
+          >
+            <Eraser aria-hidden="true" />
+            <span className="max-sm:sr-only">Supprimer</span>
+          </Button>
+          <Button
+            variant={editorState.showGrid ? "soft" : "ghost"}
+            size="sm"
+            aria-pressed={editorState.showGrid}
+            onClick={() =>
+              setEditorState((prev) => ({ ...prev, showGrid: !prev.showGrid }))
+            }
+          >
+            <Grid aria-hidden="true" />
+            <span className="max-sm:sr-only">Grille</span>
+          </Button>
+        </div>
 
-            <Separator orientation="vertical" className="h-6" />
+        <div className="ms-auto flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowPreviewModal(true)}
+          >
+            <Eye aria-hidden="true" />
+            <span className="max-sm:sr-only">Aperçu</span>
+          </Button>
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download aria-hidden="true" />
+            <span className="max-sm:sr-only">Exporter</span>
+          </Button>
+          <Button size="sm" onClick={() => setShowSaveDialog(true)}>
+            <Save aria-hidden="true" />
+            <span className="max-sm:sr-only">Sauvegarder</span>
+          </Button>
 
-            {/* Édition */}
-            <div className="flex items-center space-x-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                size="sm"
-                onClick={() => undo()}
-                disabled={editorState.historyIndex === 0}
+                size="icon-sm"
+                aria-label="Plus d'actions"
+                title="Plus d'actions"
               >
-                <Undo2 className="h-4 w-4" />
+                <MoreHorizontal aria-hidden="true" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => redo()}
-                disabled={
-                  editorState.historyIndex === editorState.history.length - 1
-                }
-              >
-                <Redo2 className="h-4 w-4" />
-              </Button>
-            </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => clearGrid()}>
+                <RotateCcw aria-hidden="true" />
+                Effacer le dessin
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleNew}>
+                <FilePlus aria-hidden="true" />
+                Nouveau motif
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleReset}>
+                <Settings aria-hidden="true" />
+                Réinitialiser la configuration
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-            <Separator orientation="vertical" className="h-6" />
-
-            {/* Mode de grille */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  {editorState.gridMode === "pixel" ? (
-                    <Square className="h-4 w-4 mr-2" />
-                  ) : (
-                    <Circle className="h-4 w-4 mr-2" />
-                  )}
-                  {editorState.gridMode === "pixel" ? "Pixels" : "Points"}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onClick={() => {
-                    const oldMode = editorState.gridMode;
-                    setGridMode("pixel");
-                    if (oldMode !== "pixel") {
-                      toast.info(
-                        "Mode Pixels activé - Historique réinitialisé"
-                      );
-                    }
-                  }}
-                  className={
-                    editorState.gridMode === "pixel"
-                      ? "bg-blue-50 dark:bg-blue-900/20"
-                      : ""
-                  }
-                >
-                  <Square className="h-4 w-4 mr-2" />
-                  Mode Pixels
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    const oldMode = editorState.gridMode;
-                    setGridMode("points");
-                    if (oldMode !== "points") {
-                      toast.info(
-                        "Mode Points activé - Historique réinitialisé"
-                      );
-                    }
-                  }}
-                  className={
-                    editorState.gridMode === "points"
-                      ? "bg-blue-50 dark:bg-blue-900/20"
-                      : ""
-                  }
-                >
-                  <Circle className="h-4 w-4 mr-2" />
-                  Mode Points
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowSidebar(!showSidebar)}
-              >
-                <Layers className="h-4 w-4" />
-              </Button>
-            </motion.div>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-expanded={showPanel}
+            aria-label={showPanel ? "Masquer le panneau" : "Afficher le panneau"}
+            title={showPanel ? "Masquer le panneau" : "Afficher le panneau"}
+            onClick={() => setShowPanel(!showPanel)}
+          >
+            {showPanel ? (
+              <PanelRightClose aria-hidden="true" />
+            ) : (
+              <PanelRightOpen aria-hidden="true" />
+            )}
+          </Button>
         </div>
       </div>
 
-      {/* Contenu principal */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Zone de travail */}
-        <div className="flex-1 flex flex-col">
-          {/* Barre d'outils secondaire */}
-          <div className="bg-white dark:bg-card border-b border-slate-200 dark:border-slate-700 px-4 py-2">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="grid-size" className="text-sm">
-                  Grille:
-                </Label>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
+        <div className="bg-surface relative min-h-0 min-w-0 flex-1">
+          {/* Un conteneur de taille : le carré de dessin prend le plus petit des
+              deux axes, et tient donc dans la zone quelle que soit sa forme. */}
+          <div className="absolute inset-3 flex items-center justify-center [container-type:size] lg:inset-6">
+            <div className="border-border rounded-field size-[min(100cqw,100cqh)] max-h-[44rem] max-w-[44rem] overflow-hidden border">
+              {editorState.gridMode === "pixel" ? <PixelGrid /> : <PointsGrid />}
+            </div>
+          </div>
+        </div>
+
+        {showPanel && (
+          <aside
+            aria-label="Réglages du motif"
+            className="border-border divide-border flex max-h-[38dvh] min-w-0 shrink-0 flex-col divide-y overflow-y-auto border-t lg:max-h-none lg:w-80 lg:border-s lg:border-t-0"
+          >
+            <section
+              aria-labelledby="pattern-preview-title"
+              className="flex flex-col gap-2 p-4"
+            >
+              <h2
+                id="pattern-preview-title"
+                className="text-fg text-sm font-medium"
+              >
+                Aperçu répété
+              </h2>
+              <button
+                type="button"
+                aria-label="Agrandir l'aperçu"
+                title="Agrandir l'aperçu"
+                onClick={() => setShowPreviewModal(true)}
+                className="border-border hover:border-border-strong rounded-field block w-full cursor-zoom-in overflow-hidden border transition-colors duration-(--animate-duration-fast) max-lg:max-w-32"
+              >
+                <PatternPreview />
+              </button>
+            </section>
+
+            <section aria-label="Réglages" className="flex flex-col gap-5 p-4">
+              <div className="flex flex-col gap-2">
+                <span id="grid-mode-label" className="text-fg text-sm font-medium">
+                  Type de grille
+                </span>
+                <div
+                  role="group"
+                  aria-labelledby="grid-mode-label"
+                  className="grid grid-cols-2 gap-2"
+                >
+                  {GRID_MODES.map(({ value, label, icon: Icon }) => (
+                    <Button
+                      key={value}
+                      variant={
+                        editorState.gridMode === value ? "soft" : "outline"
+                      }
+                      aria-pressed={editorState.gridMode === value}
+                      onClick={() => handleModeChange(value)}
+                    >
+                      <Icon aria-hidden="true" />
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <Label htmlFor="grid-size">Taille</Label>
+                  <span className="text-fg font-mono text-sm tabular-nums">
+                    {editorState.gridSize}×{editorState.gridSize}
+                  </span>
+                </div>
                 <Slider
                   id="grid-size"
+                  aria-label="Taille de la grille"
                   min={8}
                   max={32}
                   step={4}
                   value={[editorState.gridSize]}
                   onValueChange={([value]) => setGridSize(value)}
-                  className="w-24"
                 />
-                <span className="text-sm text-slate-500 w-8">
-                  {editorState.gridSize}x{editorState.gridSize}
-                </span>
+                <p className="text-fg-muted text-[0.8125rem] leading-snug">
+                  Changer de grille ou de taille efface le dessin.
+                </p>
               </div>
 
-              <Separator orientation="vertical" className="h-6" />
-
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="bg-color" className="text-sm">
-                  Arrière-plan:
-                </Label>
-                <Input
-                  id="bg-color"
-                  type="color"
-                  value={editorState.backgroundColor}
-                  onChange={(e) =>
-                    setEditorState((prev) => ({
-                      ...prev,
-                      backgroundColor: e.target.value,
-                    }))
-                  }
-                  className="w-12 h-8"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="fg-color" className="text-sm">
-                  Motif:
-                </Label>
-                <Input
-                  id="fg-color"
-                  type="color"
-                  value={editorState.foregroundColor}
-                  onChange={(e) =>
-                    setEditorState((prev) => ({
-                      ...prev,
-                      foregroundColor: e.target.value,
-                    }))
-                  }
-                  className="w-12 h-8"
-                />
-              </div>
-
-              <Separator orientation="vertical" className="h-6" />
-
-              {/* Outils d'édition */}
-              <div className="flex items-center space-x-1">
-                <Button
-                  variant={
-                    editorState.editMode === "draw" ? "default" : "ghost"
-                  }
-                  size="sm"
-                  onClick={() => setEditMode("draw")}
-                  className="flex items-center space-x-1"
-                >
-                  <Pencil className="h-4 w-4" />
-                  <span className="text-xs">Dessiner</span>
-                </Button>
-                <Button
-                  variant={
-                    editorState.editMode === "delete" ? "default" : "ghost"
-                  }
-                  size="sm"
-                  onClick={() => setEditMode("delete")}
-                  className="flex items-center space-x-1"
-                >
-                  <Scissors className="h-4 w-4" />
-                  <span className="text-xs">Supprimer</span>
-                </Button>
-              </div>
-
-              <Separator orientation="vertical" className="h-6" />
-
-              <Button
-                variant={editorState.showGrid ? "default" : "outline"}
-                size="sm"
-                onClick={() =>
-                  setEditorState((prev) => ({
-                    ...prev,
-                    showGrid: !prev.showGrid,
-                  }))
-                }
-              >
-                <Grid className="h-4 w-4 mr-2" />
-                Grille
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPreviewModal(true)}
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                Aperçu
-              </Button>
-
-              <Button variant="outline" size="sm" onClick={() => clearGrid()}>
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Effacer
-              </Button>
-            </div>
-          </div>
-
-          {/* Zone de dessin */}
-          <div className="flex-1 flex items-center justify-center bg-slate-100 dark:bg-card relative">
-            {/* Indicateur de mode */}
-            <div className="absolute top-4 left-4 z-10">
-              <Badge variant="secondary" className="text-xs">
-                {editorState.gridMode === "pixel" ? (
-                  <>
-                    <Square className="h-3 w-3 mr-1" />
-                    Mode Pixels
-                  </>
-                ) : (
-                  <>
-                    <Circle className="h-3 w-3 mr-1" />
-                    Mode Points
-                  </>
-                )}
-              </Badge>
-            </div>
-
-            <div className="bg-white dark:bg-background rounded-lg shadow-lg p-2">
-              {editorState.gridMode === "pixel" ? (
-                <div
-                  className="border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden"
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                >
-                  {editorState.cells.map((row, rowIndex) => (
-                    <div key={rowIndex} className="flex">
-                      {row.map((cell, colIndex) => (
-                        <div
-                          key={`${rowIndex}-${colIndex}`}
-                          className={`w-6 h-6 cursor-pointer transition-colors ${
-                            cell
-                              ? "bg-slate-900 dark:bg-slate-100"
-                              : "bg-white dark:bg-card"
-                          } ${
-                            editorState.showGrid
-                              ? "border border-slate-200 dark:border-slate-700"
-                              : ""
-                          }`}
-                          onMouseDown={() =>
-                            handleMouseDown(rowIndex, colIndex)
-                          }
-                          onMouseEnter={() =>
-                            handleMouseEnter(rowIndex, colIndex)
-                          }
-                        />
-                      ))}
-                    </div>
-                  ))}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <Label htmlFor="bg-color">Arrière-plan</Label>
+                  <Input
+                    id="bg-color"
+                    type="color"
+                    value={editorState.backgroundColor}
+                    onChange={(event) =>
+                      setEditorState((prev) => ({
+                        ...prev,
+                        backgroundColor: event.target.value,
+                      }))
+                    }
+                    className="cursor-pointer p-1"
+                  />
                 </div>
-              ) : (
-                <PointsGrid />
-              )}
-            </div>
-          </div>
-        </div>
+                <div className="flex min-w-0 flex-col gap-2">
+                  <Label htmlFor="fg-color">Motif</Label>
+                  <Input
+                    id="fg-color"
+                    type="color"
+                    value={editorState.foregroundColor}
+                    onChange={(event) =>
+                      setEditorState((prev) => ({
+                        ...prev,
+                        foregroundColor: event.target.value,
+                      }))
+                    }
+                    className="cursor-pointer p-1"
+                  />
+                </div>
+              </div>
+            </section>
 
-        {/* Sidebar */}
-        <AnimatePresence>
-          {showSidebar && (
-            <motion.div
-              initial={{ x: 320, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 320, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="w-80 bg-white dark:bg-card border-l border-slate-200 dark:border-slate-700 overflow-y-auto"
+            <section
+              aria-labelledby="saved-patterns-title"
+              className="flex min-w-0 flex-col gap-2 p-4"
             >
-              <div className="p-4 space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium mb-2">
-                    Motifs sauvegardés
-                  </h3>
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {savedPatterns.length === 0 ? (
-                      <p className="text-sm text-slate-500 text-center py-4">
-                        Aucun motif sauvegardé
-                      </p>
-                    ) : (
-                      savedPatterns.map((pattern, index) => (
-                        <motion.div
-                          key={pattern.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          whileHover={{ scale: 1.02 }}
-                          className={`flex items-center justify-between p-2 rounded border cursor-pointer transition-colors ${
-                            selectedPattern?.id === pattern.id
-                              ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700"
-                              : "hover:bg-slate-50 dark:hover:bg-slate-700/50 border-slate-200 dark:border-slate-600"
-                          }`}
-                          onClick={() => handleLoad(pattern)}
+              <h2
+                id="saved-patterns-title"
+                className="text-fg text-sm font-medium"
+              >
+                Motifs sauvegardés
+              </h2>
+              {savedPatterns.length === 0 ? (
+                <p className="text-fg-muted text-[0.8125rem] leading-snug">
+                  Aucun motif pour l&apos;instant. Sauvegarde celui-ci pour le
+                  retrouver ici.
+                </p>
+              ) : (
+                <ul className="flex min-w-0 flex-col gap-1">
+                  {savedPatterns.map((pattern: Pattern) => {
+                    const selected = selectedPattern?.id === pattern.id;
+                    return (
+                      <li key={pattern.id} className="flex min-w-0 items-center gap-1">
+                        <button
+                          type="button"
+                          aria-current={selected ? "true" : undefined}
+                          onClick={() => loadPattern(pattern)}
+                          className={cn(
+                            "rounded-field flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center px-2.5 py-1.5 text-start transition-colors duration-(--animate-duration-fast)",
+                            selected
+                              ? "bg-primary-soft text-primary-soft-fg"
+                              : "text-fg hover:bg-surface"
+                          )}
                         >
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">
-                              {pattern.name}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {pattern.gridSize}x{pattern.gridSize} •{" "}
-                              {pattern.gridMode === "pixel"
-                                ? "Pixels"
-                                : "Points"}{" "}
-                              •{" "}
-                              {new Date(pattern.updatedAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(pattern.id);
-                            }}
+                          <span
+                            className="truncate text-sm font-medium"
+                            title={pattern.name}
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </motion.div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                            {pattern.name}
+                          </span>
+                          <span
+                            className={cn(
+                              "truncate text-xs",
+                              !selected && "text-fg-subtle"
+                            )}
+                          >
+                            {pattern.gridSize}×{pattern.gridSize},{" "}
+                            {pattern.gridMode === "pixel" ? "pixels" : "points"},{" "}
+                            {new Date(pattern.updatedAt).toLocaleDateString("fr-FR")}
+                          </span>
+                        </button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Supprimer ${pattern.name}`}
+                          title="Supprimer"
+                          onClick={() => handleDelete(pattern.id)}
+                        >
+                          <Trash2 aria-hidden="true" />
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          </aside>
+        )}
       </div>
 
-      {/* Dialog de sauvegarde */}
-      {showSaveDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-96 shadow-xl">
-            <CardHeader>
-              <CardTitle>
+      <Dialog
+        open={showSaveDialog}
+        onOpenChange={(open) => {
+          if (!open) closeSaveDialog();
+        }}
+      >
+        <DialogContent>
+          <form onSubmit={handleSave} className="flex min-w-0 flex-col gap-4">
+            <DialogHeader>
+              <DialogTitle>
                 {selectedPattern
                   ? "Mettre à jour le motif"
                   : "Sauvegarder le motif"}
-              </CardTitle>
-              <CardDescription>
+              </DialogTitle>
+              <DialogDescription>
                 {selectedPattern
-                  ? "Le motif sera mis à jour avec les modifications actuelles"
-                  : "Donnez un nom à votre motif pour le sauvegarder"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
+                  ? `« ${selectedPattern.name} » reprendra l'état actuel de l'éditeur.`
+                  : "Donne un nom à ton motif pour le retrouver dans le panneau."}
+              </DialogDescription>
+            </DialogHeader>
+            {!selectedPattern && (
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="pattern-name">Nom du motif</Label>
                 <Input
                   id="pattern-name"
                   value={patternName}
-                  onChange={(e) => setPatternName(e.target.value)}
-                  placeholder="Mon motif..."
-                  onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                  onChange={(event) => setPatternName(event.target.value)}
+                  placeholder="Mon motif…"
+                  autoFocus
                 />
               </div>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowSaveDialog(false);
-                    setPatternName("");
-                  }}
-                  className="flex-1"
-                >
-                  Annuler
-                </Button>
-                <Button onClick={handleSave} className="flex-1">
-                  {selectedPattern ? "Mettre à jour" : "Sauvegarder"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={closeSaveDialog}>
+                Annuler
+              </Button>
+              <Button type="submit">
+                {selectedPattern ? "Mettre à jour" : "Sauvegarder"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-      {/* Modal d'aperçu */}
       <PreviewModal
         isOpen={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}

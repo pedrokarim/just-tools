@@ -1,101 +1,78 @@
 import Image from "next/image";
-import Link from "next/link";
-import { ArrowUpRight, ExternalLink } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ArrowUpRight } from "lucide-react";
 import { ECOSYSTEM_HUB, OTHER_PROJECTS } from "@/lib/other-projects";
 
 /**
- * Section de promotion croisée des autres projets de l'écosystème.
+ * Les autres projets de l'écosystème.
  *
- * Reprend volontairement la facture des cartes d'outils de l'accueil (même
- * bordure, même rayon, même survol) : la section doit se lire comme une suite
- * naturelle de la page, pas comme un encart publicitaire greffé.
- *
- * Les logos sont hébergés par chaque projet ; les domaines sont autorisés dans
- * `next.config.ts` (`images.remotePatterns`).
+ * Même facture que le registre des outils : la section se lit comme une suite de
+ * la page, pas comme un encart publicitaire greffé. Les logos sont hébergés par
+ * chaque projet ; les domaines sont autorisés dans `next.config.ts`.
  */
 export function OtherProjects() {
   return (
-    <section id="autres-projets" className="border-t border-border py-24">
-      <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-14 space-y-4 text-center">
-            <h2 className="text-3xl font-bold text-foreground md:text-4xl">
-              Nos autres projets
-            </h2>
-            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-              Just Tools fait partie d&apos;un ensemble plus large. Voici le
-              reste de ce que nous construisons.
-            </p>
-          </div>
+    <section
+      id="autres-projets"
+      aria-labelledby="autres-projets-titre"
+      className="border-border border-t py-14 md:py-16"
+    >
+      <div className="mx-auto w-full max-w-6xl px-5 lg:px-8">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
+          <h2
+            id="autres-projets-titre"
+            className="text-fg text-2xl font-bold tracking-[-0.03em] md:text-3xl"
+          >
+            Dans le même écosystème
+          </h2>
+          <a
+            href={ECOSYSTEM_HUB.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-link inline-flex items-center gap-1 rounded-sm text-sm font-medium underline-offset-4 hover:underline"
+          >
+            {ECOSYSTEM_HUB.name}
+            <ArrowUpRight size={14} aria-hidden="true" />
+          </a>
+        </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {OTHER_PROJECTS.map((project) => (
+        <ul className="grid min-w-0 gap-x-8 gap-y-1 md:grid-cols-2 lg:grid-cols-3">
+          {OTHER_PROJECTS.map((project) => (
+            <li key={project.id} className="min-w-0">
               <a
-                key={project.id}
                 href={project.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group block rounded-xl border border-border bg-card p-6 transition-shadow duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                className="group hover:bg-surface -mx-2.5 flex items-start gap-3.5 rounded-lg px-2.5 py-3 transition-colors duration-(--animate-duration-fast)"
               >
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-muted">
-                    {/* Demandé en 80 px pour un affichage à 40 : les écrans à
-                        haute densité restent nets. Le logo du Portfolio n'existe
-                        qu'en 50 px à la source, il plafonne donc là. */}
-                    <Image
-                      src={project.logo}
-                      alt={`Logo ${project.name}`}
-                      width={80}
-                      height={80}
-                      className="h-10 w-10 object-contain"
-                      unoptimized={project.logo.endsWith(".svg")}
-                    />
-                  </div>
-                  <Badge
-                    variant={project.isNew ? "default" : "secondary"}
-                    className="text-xs"
-                  >
-                    {project.isNew ? "Nouveau" : project.tag}
-                  </Badge>
-                </div>
-
-                <h3 className="mb-2 flex items-center gap-1.5 text-lg font-semibold text-foreground transition-colors duration-200 group-hover:text-primary">
-                  <span className="min-w-0 truncate">{project.name}</span>
-                  <ExternalLink
-                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                  <span className="sr-only">(nouvel onglet)</span>
-                </h3>
-
-                <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-                  {project.description}
-                </p>
-
-                <span className="inline-flex items-center text-sm font-medium text-primary">
-                  Découvrir
-                  <ArrowUpRight
-                    className="ml-1 h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                    aria-hidden="true"
+                <span className="bg-surface border-border flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border">
+                  {/* Demandé en 80 px pour un affichage à 40 : les écrans à
+                      haute densité restent nets. */}
+                  <Image
+                    src={project.logo}
+                    alt=""
+                    width={80}
+                    height={80}
+                    loading="lazy"
+                    className="size-10 object-contain"
+                    unoptimized={project.logo.endsWith(".svg")}
                   />
                 </span>
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-fg flex items-center gap-1.5 text-sm font-semibold">
+                    <span className="min-w-0 truncate">{project.name}</span>
+                    <span className="text-fg-subtle shrink-0 text-xs font-normal">
+                      {project.isNew ? "Nouveau" : project.tag}
+                    </span>
+                    <span className="sr-only">(nouvel onglet)</span>
+                  </span>
+                  <span className="text-fg-muted text-[0.8125rem] leading-snug">
+                    {project.description}
+                  </span>
+                </span>
               </a>
-            ))}
-          </div>
-
-          <div className="mt-10 text-center">
-            <Link
-              href={ECOSYSTEM_HUB.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-            >
-              Tous nos projets sur {ECOSYSTEM_HUB.name}
-              <ArrowUpRight className="ml-1 h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

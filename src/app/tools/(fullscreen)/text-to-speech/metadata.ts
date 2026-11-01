@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Synthèse Vocale - Convertissez votre texte en parole",
+  title: "Synthèse Vocale - Convertis ton texte en parole",
   description:
-    "Outil gratuit de synthèse vocale avec des voix naturelles et des paramètres personnalisables. Convertissez instantanément votre texte en parole.",
+    "Outil gratuit de synthèse vocale avec des voix naturelles et des paramètres personnalisables. Convertis instantanément ton texte en parole.",
   keywords: [
     "synthèse vocale",
     "text to speech",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     "voix naturelles",
   ],
   openGraph: {
-    title: "Synthèse Vocale - Convertissez votre texte en parole",
+    title: "Synthèse Vocale - Convertis ton texte en parole",
     description:
       "Outil gratuit de synthèse vocale avec des voix naturelles et des paramètres personnalisables.",
     url: "https://just-tools.ascencia.re/tools/text-to-speech",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Synthèse Vocale - Convertissez votre texte en parole",
+    title: "Synthèse Vocale - Convertis ton texte en parole",
     description:
       "Outil gratuit de synthèse vocale avec des voix naturelles et des paramètres personnalisables.",
     images: ["/og-image.png"],

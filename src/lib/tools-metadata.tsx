@@ -1,15 +1,35 @@
 import React from "react";
-import { Code, Palette, Search, RefreshCw, Lock, FileText, Grid3X3, Image as ImageIcon, Volume2, Sparkles, Scissors } from "lucide-react";
+import {
+  Code,
+  Palette,
+  Search,
+  RefreshCw,
+  Lock,
+  FileText,
+  Grid3X3,
+  Image as ImageIcon,
+  Pipette,
+  Volume2,
+  Sparkles,
+  Scissors,
+} from "lucide-react";
 
 export interface ToolMetadata {
   id: string;
   name: string;
+  /** Pour les listes étroites, quand `name` ne tient pas sur une ligne. */
+  shortName?: string;
   description: string;
+  /**
+   * Ce que fait l'outil, en quelques phrases. Rendu dans le HTML de chaque page :
+   * sans lui, un agent ou un moteur de recherche ne lit qu'une coquille, tout le
+   * reste de l'outil n'existant qu'après l'exécution du JavaScript.
+   */
+  about: string;
   category: string;
   status: "coming-soon" | "in-progress" | "ready";
+  /** La taille se décide là où l'icône est posée (voir `ToolIcon`). */
   icon: React.ReactNode;
-  iconBg: string;
-  iconColor: string;
   route: string;
   createdAt: Date;
 }
@@ -19,87 +39,48 @@ export const toolsMetadata: ToolMetadata[] = [
     id: "code-formatter",
     name: "Formateur de Code",
     description:
-      "Formate automatiquement votre code dans différents langages avec une précision parfaite",
+      "Formate ton code automatiquement dans le langage de ton choix.",
+    about:
+      "Colle ton code, choisis le langage et récupère une version proprement formatée par Prettier pour JavaScript, TypeScript, JSON, HTML et CSS. Pour les autres langages, l'outil harmonise l'indentation sans toucher au reste. Tout se passe dans ton navigateur : ton code ne quitte jamais ta machine.",
     category: "Développement",
     status: "ready",
-    icon: <Code className="w-6 h-6" />,
-    iconBg: "bg-blue-100 dark:bg-blue-950",
-    iconColor: "text-blue-600 dark:text-blue-400",
+    icon: <Code aria-hidden="true" />,
     route: "/tools/code-formatter",
     createdAt: new Date("2025-05-15"),
   },
   {
-    id: "color-palette",
-    name: "Générateur de Palette",
-    description:
-      "Créez des palettes de couleurs harmonieuses pour vos projets créatifs",
-    category: "Design",
-    status: "ready",
-    icon: <Palette className="w-6 h-6" />,
-    iconBg: "bg-violet-100 dark:bg-violet-950",
-    iconColor: "text-violet-600 dark:text-violet-400",
-    route: "/tools/color-palette",
-    createdAt: new Date("2025-05-25"),
-  },
-  {
     id: "json-validator",
     name: "Validateur JSON",
-    description:
-      "Validez et formatez vos fichiers JSON avec une interface intuitive",
+    description: "Valide et reformate tes fichiers JSON, erreurs comprises.",
+    about:
+      "Colle ou importe un document JSON : l'outil te dit s'il est valide, t'indique où se trouve l'erreur le cas échéant, et le reformate pour le rendre lisible. Utile pour vérifier une réponse d'API ou un fichier de configuration avant de l'utiliser. Le contenu reste dans ton navigateur, rien n'est envoyé à un serveur.",
     category: "Développement",
     status: "ready",
-    icon: <Search className="w-6 h-6" />,
-    iconBg: "bg-emerald-100 dark:bg-emerald-950",
-    iconColor: "text-emerald-600 dark:text-emerald-400",
+    icon: <Search aria-hidden="true" />,
     route: "/tools/json-validator",
     createdAt: new Date("2025-06-05"),
   },
   {
-    id: "base64-converter",
-    name: "Convertisseur Base64",
-    description: "Encodez et décodez du texte en Base64 instantanément",
-    category: "Utilitaires",
+    id: "color-palette",
+    name: "Générateur de Palette",
+    description: "Crée des palettes de couleurs harmonieuses pour tes projets.",
+    about:
+      "Pars d'une couleur ou laisse l'outil en proposer une, puis obtiens une palette harmonieuse prête à copier dans ton projet. Chaque teinte se récupère en un clic, ce qui évite les allers-retours avec un logiciel de dessin quand tu cherches juste une base de couleurs cohérente pour une interface ou un visuel.",
+    category: "Design",
     status: "ready",
-    icon: <RefreshCw className="w-6 h-6" />,
-    iconBg: "bg-orange-100 dark:bg-orange-950",
-    iconColor: "text-orange-600 dark:text-orange-400",
-    route: "/tools/base64-converter",
-    createdAt: new Date("2025-06-15"),
-  },
-  {
-    id: "password-generator",
-    name: "Générateur de Mots de Passe",
-    description: "Générez des mots de passe sécurisés et personnalisables",
-    category: "Sécurité",
-    status: "ready",
-    icon: <Lock className="w-6 h-6" />,
-    iconBg: "bg-indigo-100 dark:bg-indigo-950",
-    iconColor: "text-indigo-600 dark:text-indigo-400",
-    route: "/tools/password-generator",
-    createdAt: new Date("2025-06-25"),
-  },
-  {
-    id: "markdown-editor",
-    name: "Éditeur Markdown",
-    description: "Éditez et prévisualisez du contenu Markdown en temps réel",
-    category: "Édition",
-    status: "ready",
-    icon: <FileText className="w-6 h-6" />,
-    iconBg: "bg-teal-100 dark:bg-teal-950",
-    iconColor: "text-teal-600 dark:text-teal-400",
-    route: "/tools/markdown-editor",
-    createdAt: new Date("2025-07-05"),
+    icon: <Palette aria-hidden="true" />,
+    route: "/tools/color-palette",
+    createdAt: new Date("2025-05-25"),
   },
   {
     id: "pattern-editor",
     name: "Éditeur de Motifs",
-    description:
-      "Créez des motifs répétitifs avec une grille interactive avancée",
+    description: "Dessine des motifs répétitifs sur une grille interactive.",
+    about:
+      "Compose un motif case par case sur une grille, observe sa répétition en direct, puis exporte-le pour l'utiliser comme fond ou comme texture. L'outil sert autant à esquisser une idée rapidement qu'à préparer un motif précis. Tout se dessine dans ton navigateur, sans compte ni envoi de fichier.",
     category: "Design",
     status: "ready",
-    icon: <Grid3X3 className="w-6 h-6" />,
-    iconBg: "bg-rose-100 dark:bg-rose-950",
-    iconColor: "text-rose-600 dark:text-rose-400",
+    icon: <Grid3X3 aria-hidden="true" />,
     route: "/tools/pattern-editor",
     createdAt: new Date("2025-07-15"),
   },
@@ -107,64 +88,102 @@ export const toolsMetadata: ToolMetadata[] = [
     id: "halftone",
     name: "Effet de Trame",
     description:
-      "Ajoutez un effet de trame halftone par-dessus vos images avec des paramètres personnalisables",
+      "Applique un effet de trame halftone réglable à tes images.",
+    about:
+      "Importe une image et transforme-la en trame de points, façon impression de presse. Forme, taille, espacement et couleurs se règlent en direct, avec des préréglages pour démarrer vite, puis tu exportes le résultat. L'image est traitée dans ton navigateur : elle n'est envoyée nulle part.",
     category: "Design",
     status: "ready",
-    icon: <ImageIcon aria-hidden="true" className="w-6 h-6" />,
-    iconBg: "bg-purple-100 dark:bg-purple-950",
-    iconColor: "text-purple-600 dark:text-purple-400",
+    icon: <ImageIcon aria-hidden="true" />,
     route: "/tools/halftone",
     createdAt: new Date("2025-07-25"),
   },
   {
     id: "color-extractor",
     name: "Extracteur de Couleurs",
-    description:
-      "Extrayez les couleurs dominantes de vos images avec une interface intuitive et un historique local",
+    description: "Extrait les couleurs dominantes de tes images.",
+    about:
+      "Dépose une image pour récupérer ses couleurs dominantes, prêtes à copier. L'outil garde un historique local de tes extractions, stocké uniquement dans ton navigateur, ce qui permet de retrouver une palette sans refaire le travail. Idéal pour partir d'une photo ou d'une capture et en tirer une base de couleurs.",
     category: "Design",
     status: "ready",
-    icon: <Palette className="w-6 h-6" />,
-    iconBg: "bg-amber-100 dark:bg-amber-950",
-    iconColor: "text-amber-600 dark:text-amber-400",
+    icon: <Pipette aria-hidden="true" />,
     route: "/tools/color-extractor",
     createdAt: new Date("2025-08-05"),
   },
   {
     id: "remove-background",
     name: "Suppression d'Arrière-plan",
+    shortName: "Détourage",
     description:
-      "Supprimez automatiquement l'arrière-plan de vos images grâce à l'IA, directement dans votre navigateur",
+      "Détoure tes images par IA, directement dans ton navigateur.",
+    about:
+      "Dépose une image et récupère-la détourée, sur fond transparent, sans compte et sans limite d'usage. Le modèle d'IA tourne dans ton navigateur : il se télécharge à la première utilisation, puis ton image reste sur ta machine et n'est envoyée à aucun serveur. Le résultat s'exporte en PNG, prêt à être réutilisé.",
     category: "Design",
     status: "ready",
-    icon: <Scissors className="w-6 h-6" />,
-    iconBg: "bg-sky-100 dark:bg-sky-950",
-    iconColor: "text-sky-600 dark:text-sky-400",
+    icon: <Scissors aria-hidden="true" />,
     route: "/tools/remove-background",
     createdAt: new Date("2026-04-23"),
+  },
+  {
+    id: "base64-converter",
+    name: "Convertisseur Base64",
+    description: "Encode et décode du texte en Base64 instantanément.",
+    about:
+      "Saisis du texte pour l'encoder en Base64, ou colle une chaîne encodée pour retrouver son contenu. La conversion est immédiate et se copie en un clic, ce qui sert au quotidien pour inspecter un en-tête, préparer une valeur de configuration ou lire un jeton. Tout se calcule dans ton navigateur.",
+    category: "Utilitaires",
+    status: "ready",
+    icon: <RefreshCw aria-hidden="true" />,
+    route: "/tools/base64-converter",
+    createdAt: new Date("2025-06-15"),
   },
   {
     id: "text-to-speech",
     name: "Synthèse Vocale",
     description:
-      "Convertissez votre texte en parole avec des voix naturelles et des paramètres personnalisables",
+      "Fais lire ton texte à voix haute, avec des voix naturelles et réglables.",
+    about:
+      "Colle un texte ou importe un document, choisis une voix, et écoute-le avec un vrai lecteur : pause, reprise, déplacement dans le texte, vitesse et mode de lecture épuré. Les voix sont celles de ton navigateur et de ton système. La traduction intégrée, elle, envoie le texte à un service tiers, uniquement quand tu la demandes.",
     category: "Utilitaires",
     status: "ready",
-    icon: <Volume2 className="w-6 h-6" />,
-    iconBg: "bg-cyan-100 dark:bg-cyan-950",
-    iconColor: "text-cyan-600 dark:text-cyan-400",
+    icon: <Volume2 aria-hidden="true" />,
     route: "/tools/text-to-speech",
     createdAt: new Date("2025-08-15"),
   },
   {
+    id: "password-generator",
+    name: "Générateur de Mots de Passe",
+    shortName: "Mots de passe",
+    description: "Génère des mots de passe solides et personnalisables.",
+    about:
+      "Choisis une longueur et les types de caractères, écarte ceux qui prêtent à confusion, et obtiens un mot de passe solide tiré par le générateur aléatoire cryptographique de ton navigateur. Rien n'est enregistré ni envoyé : le mot de passe n'existe que sur ta page, jusqu'à ce que tu le copies.",
+    category: "Sécurité",
+    status: "ready",
+    icon: <Lock aria-hidden="true" />,
+    route: "/tools/password-generator",
+    createdAt: new Date("2025-06-25"),
+  },
+  {
+    id: "markdown-editor",
+    name: "Éditeur Markdown",
+    description: "Écris en Markdown et vois le rendu en temps réel.",
+    about:
+      "Rédige en Markdown d'un côté, regarde le rendu de l'autre, mis à jour à chaque frappe. L'éditeur convient aussi bien à un fichier README qu'à une note ou un brouillon d'article. Ton texte reste dans ton navigateur et rien n'est envoyé à un serveur ; il te suffit de le copier ou de l'exporter une fois terminé.",
+    category: "Édition",
+    status: "ready",
+    icon: <FileText aria-hidden="true" />,
+    route: "/tools/markdown-editor",
+    createdAt: new Date("2025-07-05"),
+  },
+  {
     id: "artefact-generator",
     name: "Simulateur d'Artefacts Genshin",
+    shortName: "Artefacts Genshin",
     description:
-      "Générez des artefacts aléatoires avec les vraies probabilités du jeu Genshin Impact",
+      "Génère des artefacts avec les vraies probabilités de Genshin Impact.",
+    about:
+      "Simule le tirage d'artefacts de Genshin Impact avec les probabilités du jeu : set, pièce, statistique principale et sous-statistiques. L'outil sert à comprendre ce que vaut réellement une pièce, à estimer tes chances d'obtenir le jet que tu vises, ou simplement à tenter ta chance sans dépenser de résine.",
     category: "Gaming",
     status: "ready",
-    icon: <Sparkles className="w-6 h-6" />,
-    iconBg: "bg-pink-100 dark:bg-pink-950",
-    iconColor: "text-pink-600 dark:text-pink-400",
+    icon: <Sparkles aria-hidden="true" />,
     route: "/tools/artefact-generator",
     createdAt: new Date("2025-01-10"),
   },
@@ -233,6 +252,13 @@ export const getToolsByCategory = (category: string): ToolMetadata[] => {
   }
   return toolsMetadata.filter((tool) => tool.category === category);
 };
+
+/** Les outils rangés par catégorie, sans les catégories vides. */
+export const getToolGroups = (): { category: string; items: ToolMetadata[] }[] =>
+  categories
+    .filter((category) => category !== "Tous")
+    .map((category) => ({ category, items: getToolsByCategory(category) }))
+    .filter((group) => group.items.length > 0);
 
 // Fonction pour obtenir les outils prêts
 export const getReadyTools = (): ToolMetadata[] => {

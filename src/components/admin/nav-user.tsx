@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { ChevronsUpDown, LogOut, UserCog } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,7 +15,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import type { AdminChromeUser } from "./admin-chrome";
 
@@ -25,7 +23,7 @@ import type { AdminChromeUser } from "./admin-chrome";
  *
  * ── Ce qui a disparu ───────────────────────────────────────────────────────
  *
- * Trois états — chargement, non connecté, connecté — et un `useSession()` pour
+ * Trois états (chargement, non connecté, connecté) et un `useSession()` pour
  * les départager. Ils n'ont plus lieu d'être : le layout serveur ne rend cette
  * barre **que** si la personne est autorisée, donc l'utilisateur est toujours
  * là. Les deux états morts servaient à couvrir une incertitude qui n'existe
@@ -35,7 +33,7 @@ import type { AdminChromeUser } from "./admin-chrome";
  * lien vers `/api/auth/signout` : ça marche sans JavaScript, ça laisse une
  * trace HTTP ordinaire, et il n'y a plus d'état intermédiaire à afficher.
  *
- * Les entrées « Profil » et « Paramètres » du menu ne faisaient rien — aucun
+ * Les entrées « Profil » et « Paramètres » du menu ne faisaient rien : aucun
  * `onClick`, aucun lien. Le profil vit maintenant dans Ascencia ID, qui a un
  * centre de compte : le lien y mène.
  */
@@ -49,16 +47,16 @@ function initials(user: AdminChromeUser): string {
 }
 
 export function NavUser({ user }: { user: AdminChromeUser }) {
-  const { isMobile } = useSidebar();
-
   const name = user.name ?? "Compte Ascencia";
   const subtitle = user.email ?? user.roles.join(", ") ?? "";
   const accountUrl = `${process.env.NEXT_PUBLIC_ASCENCIA_ISSUER ?? "https://id.ascencia.re"}/account`;
 
   const face = (
-    <Avatar className="h-8 w-8 rounded-lg">
+    <Avatar className="size-8">
       {user.picture ? <AvatarImage src={user.picture} alt="" /> : null}
-      <AvatarFallback className="rounded-lg">{initials(user)}</AvatarFallback>
+      <AvatarFallback className="text-fg-muted text-xs font-semibold">
+        {initials(user)}
+      </AvatarFallback>
     </Avatar>
   );
 
@@ -69,28 +67,37 @@ export function NavUser({ user }: { user: AdminChromeUser }) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              aria-label={`Menu du compte, ${name}`}
+              className="data-[state=open]:bg-bg gap-2.5 px-2"
             >
               {face}
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{name}</span>
-                <span className="truncate text-xs">{subtitle}</span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-4" aria-hidden />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="text-fg truncate text-sm font-medium" title={name}>
+                  {name}
+                </span>
+                <span className="text-fg-muted truncate text-xs" title={subtitle}>
+                  {subtitle}
+                </span>
+              </span>
+              <ChevronsUpDown
+                className="text-fg-subtle ml-auto size-4 shrink-0"
+                aria-hidden
+              />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
+            className="w-[max(var(--radix-dropdown-menu-trigger-width),15rem)] max-w-[calc(100vw-2rem)]"
+            side="top"
+            align="start"
           >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+            <DropdownMenuLabel className="p-0 font-sans text-sm font-normal tracking-normal normal-case">
+              <div className="flex min-w-0 items-center gap-2.5 px-2.5 py-2">
                 {face}
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{name}</span>
-                  <span className="truncate text-xs">{subtitle}</span>
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-fg font-medium break-words">{name}</span>
+                  <span className="text-fg-muted text-xs break-all">
+                    {subtitle}
+                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>
@@ -98,7 +105,7 @@ export function NavUser({ user }: { user: AdminChromeUser }) {
             {user.roles.length > 0 ? (
               <>
                 <DropdownMenuSeparator />
-                <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                <div className="text-fg-muted px-2.5 py-1.5 text-xs break-words">
                   Rôles&nbsp;: {user.roles.join(", ")}
                 </div>
               </>
@@ -107,7 +114,7 @@ export function NavUser({ user }: { user: AdminChromeUser }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <a href={accountUrl} target="_blank" rel="noreferrer">
-                <UserCog className="mr-2 h-4 w-4" aria-hidden />
+                <UserCog aria-hidden />
                 Gérer mon compte
               </a>
             </DropdownMenuItem>
@@ -116,8 +123,8 @@ export function NavUser({ user }: { user: AdminChromeUser }) {
             {/*
               Un `<a>` et non un `<Link>` : la cible est une route d'API, pas
               une page. `Link` tente une navigation côté client, va chercher une
-              charge utile React qui n'existe pas, et le clic ne fait rien — ce
-              qui est exactement ce qu'on a constaté.
+              charge utile React qui n'existe pas, et le clic ne fait rien : c'est
+              exactement ce qu'on a constaté.
 
               Et un lien plutôt qu'un `onClick` : la déconnexion doit aboutir
               même si le JavaScript de la page a échoué. C'est précisément le
@@ -125,7 +132,7 @@ export function NavUser({ user }: { user: AdminChromeUser }) {
             */}
             <DropdownMenuItem asChild>
               <a href="/api/auth/signout">
-                <LogOut className="mr-2 h-4 w-4" aria-hidden />
+                <LogOut aria-hidden />
                 Se déconnecter
               </a>
             </DropdownMenuItem>
@@ -134,12 +141,12 @@ export function NavUser({ user }: { user: AdminChromeUser }) {
               Se déconnecter d'ici ne ferme pas la session Ascencia ID : c'est
               le principe du SSO, et c'est le bon défaut sur un poste à soi.
               Mais sans cette seconde entrée, on se déconnecte, on reclique
-              « Se connecter », et on rentre **sans qu'on nous demande rien** —
+              « Se connecter », et on rentre **sans qu'on nous demande rien**,
               ce qui donne l'impression que la déconnexion n'a pas marché.
             */}
             <DropdownMenuItem asChild>
               <a href="/api/auth/signout?global=1">
-                <LogOut className="mr-2 h-4 w-4" aria-hidden />
+                <LogOut aria-hidden />
                 Se déconnecter partout
               </a>
             </DropdownMenuItem>

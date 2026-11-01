@@ -1,0 +1,471 @@
+/* Copie conforme de `@ascencia/id-ui` (styles/tokens.css), ne pas modifier ici.
+
+   Le paquet n'étant pas publié sur npm, Just Tools embarque ses jetons et ses
+   matières tels quels. Toute évolution se fait dans le dépôt d'Ascencia ID,
+   puis se recopie : deux versions qui divergent, c'est deux identités. */
+
+/* ==========================================================================
+   Ascencia ID — jetons de design, direction « Basalte ».
+   Voir docs/brand/pistes/05-basalte.html pour la planche complète.
+
+   Trois couches, dans cet ordre :
+
+   1. PALETTE      les couleurs brutes, jamais utilisées directement dans un
+                   composant. Elles portent un nom de matière (braise, lagon,
+                   basalte), pas un nom d'usage.
+   2. SÉMANTIQUE   `--asc-*` : ce que les composants consomment. C'est cette
+                   couche qui bascule entre clair et sombre, et c'est elle que
+                   le branding par zone / par application surcharge au runtime.
+   3. TAILWIND     `@theme inline` : expose la couche sémantique en utilitaires
+                   (`bg-surface`, `text-fg-muted`, `rounded-card`…). `inline`
+                   est indispensable : sans lui, Tailwind fige la valeur à la
+                   compilation et le thème sombre ne suit plus.
+
+   COMPATIBILITÉ — les noms `--color-surface`, `--color-surface-muted`,
+   `--color-border`, `--color-fg`, `--color-fg-muted`, `--color-primary`,
+   `--color-primary-hover`, `--color-on-primary`, `--color-danger`,
+   `--color-success`, `--color-warning`, `--radius-card`, `--radius-field` et
+   `--font-sans` sont ceux déjà utilisés par `apps/id`. Ils sont conservés à
+   l'identique : seules leurs valeurs changent. Rien à réécrire côté app.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- 1. palette */
+
+@theme {
+  /* Braise — la couleur porteuse. Elle ne change pas de valeur entre les
+     thèmes : un seul contraste à vérifier, pour toute la vie du produit. */
+  --color-ember-50: #fff6ed;
+  --color-ember-100: #ffe9d5;
+  --color-ember-200: #fed0aa;
+  --color-ember-300: #fdae74;
+  --color-ember-400: #fa813c;
+  --color-ember-500: #e2571f;
+  --color-ember-600: #c2410c;
+  --color-ember-700: #a3350a;
+  --color-ember-800: #7f2c0d;
+  --color-ember-900: #68260f;
+
+  /* Lagon — liens, états calmes, succès. Même contraste que la braise
+     (5,18:1 sur blanc), ce qui permet de les permuter sans revérifier. */
+  --color-lagoon-50: #eaf6f5;
+  --color-lagoon-100: #cde9e7;
+  --color-lagoon-200: #9bd3d0;
+  --color-lagoon-300: #64b8b4;
+  --color-lagoon-400: #2e9a95;
+  --color-lagoon-500: #14847f;
+  --color-lagoon-600: #0c7a74;
+  --color-lagoon-700: #0a625e;
+  --color-lagoon-800: #094e4b;
+  --color-lagoon-900: #08403e;
+
+  /* Basalte — les neutres. CHAUDS (teintés jaune-rouge), jamais gris : c'est
+     la différence entre « papier » et « carton », et ce qui distingue
+     immédiatement cette identité d'un thème Tailwind par défaut. */
+  --color-basalt-25: #fffdfa;
+  --color-basalt-50: #f7f3ec;
+  --color-basalt-100: #f0ebe1;
+  --color-basalt-200: #e4dccf;
+  --color-basalt-300: #d3c9b9;
+  --color-basalt-400: #aba396;
+  --color-basalt-500: #868074;
+  --color-basalt-600: #6e6a62;
+  --color-basalt-700: #4f4c46;
+  --color-basalt-800: #2e2c31;
+  --color-basalt-850: #211f22;
+  --color-basalt-900: #1b1a1e;
+  --color-basalt-950: #121114;
+  --color-basalt-975: #0c0b0e;
+
+  /* Roche pure — réservée au signe. Ce n'est pas un neutre d'interface. */
+  --color-basalt: #17171a;
+
+  /* Danger — volontairement TRÈS loin de la braise. Sans cet écart, une
+     alerte et un bouton primaire se confondent, ce qui est un vrai risque
+     de sécurité sur un écran de connexion. */
+  --color-crimson-50: #fbeaea;
+  --color-crimson-200: #e5afaf;
+  --color-crimson-400: #d05a5a;
+  --color-crimson-500: #bd1f1f;
+  --color-crimson-600: #a31212;
+  --color-crimson-700: #841010;
+
+  /* Ambre — alertes non bloquantes. */
+  --color-amber-soft-50: #fbf1df;
+  --color-amber-soft-200: #e6c88a;
+  --color-amber-soft-400: #d99b22;
+  --color-amber-soft-600: #b5730a;
+
+  /* Typographie */
+  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Sora Variable', 'Sora', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
+
+  /* Rayons — 12 px sur les cartes, 8 px sur les champs. Assez doux pour être
+     chaleureux, assez serré pour ne pas faire jouet. */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-field: 8px;
+  --radius-card: 12px;
+
+  /* Mouvement — tout va vers le haut, et s'amortit. Règle unique de la
+     direction : `--ease-rise` est la courbe par défaut de tout le système. */
+  --ease-rise: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-duration-instant: 80ms;
+  --animate-duration-fast: 140ms;
+  --animate-duration-step: 180ms;
+  --animate-duration-card: 200ms;
+
+  /* Échelle de profondeur */
+  --z-base: 0;
+  --z-sticky: 20;
+  --z-overlay: 40;
+  --z-modal: 50;
+  --z-popover: 60;
+  --z-toast: 70;
+}
+
+/* ------------------------------------------------------- 2. couche sémantique */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --asc-bg: #ffffff;
+  --asc-bg-page: var(--color-basalt-50);
+  --asc-surface: var(--color-basalt-50);
+  --asc-surface-2: var(--color-basalt-25);
+  --asc-elevated: var(--color-basalt-25);
+  --asc-overlay: rgb(27 26 24 / 0.5);
+
+  /* Traits */
+  --asc-border: var(--color-basalt-200);
+  --asc-border-strong: var(--color-basalt-300);
+  --asc-border-subtle: var(--color-basalt-100);
+
+  /* Texte */
+  --asc-fg: #1b1a18;
+  --asc-fg-muted: var(--color-basalt-600);
+  /* Ni basalt-500 (3,55:1 sur la page) ni une marche de palette : la valeur
+     est calculée pour tenir 4,5:1 sur toutes les surfaces claires, au plus
+     près de muted. Vérifié par design-system-rules.test.ts. */
+  --asc-fg-subtle: #716c64;
+  --asc-fg-inverted: var(--color-basalt-25);
+
+  /* Action principale */
+  --asc-primary: var(--color-ember-600);
+  --asc-primary-hover: var(--color-ember-700);
+  --asc-primary-active: var(--color-ember-800);
+  --asc-primary-soft: var(--color-ember-50);
+  --asc-primary-soft-fg: var(--color-ember-800);
+  --asc-on-primary: #ffffff;
+  /* La braise **en texte** : liens, sur-titres, valeurs mises en avant. En
+     clair c'est la même ; en sombre elle s'éclaircit, parce qu'ember-600 sur
+     les fonds sombres tombait à 3,2:1. Les fonds et les icônes gardent
+     `--asc-primary` : la braise ne bouge pas, seul son usage en texte suit. */
+  --asc-link: var(--color-ember-600);
+
+  /* Action secondaire / liens */
+  --asc-accent: var(--color-lagoon-600);
+  --asc-accent-hover: var(--color-lagoon-700);
+  --asc-accent-soft: var(--color-lagoon-50);
+  --asc-accent-soft-fg: var(--color-lagoon-800);
+  --asc-on-accent: #ffffff;
+
+  /* États */
+  --asc-danger: var(--color-crimson-600);
+  --asc-danger-hover: var(--color-crimson-700);
+  --asc-danger-soft: var(--color-crimson-50);
+  --asc-danger-soft-fg: var(--color-crimson-700);
+  --asc-on-danger: #ffffff;
+
+  --asc-success: var(--color-lagoon-600);
+  --asc-success-soft: var(--color-lagoon-50);
+  --asc-success-soft-fg: var(--color-lagoon-800);
+
+  /* amber-soft-600 donnait 3,5:1 en texte sur la page. */
+  --asc-warning: #93600a;
+  --asc-warning-soft: var(--color-amber-soft-50);
+  --asc-warning-soft-fg: #7a4d06;
+
+  /* Marque — la roche du signe doit suivre le thème, sinon le logo
+     disparaît sur fond sombre. La braise, elle, ne bouge jamais. */
+  --asc-mark-rock: var(--color-basalt);
+  --asc-mark-ember: var(--color-ember-600);
+
+  /* Divers */
+  --asc-focus: var(--color-ember-600);
+  --asc-skeleton: var(--color-basalt-100);
+
+  /* Ombres — chaudes, jamais du noir pur : une ombre grise sur un fond sable
+     donne un rendu sale. */
+  --asc-shadow-sm: 0 1px 2px rgb(60 40 20 / 0.06);
+  --asc-shadow-card: 0 22px 50px -24px rgb(60 40 20 / 0.42), 0 2px 4px rgb(60 40 20 / 0.06);
+  --asc-shadow-pop: 0 14px 34px -12px rgb(60 40 20 / 0.28), 0 2px 6px rgb(60 40 20 / 0.08);
+  --asc-shadow-inset: inset 0 1px 0 rgb(255 255 255 / 0.5);
+
+  /* Textures (voir texture.css) */
+  --asc-grain-opacity: 0.3;
+  --asc-contour-color: rgb(27 26 24 / 0.075);
+}
+
+/* Sombre — deux déclencheurs : le choix explicite de l'utilisateur, ou la
+   préférence système quand aucun choix n'a été fait. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --asc-bg: var(--color-basalt-950);
+  --asc-bg-page: var(--color-basalt-975);
+  --asc-surface: var(--color-basalt-900);
+  --asc-surface-2: var(--color-basalt-850);
+  --asc-elevated: #191719;
+  --asc-overlay: rgb(6 5 4 / 0.66);
+
+  --asc-border: var(--color-basalt-800);
+  --asc-border-strong: #3d3a40;
+  --asc-border-subtle: var(--color-basalt-850);
+
+  --asc-fg: #f2eee7;
+  --asc-fg-muted: #9b968d;
+  /* #7d786f tombait à 3,73:1 sur surface-2 : 4,5:1 sur toutes les surfaces. */
+  --asc-fg-subtle: #8e897f;
+  --asc-fg-inverted: var(--color-basalt-950);
+
+  /* La braise ne bouge pas. Seul le survol s'éclaircit, parce que sur fond
+     sombre un survol plus foncé se lit comme une désactivation. */
+  --asc-primary: var(--color-ember-600);
+  --asc-primary-hover: var(--color-ember-500);
+  --asc-primary-active: var(--color-ember-400);
+  --asc-primary-soft: rgb(226 87 31 / 0.14);
+  --asc-primary-soft-fg: var(--color-ember-300);
+  --asc-link: var(--color-ember-400);
+
+  --asc-accent: var(--color-lagoon-400);
+  --asc-accent-hover: var(--color-lagoon-300);
+  --asc-accent-soft: rgb(46 154 149 / 0.14);
+  --asc-accent-soft-fg: var(--color-lagoon-200);
+
+  --asc-danger: #e46e6e;
+  --asc-danger-hover: #ec8a8a;
+  --asc-danger-soft: rgb(189 31 31 / 0.16);
+  --asc-danger-soft-fg: #f0a5a5;
+  --asc-on-danger: var(--color-basalt-950);
+
+  --asc-success: var(--color-lagoon-400);
+  --asc-success-soft: rgb(46 154 149 / 0.14);
+  --asc-success-soft-fg: var(--color-lagoon-200);
+
+  --asc-warning: var(--color-amber-soft-400);
+  --asc-warning-soft: rgb(217 155 34 / 0.14);
+  --asc-warning-soft-fg: var(--color-amber-soft-200);
+
+  --asc-mark-rock: #f2eee7;
+  --asc-mark-ember: var(--color-ember-500);
+
+  --asc-focus: var(--color-ember-400);
+  --asc-skeleton: var(--color-basalt-850);
+
+  --asc-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
+  --asc-shadow-card: 0 26px 60px -26px rgb(0 0 0 / 0.9), 0 0 0 1px rgb(226 87 31 / 0.1);
+  --asc-shadow-pop: 0 18px 40px -14px rgb(0 0 0 / 0.8);
+  --asc-shadow-inset: inset 0 1px 0 rgb(255 255 255 / 0.06);
+
+  --asc-grain-opacity: 0.18;
+  --asc-contour-color: rgb(242 238 231 / 0.075);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --asc-bg: var(--color-basalt-950);
+    --asc-bg-page: var(--color-basalt-975);
+    --asc-surface: var(--color-basalt-900);
+    --asc-surface-2: var(--color-basalt-850);
+    --asc-elevated: #191719;
+    --asc-overlay: rgb(6 5 4 / 0.66);
+
+    --asc-border: var(--color-basalt-800);
+    --asc-border-strong: #3d3a40;
+    --asc-border-subtle: var(--color-basalt-850);
+
+    --asc-fg: #f2eee7;
+    --asc-fg-muted: #9b968d;
+    --asc-fg-subtle: #8e897f;
+    --asc-fg-inverted: var(--color-basalt-950);
+
+    --asc-primary-hover: var(--color-ember-500);
+    --asc-primary-active: var(--color-ember-400);
+    --asc-primary-soft: rgb(226 87 31 / 0.14);
+    --asc-primary-soft-fg: var(--color-ember-300);
+    --asc-link: var(--color-ember-400);
+
+    --asc-accent: var(--color-lagoon-400);
+    --asc-accent-hover: var(--color-lagoon-300);
+    --asc-accent-soft: rgb(46 154 149 / 0.14);
+    --asc-accent-soft-fg: var(--color-lagoon-200);
+
+    --asc-danger: #e46e6e;
+    --asc-danger-hover: #ec8a8a;
+    --asc-danger-soft: rgb(189 31 31 / 0.16);
+    --asc-danger-soft-fg: #f0a5a5;
+    --asc-on-danger: var(--color-basalt-950);
+
+    --asc-success: var(--color-lagoon-400);
+    --asc-success-soft: rgb(46 154 149 / 0.14);
+    --asc-success-soft-fg: var(--color-lagoon-200);
+
+    --asc-warning: var(--color-amber-soft-400);
+    --asc-warning-soft: rgb(217 155 34 / 0.14);
+    --asc-warning-soft-fg: var(--color-amber-soft-200);
+
+    --asc-mark-rock: #f2eee7;
+    --asc-mark-ember: var(--color-ember-500);
+
+    --asc-focus: var(--color-ember-400);
+    --asc-skeleton: var(--color-basalt-850);
+
+    --asc-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
+    --asc-shadow-card: 0 26px 60px -26px rgb(0 0 0 / 0.9), 0 0 0 1px rgb(226 87 31 / 0.1);
+    --asc-shadow-pop: 0 18px 40px -14px rgb(0 0 0 / 0.8);
+    --asc-shadow-inset: inset 0 1px 0 rgb(255 255 255 / 0.06);
+
+    --asc-grain-opacity: 0.18;
+    --asc-contour-color: rgb(242 238 231 / 0.075);
+  }
+}
+
+/* --------------------------------------------- 3. exposition aux utilitaires */
+
+@theme inline {
+  --color-bg: var(--asc-bg);
+  --color-bg-page: var(--asc-bg-page);
+  --color-surface: var(--asc-surface);
+  --color-surface-muted: var(--asc-surface);
+  --color-surface-2: var(--asc-surface-2);
+  --color-elevated: var(--asc-elevated);
+
+  --color-border: var(--asc-border);
+  --color-border-strong: var(--asc-border-strong);
+  --color-border-subtle: var(--asc-border-subtle);
+
+  --color-fg: var(--asc-fg);
+  --color-fg-muted: var(--asc-fg-muted);
+  --color-fg-subtle: var(--asc-fg-subtle);
+  --color-fg-inverted: var(--asc-fg-inverted);
+
+  --color-primary: var(--asc-primary);
+  --color-primary-hover: var(--asc-primary-hover);
+  --color-primary-active: var(--asc-primary-active);
+  --color-primary-soft: var(--asc-primary-soft);
+  --color-primary-soft-fg: var(--asc-primary-soft-fg);
+  --color-on-primary: var(--asc-on-primary);
+  --color-link: var(--asc-link);
+
+  --color-accent: var(--asc-accent);
+  --color-accent-hover: var(--asc-accent-hover);
+  --color-accent-soft: var(--asc-accent-soft);
+  --color-accent-soft-fg: var(--asc-accent-soft-fg);
+  --color-on-accent: var(--asc-on-accent);
+
+  --color-danger: var(--asc-danger);
+  --color-danger-hover: var(--asc-danger-hover);
+  --color-danger-soft: var(--asc-danger-soft);
+  --color-danger-soft-fg: var(--asc-danger-soft-fg);
+  --color-on-danger: var(--asc-on-danger);
+
+  --color-success: var(--asc-success);
+  --color-success-soft: var(--asc-success-soft);
+  --color-success-soft-fg: var(--asc-success-soft-fg);
+
+  --color-warning: var(--asc-warning);
+  --color-warning-soft: var(--asc-warning-soft);
+  --color-warning-soft-fg: var(--asc-warning-soft-fg);
+
+  --color-focus: var(--asc-focus);
+  --color-skeleton: var(--asc-skeleton);
+  --color-overlay: var(--asc-overlay);
+
+  --shadow-sm: var(--asc-shadow-sm);
+  --shadow-card: var(--asc-shadow-card);
+  --shadow-pop: var(--asc-shadow-pop);
+}
+
+/* Variante `dark:` — rarement nécessaire (les jetons basculent tout seuls),
+   mais indispensable pour les cas qui ne passent pas par une couleur :
+   une opacité, une texture, un mélange. */
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *) {
+      @slot;
+    }
+  }
+}
+
+/* ------------------------------------------------- branding d'une application */
+
+/* Posé par `AuthPage` et `PopupShell` quand l'application a une couleur de
+   marque lisible (`lib/branding.ts`). Les deux valeurs du lien sont déjà
+   vérifiées, ou ramenées à celles du système : ici, on choisit seulement
+   celle du thème affiché. */
+[data-asc-brand] {
+  --asc-link: var(--asc-brand-link-light);
+}
+
+:root[data-theme='dark'] [data-asc-brand] {
+  --asc-link: var(--asc-brand-link-dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) [data-asc-brand] {
+    --asc-link: var(--asc-brand-link-dark);
+  }
+}
+
+/* ------------------------------------------------------------------ globales */
+
+/* IMPORTANT — ces règles vivent dans `@layer base`.
+   Hors layer, elles battraient les utilitaires Tailwind : un champ portant
+   `focus-visible:outline-none` récupérait quand même l'anneau global, ce qui
+   donnait un double anneau sur tous les champs. */
+@layer base {
+  body {
+    background: var(--asc-bg-page);
+    color: var(--asc-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Anneau de focus visible partout : exigence WCAG 2.2 AA, pas une option.
+     Il est en braise, donc visible sur sable comme sur roche. */
+  :focus-visible {
+    outline: 2px solid var(--asc-focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  ::selection {
+    background: var(--asc-primary-soft);
+    color: var(--asc-primary-soft-fg);
+  }
+}
+
+/* docs/07-UI-UX.md §7 — le mouvement est un confort, jamais une dépendance. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

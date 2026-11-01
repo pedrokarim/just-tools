@@ -1,506 +1,220 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Eye, EyeOff, RefreshCw } from "lucide-react";
+import { CopyButton } from "@/components/site/copy-button";
+import { ToolPage } from "@/components/site/tool-shell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Copy,
-  RefreshCw,
-  Eye,
-  EyeOff,
-  CheckCircle,
-  XCircle,
-  Zap,
-  Shield,
-  Lock,
-  Key,
-  Settings } from "lucide-react";
-import { toast } from "sonner";
+  buildCharset,
+  describeStrength,
+  estimateEntropy,
+  generatePassword,
+  type PasswordOptions,
+  type StrengthLevel,
+} from "@/lib/password";
+import { cn } from "@/lib/utils";
 
-interface PasswordOptions {
-  length: number;
-  includeUppercase: boolean;
-  includeLowercase: boolean;
-  includeNumbers: boolean;
-  includeSymbols: boolean;
-  excludeSimilar: boolean;
-  excludeAmbiguous: boolean;
-}
+const CHARACTER_TYPES = [
+  { key: "includeUppercase", label: "Majuscules", hint: "A à Z" },
+  { key: "includeLowercase", label: "Minuscules", hint: "a à z" },
+  { key: "includeNumbers", label: "Chiffres", hint: "0 à 9" },
+  { key: "includeSymbols", label: "Symboles", hint: "!@#$%&*" },
+] as const;
 
-interface PasswordStrength {
-  score: number;
-  label: string;
-  color: string;
-  description: string;
-}
+const EXCLUSIONS = [
+  {
+    key: "excludeSimilar",
+    label: "Exclure les caractères similaires",
+    hint: "l, 1, I, O et 0, faciles à confondre à la lecture.",
+  },
+  {
+    key: "excludeAmbiguous",
+    label: "Exclure les caractères ambigus",
+    hint: "Les accolades, crochets et barres, qui posent problème dans certains champs.",
+  },
+] as const;
+
+const STRENGTH_STYLES: Record<StrengthLevel, { bar: string; text: string }> = {
+  weak: { bar: "bg-danger", text: "text-danger" },
+  fair: { bar: "bg-warning", text: "text-warning" },
+  strong: { bar: "bg-success", text: "text-success" },
+  excellent: { bar: "bg-success", text: "text-success" },
+};
+
+const DEFAULT_OPTIONS: PasswordOptions = {
+  length: 20,
+  includeUppercase: true,
+  includeLowercase: true,
+  includeNumbers: true,
+  includeSymbols: true,
+  excludeSimilar: false,
+  excludeAmbiguous: false,
+};
 
 export default function PasswordGenerator() {
+  const [options, setOptions] = useState(DEFAULT_OPTIONS);
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [options, setOptions] = useState<PasswordOptions>({
-    length: 16,
-    includeUppercase: true,
-    includeLowercase: true,
-    includeNumbers: true,
-    includeSymbols: true,
-    excludeSimilar: false,
-    excludeAmbiguous: false,
-  });
+  const [revealed, setRevealed] = useState(true);
 
-  const generatePassword = useCallback(() => {
-    const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const lowercase = "abcdefghijklmnopqrstuvwxyz";
-    const numbers = "0123456789";
-    const symbols = "!@#$%^&*()_+-=[]{}|;:,.<>?";
-    const similar = "il1Lo0O";
-    const ambiguous = "{}[]()/\\'\"`~,;:.<>";
+  const update = useCallback(
+    (changes: Partial<PasswordOptions>) =>
+      setOptions((previous) => ({ ...previous, ...changes })),
+    []
+  );
 
-    let charset = "";
-    if (options.includeUppercase) charset += uppercase;
-    if (options.includeLowercase) charset += lowercase;
-    if (options.includeNumbers) charset += numbers;
-    if (options.includeSymbols) charset += symbols;
-
-    if (options.excludeSimilar) {
-      charset = charset
-        .split("")
-        .filter((char) => !similar.includes(char))
-        .join("");
-    }
-
-    if (options.excludeAmbiguous) {
-      charset = charset
-        .split("")
-        .filter((char) => !ambiguous.includes(char))
-        .join("");
-    }
-
-    if (charset.length === 0) {
-      toast.error("Veuillez sélectionner au moins un type de caractères");
-      return;
-    }
-
-    let generatedPassword = "";
-    for (let i = 0; i < options.length; i++) {
-      const randomIndex = Math.floor(Math.random() * charset.length);
-      generatedPassword += charset[randomIndex];
-    }
-
-    setPassword(generatedPassword);
+  // Le mot de passe suit les options : il n'y a jamais d'écran vide à remplir, et
+  // ce qui est affiché correspond toujours à ce qui est réglé.
+  useEffect(() => {
+    setPassword(generatePassword(options));
   }, [options]);
 
-  const copyToClipboard = () => {
-    if (password) {
-      navigator.clipboard.writeText(password);
-      toast.success("Mot de passe copié dans le presse-papiers !");
-    }
-  };
-
-  const getPasswordStrength = (): PasswordStrength => {
-    if (!password) {
-      return {
-        score: 0,
-        label: "Aucun",
-        color: "bg-gray-500",
-        description: "Aucun mot de passe généré",
-      };
-    }
-
-    let score = 0;
-
-    // Longueur
-    if (password.length >= 8) score += 1;
-    if (password.length >= 12) score += 1;
-    if (password.length >= 16) score += 1;
-
-    // Complexité
-    if (/[a-z]/.test(password)) score += 1;
-    if (/[A-Z]/.test(password)) score += 1;
-    if (/[0-9]/.test(password)) score += 1;
-    if (/[^A-Za-z0-9]/.test(password)) score += 1;
-
-    // Variété des caractères
-    const uniqueChars = new Set(password).size;
-    if (uniqueChars >= password.length * 0.7) score += 1;
-
-    if (score <= 2) {
-      return {
-        score,
-        label: "Faible",
-        color: "bg-red-500",
-        description: "Facilement devinable",
-      };
-    } else if (score <= 4) {
-      return {
-        score,
-        label: "Moyen",
-        color: "bg-yellow-500",
-        description: "Peut être amélioré",
-      };
-    } else if (score <= 6) {
-      return {
-        score,
-        label: "Fort",
-        color: "bg-green-500",
-        description: "Bon niveau de sécurité",
-      };
-    } else {
-      return {
-        score,
-        label: "Très Fort",
-        color: "bg-emerald-500",
-        description: "Excellent niveau de sécurité",
-      };
-    }
-  };
-
-  const strength = getPasswordStrength();
+  const empty = buildCharset(options).length === 0;
+  const strength = useMemo(
+    () => describeStrength(estimateEntropy(options)),
+    [options]
+  );
+  const bits = Math.round(estimateEntropy(options));
+  const styles = STRENGTH_STYLES[strength.level];
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6">
-      <div className="w-full space-y-8">
-        {/* Mot de passe généré */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Key className="h-5 w-5" />
-              <span>Mot de passe généré</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="flex-1 relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  readOnly
-                  placeholder="Cliquez sur 'Générer' pour créer un mot de passe"
-                  className="text-lg font-mono pr-12"
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              <Button onClick={copyToClipboard} disabled={!password}>
-                <Copy className="h-4 w-4 mr-2" />
-                Copier
-              </Button>
-              <Button onClick={generatePassword} variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Générer
-              </Button>
-            </div>
+    <ToolPage className="max-w-3xl">
+      <Card className="gap-4 p-5">
+        <p
+          // La clé rejoue l'apparition à chaque tirage : le nouveau mot de passe
+          // se voit, y compris quand il ressemble au précédent.
+          key={password}
+          aria-live="polite"
+          className={cn(
+            "asc-animate-fade text-fg min-h-16 font-mono text-xl leading-snug break-all md:text-2xl",
+            !revealed && "[-webkit-text-security:disc]"
+          )}
+        >
+          {empty ? (
+            <span className="text-fg-subtle font-sans text-base">
+              Choisis au moins un type de caractères.
+            </span>
+          ) : (
+            password || " "
+          )}
+        </p>
 
-            {/* Force du mot de passe */}
-            {password && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">
-                    Force du mot de passe :
-                  </span>
-                  <Badge className={`${strength.color} text-white`}>
-                    {strength.label}
-                  </Badge>
-                </div>
-                <div className="w-full bg-slate-200 dark:bg-muted rounded-full h-2">
-                  <div
-                    className={`${strength.color} h-2 rounded-full transition-[width,background-color] duration-300`}
-                    style={{ width: `${(strength.score / 8) * 100}%` }}
-                  />
-                </div>
-                <p className="text-sm text-slate-600 dark:text-slate-300">
-                  {strength.description}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Options de génération */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Paramètres principaux */}
-          <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Settings className="h-5 w-5" />
-                <span>Paramètres</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Longueur */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="length" className="text-sm font-medium">
-                    Longueur : {options.length} caractères
-                  </Label>
-                  <Badge variant="outline">{options.length}</Badge>
-                </div>
-                <Slider
-                  id="length"
-                  min={4}
-                  max={64}
-                  step={1}
-                  value={[options.length]}
-                  onValueChange={([value]) =>
-                    setOptions((prev) => ({ ...prev, length: value }))
-                  }
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>4</span>
-                  <span>8</span>
-                  <span>16</span>
-                  <span>32</span>
-                  <span>64</span>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Types de caractères */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">
-                  Types de caractères
-                </Label>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="uppercase"
-                      checked={options.includeUppercase}
-                      onChange={(e) =>
-                        setOptions((prev) => ({
-                          ...prev,
-                          includeUppercase: e.target.checked,
-                        }))
-                      }
-                      className="rounded"
-                    />
-                    <Label htmlFor="uppercase" className="text-sm">
-                      Majuscules (A-Z)
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="lowercase"
-                      checked={options.includeLowercase}
-                      onChange={(e) =>
-                        setOptions((prev) => ({
-                          ...prev,
-                          includeLowercase: e.target.checked,
-                        }))
-                      }
-                      className="rounded"
-                    />
-                    <Label htmlFor="lowercase" className="text-sm">
-                      Minuscules (a-z)
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="numbers"
-                      checked={options.includeNumbers}
-                      onChange={(e) =>
-                        setOptions((prev) => ({
-                          ...prev,
-                          includeNumbers: e.target.checked,
-                        }))
-                      }
-                      className="rounded"
-                    />
-                    <Label htmlFor="numbers" className="text-sm">
-                      Chiffres (0-9)
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="symbols"
-                      checked={options.includeSymbols}
-                      onChange={(e) =>
-                        setOptions((prev) => ({
-                          ...prev,
-                          includeSymbols: e.target.checked,
-                        }))
-                      }
-                      className="rounded"
-                    />
-                    <Label htmlFor="symbols" className="text-sm">
-                      Symboles (!@#$%^&*)
-                    </Label>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Options avancées */}
-          <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5" />
-                <span>Options avancées</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="excludeSimilar"
-                    checked={options.excludeSimilar}
-                    onChange={(e) =>
-                      setOptions((prev) => ({
-                        ...prev,
-                        excludeSimilar: e.target.checked,
-                      }))
-                    }
-                    className="rounded"
-                  />
-                  <Label htmlFor="excludeSimilar" className="text-sm">
-                    Exclure les caractères similaires
-                  </Label>
-                </div>
-                <p className="text-xs text-slate-500 ml-6">
-                  Exclut les caractères qui peuvent être confondus (l, 1, I, O,
-                  0)
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="excludeAmbiguous"
-                    checked={options.excludeAmbiguous}
-                    onChange={(e) =>
-                      setOptions((prev) => ({
-                        ...prev,
-                        excludeAmbiguous: e.target.checked,
-                      }))
-                    }
-                    className="rounded"
-                  />
-                  <Label htmlFor="excludeAmbiguous" className="text-sm">
-                    Exclure les caractères ambigus
-                  </Label>
-                </div>
-                <p className="text-xs text-slate-500 ml-6">
-                  Exclut les caractères spéciaux qui peuvent causer des
-                  problèmes ({} [ ] / \)
-                </p>
-              </div>
-
-              <Separator />
-
-              {/* Bouton de génération rapide */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Génération rapide</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setOptions({
-                        length: 8,
-                        includeUppercase: true,
-                        includeLowercase: true,
-                        includeNumbers: true,
-                        includeSymbols: false,
-                        excludeSimilar: false,
-                        excludeAmbiguous: false,
-                      });
-                      generatePassword();
-                    }}
-                  >
-                    <Zap className="h-4 w-4 mr-2" />
-                    Simple
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setOptions({
-                        length: 16,
-                        includeUppercase: true,
-                        includeLowercase: true,
-                        includeNumbers: true,
-                        includeSymbols: true,
-                        excludeSimilar: true,
-                        excludeAmbiguous: false,
-                      });
-                      generatePassword();
-                    }}
-                  >
-                    <Lock className="h-4 w-4 mr-2" />
-                    Sécurisé
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex flex-wrap items-center gap-2">
+          <CopyButton value={password} disabled={!password} />
+          <Button
+            variant="secondary"
+            onClick={() => setPassword(generatePassword(options))}
+            disabled={empty}
+          >
+            <RefreshCw aria-hidden="true" />
+            Générer
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ms-auto"
+            aria-label={revealed ? "Masquer" : "Afficher"}
+            aria-pressed={!revealed}
+            title={revealed ? "Masquer" : "Afficher"}
+            onClick={() => setRevealed(!revealed)}
+          >
+            {revealed ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+          </Button>
         </div>
 
-        {/* Conseils de sécurité */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Shield className="h-5 w-5" />
-              <span>Conseils de sécurité</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div className="space-y-2">
-                <div className="flex items-start space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>
-                    Utilisez au moins 12 caractères pour une sécurité optimale
-                  </span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Combinez différents types de caractères</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Évitez les mots du dictionnaire ou les séquences</span>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-start space-x-2">
-                  <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <span>N'utilisez pas le même mot de passe partout</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <span>N'utilisez pas d'informations personnelles</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <span>Ne partagez jamais vos mots de passe</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+        <div className="border-border flex flex-col gap-2 border-t pt-4">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className={cn("text-sm font-semibold", styles.text)}>
+              {strength.label}
+            </span>
+            <span className="text-fg-subtle text-xs tabular-nums">
+              {bits}&nbsp;bits d&apos;entropie
+            </span>
+          </div>
+          <div className="bg-border h-1.5 overflow-hidden rounded-full">
+            <div
+              className={cn(
+                "h-full origin-left rounded-full transition-[scale,background-color] duration-(--animate-duration-card) ease-(--ease-rise)",
+                styles.bar
+              )}
+              style={{ scale: `${strength.ratio} 1` }}
+            />
+          </div>
+          <p className="text-fg-muted text-sm">{strength.description}</p>
+        </div>
+      </Card>
+
+      <section aria-label="Réglages" className="flex flex-col gap-6">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <Label htmlFor="length">Longueur</Label>
+            <span className="text-fg font-mono text-sm tabular-nums">
+              {options.length}
+            </span>
+          </div>
+          <Slider
+            id="length"
+            aria-label="Longueur"
+            min={4}
+            max={64}
+            step={1}
+            value={[options.length]}
+            onValueChange={([length]) => update({ length })}
+          />
+        </div>
+
+        <fieldset className="flex flex-col gap-1">
+          <legend className="text-fg mb-2 text-sm font-medium">
+            Types de caractères
+          </legend>
+          <div className="grid gap-x-6 sm:grid-cols-2">
+            {CHARACTER_TYPES.map(({ key, label, hint }) => (
+              <label
+                key={key}
+                className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm"
+              >
+                <Checkbox
+                  checked={options[key]}
+                  onCheckedChange={(checked) =>
+                    update({ [key]: checked === true })
+                  }
+                />
+                <span className="text-fg">{label}</span>
+                <span className="text-fg-subtle">{hint}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset className="border-border flex flex-col gap-1 border-t pt-5">
+          <legend className="sr-only">Exclusions</legend>
+          {EXCLUSIONS.map(({ key, label, hint }) => (
+            <label
+              key={key}
+              className="flex min-h-11 cursor-pointer items-start gap-2.5 py-2 text-sm"
+            >
+              <span className="flex h-5 items-center">
+                <Checkbox
+                  checked={options[key]}
+                  onCheckedChange={(checked) =>
+                    update({ [key]: checked === true })
+                  }
+                />
+              </span>
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-fg">{label}</span>
+                <span className="text-fg-muted text-[0.8125rem] leading-snug">
+                  {hint}
+                </span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      </section>
+    </ToolPage>
   );
 }

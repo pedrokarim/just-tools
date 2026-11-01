@@ -1,16 +1,28 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
-import {
-  patternEditorAtom,
-  migratePreviewSettingsAtom } from "@/lib/pattern-store";
-import { motion, AnimatePresence } from "framer-motion";
+import { Download, ZoomIn, ZoomOut } from "lucide-react";
+import { renderPattern } from "@/components/pattern-preview";
 import { Button } from "@/components/ui/button";
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { X, Download, ZoomIn, ZoomOut, Grid } from "lucide-react";
-import { useRef, useEffect } from "react";
+import { Slider } from "@/components/ui/slider";
+import {
+  migratePreviewSettingsAtom,
+  patternEditorAtom,
+} from "@/lib/pattern-store";
+
+const DEFAULT_REPEAT_COUNT = 4;
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 3;
+const ZOOM_STEP = 0.2;
 
 interface PreviewModalProps {
   isOpen: boolean;
@@ -20,7 +32,13 @@ interface PreviewModalProps {
 export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
   const [editorState, setEditorState] = useAtom(patternEditorAtom);
   const [, migrateSettings] = useAtom(migratePreviewSettingsAtom);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Un état plutôt qu'un `ref` : la fenêtre passe par un portail et son canvas
+  // se monte après l'effet d'ouverture, qui ne se relancerait pas tout seul.
+  const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
+  const [displayWidth, setDisplayWidth] = useState<number>();
+
+  const repeatCount = editorState.previewRepeatCount || DEFAULT_REPEAT_COUNT;
+  const zoom = editorState.previewZoom || MIN_ZOOM;
 
   // Migration automatique des paramètres d'aperçu
   useEffect(() => {
@@ -29,233 +47,120 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
     }
   }, [isOpen, migrateSettings]);
 
-  // Générer l'aperçu du motif
   useEffect(() => {
-    if (!canvasRef.current || !isOpen) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const repeatCount = editorState.previewRepeatCount || 4;
-
-    if (editorState.gridMode === "pixel") {
-      // Mode pixels - calcul basé sur les cellules
-      const cellSize = 20;
-      const patternSize = editorState.gridSize * cellSize;
-      const totalSize = patternSize * repeatCount;
-
-      canvas.width = totalSize;
-      canvas.height = totalSize;
-
-      // Remplir l'arrière-plan
-      ctx.fillStyle = editorState.backgroundColor;
-      ctx.fillRect(0, 0, totalSize, totalSize);
-
-      // Dessiner seulement les cellules actives
-      for (let i = 0; i < repeatCount; i++) {
-        for (let j = 0; j < repeatCount; j++) {
-          // Dessiner chaque cellule du motif
-          for (let row = 0; row < editorState.gridSize; row++) {
-            for (let col = 0; col < editorState.gridSize; col++) {
-              if (editorState.cells[row][col]) {
-                const x = i * patternSize + col * cellSize;
-                const y = j * patternSize + row * cellSize;
-
-                ctx.fillStyle = editorState.foregroundColor;
-                ctx.fillRect(x, y, cellSize, cellSize);
-              }
-            }
-          }
-        }
-      }
-    } else {
-      // Mode points - calcul basé sur l'espacement des points
-      const spacing = 40;
-      const offset = spacing / 2;
-
-      // Générer les points pour calculer les positions
-      const points: Array<{ x: number; y: number; id: string }> = [];
-      for (let row = 0; row < editorState.gridSize; row++) {
-        for (let col = 0; col < editorState.gridSize; col++) {
-          points.push({
-            x: col * spacing + offset,
-            y: row * spacing + offset,
-            id: `${row}-${col}`,
-          });
-        }
-      }
-
-      // Calculer la taille du motif - carré complet sans offset
-      const patternWidth = (editorState.gridSize - 1) * spacing;
-      const patternHeight = (editorState.gridSize - 1) * spacing;
-      const totalSize = Math.max(patternWidth, patternHeight) * repeatCount;
-
-      canvas.width = totalSize;
-      canvas.height = totalSize;
-
-      // Remplir l'arrière-plan
-      ctx.fillStyle = editorState.backgroundColor;
-      ctx.fillRect(0, 0, totalSize, totalSize);
-
-      // Dessiner les répétitions
-      for (let i = 0; i < repeatCount; i++) {
-        for (let j = 0; j < repeatCount; j++) {
-          const baseX = i * patternWidth;
-          const baseY = j * patternHeight;
-
-          // Dessiner les lignes d'abord (en arrière-plan)
-          editorState.lines.forEach((line) => {
-            const fromPoint = points.find((p) => p.id === line.from);
-            const toPoint = points.find((p) => p.id === line.to);
-
-            if (fromPoint && toPoint) {
-              ctx.strokeStyle = editorState.foregroundColor;
-              ctx.lineWidth = 3;
-              ctx.lineCap = "round";
-
-              ctx.beginPath();
-              ctx.moveTo(
-                baseX + fromPoint.x - offset,
-                baseY + fromPoint.y - offset
-              );
-              ctx.lineTo(
-                baseX + toPoint.x - offset,
-                baseY + toPoint.y - offset
-              );
-              ctx.stroke();
-            }
-          });
-
-          // Ne pas dessiner les points - seulement les lignes
-        }
-      }
-    }
-  }, [editorState, isOpen]);
+    if (!canvas) return;
+    renderPattern(canvas, editorState, repeatCount);
+    // Le zoom agit sur la largeur et non sur `scale` : c'est elle qui donne sa
+    // taille à la zone de défilement.
+    // La largeur n'est connue qu'une fois le motif dessiné dans le canvas.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDisplayWidth(canvas.width * zoom);
+  }, [canvas, editorState, repeatCount, zoom]);
 
   const handleExport = () => {
-    if (!canvasRef.current) return;
+    if (!canvas) return;
 
     const link = document.createElement("a");
     link.download = `pattern-${Date.now()}.png`;
-    link.href = canvasRef.current.toDataURL();
+    link.href = canvas.toDataURL();
     link.click();
   };
 
   const handleZoomIn = () => {
     setEditorState((prev) => ({
       ...prev,
-      previewZoom: Math.min((prev.previewZoom || 0.5) + 0.2, 3),
+      previewZoom: Math.min((prev.previewZoom || MIN_ZOOM) + ZOOM_STEP, MAX_ZOOM),
     }));
   };
 
   const handleZoomOut = () => {
     setEditorState((prev) => ({
       ...prev,
-      previewZoom: Math.max((prev.previewZoom || 0.5) - 0.2, 0.5),
+      previewZoom: Math.max((prev.previewZoom || MIN_ZOOM) - ZOOM_STEP, MIN_ZOOM),
     }));
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-8"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="bg-white dark:bg-card rounded-lg shadow-xl max-w-[90vw] w-full max-h-[95vh] overflow-hidden py-8"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <CardTitle>Aperçu du Motif</CardTitle>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleZoomOut}
-                  disabled={(editorState.previewZoom || 0.5) <= 0.5}
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </Button>
-                <span className="text-sm text-slate-500 min-w-[60px] text-center">
-                  {Math.round((editorState.previewZoom || 0.5) * 100)}%
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleZoomIn}
-                  disabled={(editorState.previewZoom || 0.5) >= 3}
-                >
-                  <ZoomIn className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleExport}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Exporter
-                </Button>
-                <Button variant="ghost" size="sm" onClick={onClose}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-background">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Grid className="h-4 w-4 text-slate-500" />
-                  <Label className="text-sm font-medium">Répétitions</Label>
-                </div>
-                <div className="flex-1 max-w-xs">
-                  <Slider
-                    value={[editorState.previewRepeatCount || 4]}
-                    onValueChange={(value) =>
-                      setEditorState((prev) => ({
-                        ...prev,
-                        previewRepeatCount: value[0],
-                      }))
-                    }
-                    min={2}
-                    max={16}
-                    step={1}
-                    className="w-full"
-                  />
-                </div>
-                <span className="text-sm text-slate-500 min-w-[40px] text-center">
-                  {editorState.previewRepeatCount || 4}×
-                  {editorState.previewRepeatCount || 4}
-                </span>
-              </div>
-            </div>
-            <CardContent className="p-0">
-              <div
-                className="overflow-auto max-h-[70vh] bg-slate-100 dark:bg-background"
-                style={{ padding: "32px" }}
-              >
-                <div className="flex justify-center items-center min-h-full">
-                  <div
-                    style={{
-                      transform: `scale(${editorState.previewZoom || 0.5})`,
-                      transformOrigin: "center",
-                    }}
-                    className="transition-transform duration-200"
-                  >
-                    <canvas
-                      ref={canvasRef}
-                      className="border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg"
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent className="flex h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
+        <DialogHeader className="border-border shrink-0 border-b px-5 py-4 pe-14">
+          <DialogTitle>Aperçu du motif</DialogTitle>
+          <DialogDescription>
+            Le motif répété, tel qu&apos;il sera exporté.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="border-border flex shrink-0 flex-wrap items-center gap-x-5 gap-y-3 border-b px-5 py-3">
+          <div className="flex min-w-48 flex-1 items-center gap-3">
+            <Label htmlFor="preview-repeat" className="shrink-0">
+              Répétitions
+            </Label>
+            <Slider
+              id="preview-repeat"
+              aria-label="Répétitions"
+              min={2}
+              max={16}
+              step={1}
+              value={[repeatCount]}
+              onValueChange={([previewRepeatCount]) =>
+                setEditorState((prev) => ({ ...prev, previewRepeatCount }))
+              }
+              className="min-w-0 flex-1 sm:max-w-xs"
+            />
+            <span className="text-fg shrink-0 font-mono text-sm tabular-nums">
+              {repeatCount}×{repeatCount}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Dézoomer"
+              title="Dézoomer"
+              onClick={handleZoomOut}
+              disabled={zoom <= MIN_ZOOM}
+            >
+              <ZoomOut aria-hidden="true" />
+            </Button>
+            <span className="text-fg-muted w-12 text-center font-mono text-xs tabular-nums">
+              {Math.round(zoom * 100)}&nbsp;%
+            </span>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Zoomer"
+              title="Zoomer"
+              onClick={handleZoomIn}
+              disabled={zoom >= MAX_ZOOM}
+            >
+              <ZoomIn aria-hidden="true" />
+            </Button>
+          </div>
+
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download aria-hidden="true" />
+            Exporter
+          </Button>
+        </div>
+
+        <div className="bg-surface flex min-h-0 flex-1 overflow-auto p-4 sm:p-6">
+          {/* `m-auto` centre tant que le motif tient, sans le couper une fois
+              qu'il déborde, ce que ferait `justify-center`. */}
+          <canvas
+            ref={setCanvas}
+            style={{ width: displayWidth }}
+            role="img"
+            aria-label="Motif répété"
+            className="border-border rounded-field m-auto block h-auto max-w-none shrink-0 border"
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,79 +1,158 @@
 "use client";
 
+import { useState } from "react";
+import { Save, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { useHalftoneStore } from "@/lib/halftone-store";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ConfirmDialog, PanelSection } from "./panel-parts";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, Settings, Star } from "lucide-react";
-import { toast } from "sonner";
+const quoted = (name: string) => `« ${name} »`;
 
 export function PresetsBar() {
-  const { presets, loadPreset, deletePreset } = useHalftoneStore();
+  const { sourceImage, presets, savePreset, loadPreset, deletePreset } =
+    useHalftoneStore();
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  // Le nom reste après la confirmation : la fenêtre se ferme encore en l'affichant.
+  const [deletionTarget, setDeletionTarget] = useState("");
 
   const presetNames = Object.keys(presets);
+  const trimmedName = draftName.trim();
 
-  if (presetNames.length === 0) {
-    return null;
-  }
-
-  const handleLoadPreset = (name: string) => {
+  const handleLoad = (name: string) => {
     loadPreset(name);
-    toast.success(`Preset "${name}" chargé`);
+    toast.success(`Préréglage ${quoted(name)} chargé.`);
   };
 
-  const handleDeletePreset = (name: string) => {
-    if (confirm(`Supprimer le preset "${name}" ?`)) {
-      deletePreset(name);
-      toast.success(`Preset "${name}" supprimé`);
-    }
+  const handleSave = () => {
+    if (!trimmedName) return;
+    savePreset(trimmedName);
+    toast.success(`Préréglage ${quoted(trimmedName)} enregistré.`);
+    setDraftName("");
+    setIsSaving(false);
   };
 
   return (
-    <div className="flex-shrink-0 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-card p-2">
-      <div className="flex items-center space-x-2 overflow-x-auto">
-        <div className="flex items-center space-x-2 text-xs text-slate-500 dark:text-slate-400 px-2">
-          <Star className="h-3 w-3" />
-          <span>Presets:</span>
-        </div>
+    <>
+      <PanelSection
+        title="Préréglages"
+        summary={presetNames.length > 0 ? String(presetNames.length) : undefined}
+      >
+        {presetNames.length > 0 ? (
+          <ul className="flex min-w-0 flex-col gap-0.5">
+            {presetNames.map((name) => (
+              <li key={name} className="flex min-w-0 items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  title={name}
+                  onClick={() => handleLoad(name)}
+                  className="min-w-0 flex-1 justify-start"
+                >
+                  <span className="min-w-0 truncate">{name}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Supprimer le préréglage ${name}`}
+                  title="Supprimer"
+                  onClick={() => {
+                    setDeletionTarget(name);
+                    setIsDeleting(true);
+                  }}
+                  className="hover:text-danger pointer-coarse:size-11"
+                >
+                  <Trash2 aria-hidden="true" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-fg-muted text-xs leading-snug">
+            Enregistre tes calques et leurs réglages pour les retrouver ici.
+          </p>
+        )}
+        <Button
+          variant="secondary"
+          size="sm"
+          className="w-full"
+          disabled={!sourceImage}
+          onClick={() => setIsSaving(true)}
+        >
+          <Save aria-hidden="true" />
+          Enregistrer ces réglages
+        </Button>
+      </PanelSection>
 
-        <AnimatePresence>
-          {presetNames.map((name, index) => (
-            <motion.div
-              key={name}
-              initial={{ opacity: 0, scale: 0.8, x: -20 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.8, x: -20 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card className="shadow-sm">
-                <CardContent className="p-2">
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleLoadPreset(name)}
-                      className="h-6 px-2 text-xs"
-                    >
-                      <Settings className="h-3 w-3 mr-1" />
-                      {name}
-                    </Button>
+      <Dialog open={isSaving} onOpenChange={setIsSaving}>
+        <DialogContent>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleSave();
+            }}
+            className="flex min-w-0 flex-col gap-4"
+          >
+            <DialogHeader>
+              <DialogTitle>Enregistrer un préréglage</DialogTitle>
+              <DialogDescription>
+                Il garde tous tes calques et leurs réglages, dans ce navigateur.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <Label htmlFor="halftone-preset-name">Nom du préréglage</Label>
+              <Input
+                id="halftone-preset-name"
+                value={draftName}
+                onChange={(event) => setDraftName(event.target.value)}
+                autoFocus
+              />
+              {presets[trimmedName] && (
+                <p className="text-warning text-xs leading-snug">
+                  Ce nom existe déjà&nbsp;: le préréglage sera remplacé.
+                </p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsSaving(false)}
+              >
+                Annuler
+              </Button>
+              <Button type="submit" disabled={!trimmedName}>
+                Enregistrer
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeletePreset(name)}
-                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-    </div>
+      <ConfirmDialog
+        open={isDeleting}
+        onOpenChange={setIsDeleting}
+        title={`Supprimer ${quoted(deletionTarget)} ?`}
+        description="Ce préréglage sera perdu. Tes calques actuels ne changent pas."
+        confirmLabel="Supprimer"
+        onConfirm={() => {
+          deletePreset(deletionTarget);
+          toast.success(`Préréglage ${quoted(deletionTarget)} supprimé.`);
+        }}
+      />
+    </>
   );
 }

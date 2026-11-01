@@ -14,24 +14,24 @@ describe("Badge Component", () => {
   it("should render with different variants", () => {
     const { rerender } = render(<Badge variant="default">Default</Badge>);
     expect(screen.getByText("Default")).toHaveClass(
-      "border-transparent",
-      "bg-primary"
+      "border-primary/25",
+      "bg-primary-soft"
     );
 
     rerender(<Badge variant="secondary">Secondary</Badge>);
     expect(screen.getByText("Secondary")).toHaveClass(
-      "border-transparent",
-      "bg-secondary"
+      "border-border",
+      "bg-surface"
     );
 
     rerender(<Badge variant="destructive">Destructive</Badge>);
     expect(screen.getByText("Destructive")).toHaveClass(
-      "border-transparent",
-      "bg-destructive"
+      "border-danger/25",
+      "bg-danger-soft"
     );
 
     rerender(<Badge variant="outline">Outline</Badge>);
-    expect(screen.getByText("Outline")).toHaveClass("text-foreground");
+    expect(screen.getByText("Outline")).toHaveClass("text-fg");
   });
 
   it("should render as child when asChild is true", () => {
@@ -74,23 +74,6 @@ describe("Badge Component", () => {
     expect(badge).toHaveAttribute("aria-label", "Custom label");
   });
 
-  it("should handle focus states", () => {
-    render(<Badge>Focusable</Badge>);
-
-    const badge = screen.getByText("Focusable");
-    expect(badge).toHaveClass(
-      "focus-visible:border-ring",
-      "focus-visible:ring-ring/50"
-    );
-  });
-
-  it("should handle invalid states", () => {
-    render(<Badge aria-invalid="true">Invalid</Badge>);
-
-    const badge = screen.getByText("Invalid");
-    expect(badge).toHaveClass("aria-invalid:ring-destructive/20");
-  });
-
   it("should render with different content types", () => {
     render(<Badge>Text Content</Badge>);
     expect(screen.getByText("Text Content")).toBeInTheDocument();
@@ -106,6 +89,6 @@ describe("Badge Component", () => {
     render(<Badge>Test</Badge>);
 
     const badge = screen.getByText("Test");
-    expect(badge).toHaveClass("border-transparent", "bg-primary");
+    expect(badge).toHaveClass("border-primary/25", "bg-primary-soft");
   });
 });

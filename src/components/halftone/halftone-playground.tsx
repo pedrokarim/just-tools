@@ -1,19 +1,23 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useHalftoneStore } from "@/lib/halftone-store";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ImagePlus, Play, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 import { HalftoneEngine } from "@/lib/halftone-engine";
-import { ImageDropzone } from "./image-dropzone";
-import { PreviewCanvas } from "./preview-canvas";
+import { useHalftoneStore } from "@/lib/halftone-store";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ControlsPanel } from "./controls-panel";
 import { ExportPanel } from "./export-panel";
-import { PresetsBar } from "./presets-bar";
+import { ImageDropzone } from "./image-dropzone";
 import { LayerPanel } from "./layer-panel";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Image as ImageIcon, Settings, Download, Save, RotateCcw, Eye, Layers } from "lucide-react";
-import { toast } from "sonner";
+import { ConfirmDialog } from "./panel-parts";
+import { PresetsBar } from "./presets-bar";
+import { PreviewCanvas } from "./preview-canvas";
+
+// Les onglets restent montés : les options d'export et les sections repliées
+// survivent à un aller-retour.
+const PANEL_CONTENT = "min-w-0 data-[state=inactive]:hidden";
 
 export function HalftonePlayground() {
   const {
@@ -22,13 +26,10 @@ export function HalftonePlayground() {
     isProcessing,
     setProcessing,
     resetSettings,
-    savePreset,
     clearSourceImage,
   } = useHalftoneStore();
 
-  const [showControls, setShowControls] = useState(true);
-  const [showExport, setShowExport] = useState(false);
-  const [showLayers, setShowLayers] = useState(true);
+  const [isResetting, setIsResetting] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null!);
   const renderTimeoutRef = useRef<NodeJS.Timeout>(undefined);
 
@@ -53,7 +54,7 @@ export function HalftonePlayground() {
         );
       } catch (error) {
         console.error("Erreur lors du rendu:", error);
-        toast.error("Erreur lors du rendu de l'image");
+        toast.error("Le rendu a échoué. Réessaie avec une image plus petite.");
       } finally {
         setProcessing(false);
       }
@@ -76,190 +77,88 @@ export function HalftonePlayground() {
     }
   }, [renderHalftone, autoApply]);
 
-  // Sauvegarder un preset
-  const handleSavePreset = () => {
-    const name = prompt("Nom du preset:");
-    if (name) {
-      savePreset(name);
-      toast.success(`Preset "${name}" sauvegardé`);
-    }
-  };
-
-  // Réinitialiser les paramètres
-  const handleReset = () => {
-    if (confirm("Réinitialiser tous les paramètres ?")) {
-      resetSettings();
-      toast.success("Paramètres réinitialisés");
-    }
-  };
-
-  // Appliquer l'effet manuellement
-  const handleApplyEffect = () => {
-    if (!sourceImage) {
-      toast.error("Aucune image chargée");
-      return;
-    }
-    renderHalftone();
-    toast.success("Effet appliqué");
-  };
-
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-background">
-      {/* En-tête avec actions */}
-      <div className="flex-shrink-0 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-card p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <ImageIcon aria-hidden="true" className="h-6 w-6 text-blue-600" />
-              <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                Effet de Trame
-              </h1>
-            </div>
-            <div className="h-6 w-px bg-slate-300 dark:bg-slate-600" />
-            <span className="text-sm text-slate-500 dark:text-slate-400">
-              Ajoutez un effet de trame par-dessus vos images
-            </span>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => clearSourceImage()}
-              disabled={!sourceImage}
-            >
-              <ImageIcon aria-hidden="true" className="h-4 w-4 mr-2" />
-              Changer d'image
-            </Button>
-
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleApplyEffect}
-              disabled={!sourceImage}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Appliquer l'effet
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSavePreset}
-              disabled={!sourceImage}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Sauvegarder
-            </Button>
-
-            <Button variant="outline" size="sm" onClick={handleReset}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Réinitialiser
-            </Button>
-
-            <Button
-              variant={showLayers ? "default" : "outline"}
-              size="sm"
-              onClick={() => setShowLayers(!showLayers)}
-            >
-              <Layers className="h-4 w-4 mr-2" />
-              Calques
-            </Button>
-
-            <Button
-              variant={showControls ? "default" : "outline"}
-              size="sm"
-              onClick={() => setShowControls(!showControls)}
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              Contrôles
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowExport(!showExport)}
-              disabled={!sourceImage}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Exporter
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Barre des presets */}
-      <PresetsBar />
-
-      {/* Contenu principal : 3 colonnes */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Panneau de calques (gauche) */}
-        <AnimatePresence>
-          {showLayers && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 260, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="flex-shrink-0 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-card overflow-hidden"
-            >
-              <LayerPanel />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Zone de prévisualisation (centre) */}
-        <div className="flex-1 flex flex-col p-4">
-          {!sourceImage ? (
-            <ImageDropzone />
-          ) : (
-            <div className="flex-1 flex flex-col">
-              <PreviewCanvas ref={canvasRef} isProcessing={isProcessing} />
-            </div>
-          )}
-        </div>
-
-        {/* Panneau latéral (droite) */}
-        <AnimatePresence>
-          {(showControls || showExport) && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 320, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="flex-shrink-0 border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-card overflow-hidden"
-            >
-              <div className="h-full overflow-y-auto">
-                {showControls && <ControlsPanel />}
-                {showExport && <ExportPanel canvasRef={canvasRef} />}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Indicateur de traitement */}
-      <AnimatePresence>
-        {isProcessing && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="absolute bottom-4 right-4"
-          >
-            <Card className="shadow-lg">
-              <CardContent className="p-3">
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
-                  <span className="text-sm text-slate-600 dark:text-slate-300">
-                    Traitement en cours...
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
+      {/* La scène suit le défilement du panneau : on voit l'effet en le réglant. */}
+      <section
+        aria-label="Aperçu de l'image"
+        className="bg-card border-border rounded-card flex min-h-[min(60dvh,34rem)] min-w-0 flex-col overflow-hidden border xl:sticky xl:top-22 xl:h-[calc(100dvh-7rem)] xl:min-h-[30rem]"
+      >
+        {sourceImage ? (
+          <PreviewCanvas
+            ref={canvasRef}
+            isProcessing={isProcessing}
+            actions={
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => clearSourceImage()}
+                >
+                  <ImagePlus aria-hidden="true" />
+                  Changer d&apos;image
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => renderHalftone()}
+                >
+                  <Play aria-hidden="true" />
+                  Appliquer l&apos;effet
+                </Button>
+              </>
+            }
+          />
+        ) : (
+          <ImageDropzone />
         )}
-      </AnimatePresence>
+      </section>
+
+      <aside aria-label="Réglages de la trame" className="min-w-0">
+        <Tabs defaultValue="settings" className="min-w-0">
+          <TabsList className="w-full">
+            <TabsTrigger value="settings">Réglages</TabsTrigger>
+            <TabsTrigger value="layers">Calques</TabsTrigger>
+            <TabsTrigger value="export">Export</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="settings" forceMount className={PANEL_CONTENT}>
+            <PresetsBar />
+            <ControlsPanel />
+            <div className="border-border border-t pt-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={() => setIsResetting(true)}
+              >
+                <RotateCcw aria-hidden="true" />
+                Réinitialiser les calques et réglages
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="layers" forceMount className={PANEL_CONTENT}>
+            <LayerPanel />
+          </TabsContent>
+
+          <TabsContent value="export" forceMount className={PANEL_CONTENT}>
+            <ExportPanel canvasRef={canvasRef} />
+          </TabsContent>
+        </Tabs>
+      </aside>
+
+      <ConfirmDialog
+        open={isResetting}
+        onOpenChange={setIsResetting}
+        title="Réinitialiser les réglages&nbsp;?"
+        description="Tes calques et leurs réglages reviennent à l'état de départ. Tes préréglages enregistrés sont conservés."
+        confirmLabel="Réinitialiser"
+        onConfirm={() => {
+          resetSettings();
+          toast.success("Réglages réinitialisés.");
+        }}
+      />
     </div>
   );
 }

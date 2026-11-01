@@ -1,11 +1,12 @@
 "use client";
 
 import { HalftonePlayground } from "@/components/halftone/halftone-playground";
+import { ToolPage } from "@/components/site/tool-shell";
 
 export default function HalftoneEffect() {
   return (
-    <div className="h-screen w-full bg-background">
+    <ToolPage wide>
       <HalftonePlayground />
-    </div>
+    </ToolPage>
   );
 }

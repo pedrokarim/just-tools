@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Générateur de Palette - Créez des palettes de couleurs harmonieuses",
+  title: "Générateur de Palette - Crée des palettes de couleurs harmonieuses",
   description:
-    "Outil gratuit pour créer des palettes de couleurs harmonieuses. Générez des combinaisons de couleurs parfaites pour vos projets de design.",
+    "Outil gratuit pour créer des palettes de couleurs harmonieuses. Génère des combinaisons de couleurs parfaites pour tes projets de design.",
   keywords: [
     "générateur palette",
     "palette couleurs",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title:
-      "Générateur de Palette - Créez des palettes de couleurs harmonieuses",
+      "Générateur de Palette - Crée des palettes de couleurs harmonieuses",
     description:
       "Outil gratuit pour créer des palettes de couleurs harmonieuses.",
     url: "https://just-tools.ascencia.re/tools/color-palette",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title:
-      "Générateur de Palette - Créez des palettes de couleurs harmonieuses",
+      "Générateur de Palette - Crée des palettes de couleurs harmonieuses",
     description:
       "Outil gratuit pour créer des palettes de couleurs harmonieuses.",
     images: ["/og-image.png"],

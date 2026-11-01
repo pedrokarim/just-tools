@@ -1,27 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Settings,
-  Database,
-  Download,
-  Trash2,
-  RefreshCw,
-  AlertTriangle } from "lucide-react";
+import { Download, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { AdminSection, PageHeader } from "@/components/admin/admin-page";
+
+const ROW = "flex min-w-0 flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-4";
 
 export default function SettingsPage() {
   const [isClearing, setIsClearing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [databaseType, setDatabaseType] = useState<string>("Chargement...");
+  const [databaseType, setDatabaseType] = useState<string>("Chargement…");
 
   useEffect(() => {
     // Récupérer le type de base de données depuis l'API
@@ -34,7 +25,7 @@ export default function SettingsPage() {
   const handleClearAnalytics = async () => {
     if (
       !confirm(
-        "Êtes-vous sûr de vouloir supprimer toutes les données analytics ? Cette action est irréversible."
+        "Supprimer toutes les données analytics ? Cette action est irréversible."
       )
     ) {
       return;
@@ -48,17 +39,16 @@ export default function SettingsPage() {
 
       if (response.ok) {
         toast.success("Données analytics supprimées", {
-          description:
-            "Toutes les données analytics ont été supprimées avec succès.",
+          description: "Toutes les données analytics ont été supprimées.",
         });
       } else {
         throw new Error("Erreur lors de la suppression");
       }
     } catch (error) {
       console.error("Erreur lors de la suppression des analytics:", error);
-      toast.error("Erreur lors de la suppression", {
+      toast.error("Suppression impossible", {
         description:
-          "Une erreur s'est produite lors de la suppression des données analytics.",
+          "Les données analytics n'ont pas été supprimées. Réessaie dans un instant.",
       });
     } finally {
       setIsClearing(false);
@@ -89,16 +79,16 @@ export default function SettingsPage() {
         URL.revokeObjectURL(url);
 
         toast.success("Export réussi", {
-          description: "Les données analytics ont été exportées avec succès.",
+          description: "Les données analytics ont été exportées.",
         });
       } else {
         throw new Error("Erreur lors de l'export");
       }
     } catch (error) {
       console.error("Erreur lors de l'export des analytics:", error);
-      toast.error("Erreur lors de l'export", {
+      toast.error("Export impossible", {
         description:
-          "Une erreur s'est produite lors de l'export des données analytics.",
+          "Les données analytics n'ont pas été exportées. Réessaie dans un instant.",
       });
     } finally {
       setIsExporting(false);
@@ -106,68 +96,60 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Paramètres</h1>
-        <p className="text-muted-foreground">
-          Gestion des paramètres et données du système
-        </p>
-      </div>
+    <>
+      <PageHeader
+        title="Paramètres"
+        description="La configuration du site et les données qu'il collecte."
+      />
 
       {/* Informations système */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Informations système
-          </CardTitle>
-          <CardDescription>
-            Informations sur la configuration actuelle
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <h4 className="font-medium">Base de données</h4>
-              <p className="text-sm text-muted-foreground">
-                {databaseType} avec Prisma
-              </p>
+      <AdminSection title="Système">
+        <dl className="border-border bg-elevated rounded-card divide-border divide-y border text-sm">
+          {[
+            { label: "Base de données", value: `${databaseType} avec Prisma` },
+            { label: "Authentification", value: "Ascencia ID" },
+            { label: "Framework", value: "Next.js 15 et React 19" },
+            { label: "Environnement d'exécution", value: "Bun" },
+          ].map(({ label, value }) => (
+            <div
+              key={label}
+              className="flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-0.5 px-5 py-3"
+            >
+              <dt className="text-fg-muted w-56 max-w-full shrink-0">{label}</dt>
+              <dd className="text-fg min-w-0 flex-[1_1_10rem] break-words">
+                {value}
+              </dd>
             </div>
-            <div>
-              <h4 className="font-medium">Authentification</h4>
-              <p className="text-sm text-muted-foreground">Auth.js + Discord</p>
-            </div>
-            <div>
-              <h4 className="font-medium">Framework</h4>
-              <p className="text-sm text-muted-foreground">
-                Next.js 15 + React 19
-              </p>
-            </div>
-            <div>
-              <h4 className="font-medium">Runtime</h4>
-              <p className="text-sm text-muted-foreground">Bun</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          ))}
+        </dl>
+      </AdminSection>
 
       {/* Gestion des analytics */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Gestion des analytics
-          </CardTitle>
-          <CardDescription>
-            Actions sur les données analytics collectées
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div>
-              <h4 className="font-medium">Export des données</h4>
-              <p className="text-sm text-muted-foreground">
-                Télécharger toutes les données analytics au format JSON
+      <AdminSection
+        title="Données analytics"
+        description="Les visites collectées par le site."
+      >
+        <div className="border-border bg-elevated rounded-card divide-border divide-y border">
+          <div className={ROW}>
+            <div className="flex min-w-0 flex-[1_1_16rem] flex-col gap-0.5">
+              <h3 className="text-fg font-sans text-sm font-medium tracking-normal">
+                Suivi des visites
+              </h3>
+              <p className="text-fg-muted text-sm leading-relaxed">
+                Le site collecte automatiquement les données de visite sur toutes
+                les pages.
+              </p>
+            </div>
+            <Badge variant="success">Actif</Badge>
+          </div>
+
+          <div className={ROW}>
+            <div className="flex min-w-0 flex-[1_1_16rem] flex-col gap-0.5">
+              <h3 className="text-fg font-sans text-sm font-medium tracking-normal">
+                Exporter les données
+              </h3>
+              <p className="text-fg-muted text-sm leading-relaxed">
+                Télécharge toutes les données analytics au format JSON.
               </p>
             </div>
             <Button
@@ -176,26 +158,23 @@ export default function SettingsPage() {
               variant="outline"
             >
               {isExporting ? (
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="asc-animate-spin" aria-hidden />
               ) : (
-                <Download className="h-4 w-4 mr-2" />
+                <Download aria-hidden />
               )}
-              {isExporting ? "Export en cours..." : "Exporter"}
+              {isExporting ? "Export en cours…" : "Exporter"}
             </Button>
           </div>
 
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div>
-              <h4 className="font-medium">Supprimer les données</h4>
-              <p className="text-sm text-muted-foreground">
-                Supprimer définitivement toutes les données analytics
+          <div className={ROW}>
+            <div className="flex min-w-0 flex-[1_1_16rem] flex-col items-start gap-1">
+              <h3 className="text-fg font-sans text-sm font-medium tracking-normal">
+                Supprimer les données
+              </h3>
+              <p className="text-fg-muted text-sm leading-relaxed">
+                Supprime définitivement toutes les données analytics.
               </p>
-              <div className="flex items-center gap-2 mt-1">
-                <AlertTriangle className="h-3 w-3 text-orange-500" />
-                <span className="text-xs text-orange-600">
-                  Action irréversible
-                </span>
-              </div>
+              <Badge variant="warning">Action irréversible</Badge>
             </div>
             <Button
               onClick={handleClearAnalytics}
@@ -203,36 +182,15 @@ export default function SettingsPage() {
               variant="destructive"
             >
               {isClearing ? (
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="asc-animate-spin" aria-hidden />
               ) : (
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 aria-hidden />
               )}
-              {isClearing ? "Suppression..." : "Supprimer tout"}
+              {isClearing ? "Suppression…" : "Tout supprimer"}
             </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Statut du tracking */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Statut du tracking</CardTitle>
-          <CardDescription>
-            État du système de collecte des données
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-sm">Tracking actif</span>
-            <Badge variant="secondary">En ligne</Badge>
-          </div>
-          <p className="text-sm text-muted-foreground mt-2">
-            Le système collecte automatiquement les données de visite sur toutes
-            les pages.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </AdminSection>
+    </>
   );
 }

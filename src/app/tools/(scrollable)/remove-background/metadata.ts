@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Suppression d'Arrière-plan - Enlevez le fond de vos images",
+  title: "Suppression d'Arrière-plan - Enlève le fond de tes images",
   description:
-    "Outil gratuit pour supprimer automatiquement l'arrière-plan de vos images grâce à l'IA, directement dans votre navigateur. Aucun upload serveur, 100% confidentiel.",
+    "Outil gratuit pour supprimer automatiquement l'arrière-plan de tes images grâce à l'IA, directement dans ton navigateur. Aucun upload serveur, 100% confidentiel.",
   keywords: [
     "remove background",
     "suppression arrière-plan",
@@ -15,9 +15,9 @@ export const metadata: Metadata = {
     "outil image gratuit",
   ],
   openGraph: {
-    title: "Suppression d'Arrière-plan - Enlevez le fond de vos images",
+    title: "Suppression d'Arrière-plan - Enlève le fond de tes images",
     description:
-      "Outil gratuit pour supprimer automatiquement l'arrière-plan de vos images avec l'IA.",
+      "Outil gratuit pour supprimer automatiquement l'arrière-plan de tes images avec l'IA.",
     url: "https://just-tools.ascencia.re/tools/remove-background",
     type: "website",
     images: [
@@ -31,9 +31,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Suppression d'Arrière-plan - Enlevez le fond de vos images",
+    title: "Suppression d'Arrière-plan - Enlève le fond de tes images",
     description:
-      "Outil gratuit pour supprimer automatiquement l'arrière-plan de vos images avec l'IA.",
+      "Outil gratuit pour supprimer automatiquement l'arrière-plan de tes images avec l'IA.",
     images: ["/og-image.png"],
   },
   alternates: {

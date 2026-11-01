@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AnimatedCounterProps {
   value: number;
@@ -12,16 +13,22 @@ interface AnimatedCounterProps {
   decimals?: number;
 }
 
+/**
+ * Un chiffre qui signale son propre changement.
+ *
+ * Il arrive à sa vraie valeur et ne compte qu'ensuite, quand elle bouge : un
+ * compteur qui démarre de zéro à chaque ouverture de page ne dit rien, il fait
+ * attendre. `tabular-nums` fixe la largeur : le texte voisin ne tremble pas.
+ */
 export function AnimatedCounter({
   value,
-  duration = 2000,
+  duration = 600,
   className,
   prefix = "",
   suffix = "",
   decimals = 0,
 }: AnimatedCounterProps) {
-  const [displayValue, setDisplayValue] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [displayValue, setDisplayValue] = useState(value);
 
   // L'animation a besoin de sa valeur de départ, mais elle met `displayValue`
   // à jour à chaque image : en faire une dépendance de l'effet relancerait
@@ -33,53 +40,49 @@ export function AnimatedCounter({
   }, [displayValue]);
 
   useEffect(() => {
-    if (value === 0) {
-      setDisplayValue(0);
-      return;
-    }
-
-    setIsAnimating(true);
-    const startTime = Date.now();
     const startValue = displayValueRef.current;
+    if (startValue === value) return;
+
+    // `tokens.css` neutralise les animations CSS, pas celle-ci : elle tourne en
+    // JavaScript et doit lire la préférence elle-même.
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    // Sans animation, la valeur s'applique à la première image.
+    const length = value === 0 || reducedMotion ? 0 : duration;
+    const startTime = Date.now();
+    let frame = 0;
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+      const progress = length > 0 ? Math.min(elapsed / length, 1) : 1;
 
       // Fonction d'easing pour une animation plus fluide
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
 
-      const currentValue = startValue + (value - startValue) * easeOutQuart;
-      setDisplayValue(currentValue);
+      setDisplayValue(startValue + (value - startValue) * easeOutQuart);
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        frame = requestAnimationFrame(animate);
       } else {
         setDisplayValue(value);
-        setIsAnimating(false);
       }
     };
 
-    requestAnimationFrame(animate);
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
   }, [value, duration]);
 
-  const formatValue = (val: number) => {
-    if (decimals > 0) {
-      return val.toFixed(decimals);
-    }
-    return Math.round(val).toLocaleString();
-  };
+  const formatted = displayValue.toLocaleString("fr-FR", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
 
   return (
-    <span
-      className={cn(
-        "transition-[color,transform] duration-300",
-        isAnimating && "scale-105",
-        className
-      )}
-    >
+    <span className={cn("tabular-nums", className)}>
       {prefix}
-      {formatValue(displayValue)}
+      {formatted}
       {suffix}
     </span>
   );
@@ -98,18 +101,13 @@ export function StatCounter({
   className,
 }: StatCounterProps) {
   if (isLoading) {
-    return (
-      <div
-        className={cn("animate-pulse bg-muted rounded h-8 w-20", className)}
-      />
-    );
+    return <Skeleton className={cn("h-8 w-20", className)} />;
   }
 
   return (
     <AnimatedCounter
       value={value}
-      duration={1500}
-      className={cn("text-2xl font-bold", className)}
+      className={cn("font-display text-2xl font-bold", className)}
     />
   );
 }

@@ -2,19 +2,25 @@
 
 import { useEffect, useState } from "react";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { FileText, Eye, Users, Clock, Globe, RefreshCw } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow } from "@/components/ui/table";
 import { usePagination } from "@/hooks/use-pagination";
 import { PaginationControls } from "@/components/admin/pagination-controls";
 import { AdminLoading } from "@/components/ui/loading";
-import { Button } from "@/components/ui/button";
+import { StatCard, StatGrid } from "@/components/ui/loading-card";
+import {
+  EmptyState,
+  ExpandableTableRow,
+  formatInteger,
+  formatLocation,
+  PageHeader,
+  RecentViewList,
+  RefreshButton,
+  RelativeTime } from "@/components/admin/admin-page";
 
 interface PageView {
   id: number;
@@ -38,6 +44,9 @@ interface PagesStats {
   uniquePages: number;
 }
 
+/** Rang, page, vues, visiteurs, dernière visite et bouton de dépliage. */
+const COLUMN_COUNT = 6;
+
 export default function PagesPage() {
   const [pages, setPages] = useState<PageStats[]>([]);
   const [stats, setStats] = useState<PagesStats | null>(null);
@@ -51,7 +60,7 @@ export default function PagesPage() {
     fetchPages();
     // La fonction n'est volontairement pas dans les dépendances : elle est
     // recréée à chaque rendu, donc l'y mettre relancerait l'effet en boucle.
-    // Elle modifie de surcroît `refreshing`, dont elle dépend — la boucle
+    // Elle modifie de surcroît `refreshing`, dont elle dépend : la boucle
     // serait immédiate. L'effet doit se déclencher sur la pagination seule, et
     // la fonction lue à ce moment porte déjà les bonnes valeurs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -86,209 +95,111 @@ export default function PagesPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Pages visitées
-            </h1>
-            <p className="text-muted-foreground">
-              Analyse des pages les plus populaires
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-center min-h-[400px]">
-          <AdminLoading
-            mode="full"
-            message="Chargement des pages..."
-            submessage="Analyse des statistiques de pages"
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Pages visitées</h1>
-          <p className="text-muted-foreground">
-            Analyse des pages les plus populaires
-          </p>
-        </div>
-
-        <Button
-          onClick={fetchPages}
-          disabled={refreshing}
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2"
-        >
-          <RefreshCw
-            className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+    <>
+      <PageHeader
+        title="Pages"
+        description="Les pages du site, de la plus vue à la moins vue."
+        actions={
+          <RefreshButton
+            onClick={fetchPages}
+            busy={refreshing}
+            disabled={loading}
           />
-          {refreshing ? "Actualisation..." : "Actualiser"}
-        </Button>
-      </div>
+        }
+      />
 
-      {/* Statistiques générales */}
-      {stats && (
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total des vues
-              </CardTitle>
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalPages}</div>
-              <p className="text-xs text-muted-foreground">
-                Vues de pages au total
-              </p>
-            </CardContent>
-          </Card>
+      {loading ? (
+        <AdminLoading message="Chargement des pages…" />
+      ) : (
+        <>
+          {/* Statistiques générales */}
+          {stats && (
+            <StatGrid columns={2}>
+              <StatCard title="Vues au total" value={stats.totalPages} />
+              <StatCard title="Pages différentes" value={stats.uniquePages} />
+            </StatGrid>
+          )}
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Pages uniques
-              </CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.uniquePages}</div>
-              <p className="text-xs text-muted-foreground">
-                Pages différentes visitées
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Liste des pages */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Pages les plus visitées</CardTitle>
-          <CardDescription>
-            Classement des pages par nombre de vues
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {pages.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Aucune page visitée enregistrée
-              </div>
-            ) : (
-              pages.map((page, index) => (
-                <div
-                  key={page.pagePath}
-                  className="border rounded-lg p-6 space-y-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-blue-600">
-                          {index +
-                            1 +
-                            (pagination.page - 1) * pagination.pageSize}
-                        </span>
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-lg">{page.pagePath}</h3>
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                          <div className="flex items-center space-x-1">
-                            <Eye className="h-4 w-4" />
-                            <span>{page.viewCount} vues</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Users className="h-4 w-4" />
-                            <span>{page.uniqueVisitors} visiteurs uniques</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Clock className="h-4 w-4" />
-                            <span>
-                              Dernière visite:{" "}
-                              {formatDistanceToNow(new Date(page.lastVisit), {
-                                addSuffix: true,
-                                locale: fr,
-                              })}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <Badge variant="secondary">
-                      {((page.uniqueVisitors / page.viewCount) * 100).toFixed(
-                        1
-                      )}
-                      % unique
-                    </Badge>
-                  </div>
-
-                  {/* Dernières vues */}
-                  {page.recentViews.length > 0 && (
-                    <div className="ml-12">
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                        Dernières vues :
-                      </h4>
-                      <div className="space-y-2">
-                        {page.recentViews.map((view) => (
-                          <div
-                            key={view.id}
-                            className="flex items-center justify-between text-sm bg-muted/50 rounded px-3 py-2"
-                          >
-                            <div className="flex items-center space-x-4">
+          {/* Liste des pages */}
+          {pages.length === 0 ? (
+            <EmptyState
+              framed
+              title="Aucune page visitée"
+              description="Les pages apparaîtront ici dès la première visite enregistrée."
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12 text-end">Rang</TableHead>
+                  <TableHead>Page</TableHead>
+                  <TableHead className="text-end">Vues</TableHead>
+                  <TableHead className="text-end">Visiteurs</TableHead>
+                  <TableHead>Dernière visite</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Dernières vues</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pages.map((page, index) => (
+                  <ExpandableTableRow
+                    key={page.pagePath}
+                    colSpan={COLUMN_COUNT}
+                    toggleLabel={`Dernières vues de ${page.pagePath}`}
+                    detail={
+                      page.recentViews.length > 0 ? (
+                        <RecentViewList
+                          heading="Dernières vues"
+                          items={page.recentViews.map((view) => ({
+                            id: view.id,
+                            label: (
                               <span className="font-mono text-xs">
-                                {view.fingerprint.substring(0, 8)}...
+                                {view.fingerprint.substring(0, 8)}…
                               </span>
-                              {view.ipAddress && (
-                                <span className="text-muted-foreground">
-                                  {view.ipAddress}
-                                </span>
-                              )}
-                              {view.country && (
-                                <div className="flex items-center space-x-1">
-                                  <Globe className="h-3 w-3" />
-                                  <span>
-                                    {view.country}
-                                    {view.city && `, ${view.city}`}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <span className="text-muted-foreground">
-                              {formatDistanceToNow(new Date(view.timestamp), {
-                                addSuffix: true,
-                                locale: fr,
-                              })}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                            ),
+                            ipAddress: view.ipAddress,
+                            location: formatLocation(view.country, view.city),
+                            timestamp: view.timestamp,
+                          }))}
+                        />
+                      ) : null
+                    }
+                  >
+                    <TableCell className="text-fg-subtle text-end tabular-nums">
+                      {index + 1 + (pagination.page - 1) * pagination.pageSize}
+                    </TableCell>
+                    <TableCell
+                      className="max-w-[28rem] truncate font-mono text-[0.8125rem]"
+                      title={page.pagePath}
+                    >
+                      {page.pagePath}
+                    </TableCell>
+                    <TableCell className="text-end tabular-nums">
+                      {formatInteger(page.viewCount)}
+                    </TableCell>
+                    <TableCell className="text-end tabular-nums">
+                      {formatInteger(page.uniqueVisitors)}
+                    </TableCell>
+                    <TableCell className="text-fg-muted">
+                      <RelativeTime value={page.lastVisit} />
+                    </TableCell>
+                  </ExpandableTableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
 
-      {/* Pagination */}
-      {stats && stats.uniquePages > 0 && (
-        <div className="mt-6">
-          <PaginationControls
-            pagination={pagination}
-            pageSizeOptions={[10, 25, 50, 100]}
-          />
-        </div>
+          {/* Pagination */}
+          {stats && stats.uniquePages > 0 && (
+            <PaginationControls
+              pagination={pagination}
+              pageSizeOptions={[10, 25, 50, 100]}
+            />
+          )}
+        </>
       )}
-    </div>
+    </>
   );
 }

@@ -1,212 +1,167 @@
 import { Metadata } from "next";
-import { Navbar } from "@/components/navbar";
+import { LegalSignature } from "@/components/site/legal-signature";
+import {
+  ReadingColumn,
+  ReadingSection,
+  SiteShell,
+} from "@/components/site/site-shell";
+import { PROJECT_CONFIG } from "@/lib/constants";
+import { tools } from "@/lib/tools-metadata";
 
 export const metadata: Metadata = {
-  title: "Conditions Générales d'Utilisation",
+  title: "Conditions générales d'utilisation",
   description:
-    "Conditions générales d'utilisation de Just Tools - Suite d'outils de développement gratuits",
+    "Les conditions générales d'utilisation de Just Tools, suite d'outils de développement gratuits et open source : usage autorisé, responsabilité et droit applicable.",
   alternates: { canonical: "/legal/terms" },
 };
 
+const toolNames = tools.map((tool) => tool.name).join(", ");
+
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 py-12 max-w-4xl pt-24">
-        <div className="border border-border bg-card rounded-xl p-8">
-          <h1 className="text-3xl font-bold text-foreground mb-8">
-            Conditions Générales d'Utilisation
-          </h1>
+    <SiteShell>
+      <ReadingColumn
+        title="Conditions générales d'utilisation"
+        updatedAt="1er novembre 2026"
+      >
+        <ReadingSection id="presentation" title="1. Présentation du service">
+          <p>
+            Just Tools est une suite d&apos;outils de développement gratuits
+            accessible en ligne, développée par Ahmed Karim (PedroKarim) pour
+            Ascencia. Le service propose une collection d&apos;outils pratiques
+            et créatifs destinés à simplifier le travail quotidien des
+            développeurs.
+          </p>
+          <p>Les outils disponibles sont les suivants&nbsp;: {toolNames}.</p>
+        </ReadingSection>
 
-          <div className="prose prose-lg dark:prose-invert max-w-none">
-            <p className="text-sm text-muted-foreground mb-6">
-              <strong>Dernière mise à jour :</strong> 15 août 2025
-            </p>
+        <ReadingSection id="acceptation" title="2. Acceptation des conditions">
+          <p>
+            L&apos;utilisation de Just Tools implique l&apos;acceptation pleine
+            et entière des présentes conditions. Si tu ne les acceptes pas,
+            merci de ne pas utiliser le service.
+          </p>
+        </ReadingSection>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
-                1. Présentation du Service
-              </h2>
-              <p className="text-muted-foreground mb-4">
-                Just Tools est une suite d'outils de développement gratuits
-                accessible en ligne, développée par Ahmed Karim (PedroKarim)
-                pour Ascencia. Le service propose une collection d'outils
-                pratiques et créatifs destinés à simplifier le workflow
-                quotidien des développeurs.
-              </p>
-              <p className="text-muted-foreground">
-                Les outils disponibles incluent : convertisseur Base64,
-                formateur de code, générateur de palette, validateur JSON,
-                générateur de mots de passe, éditeur Markdown, éditeur de
-                motifs, effet de trame, extracteur de couleurs, et synthèse
-                vocale.
-              </p>
-            </section>
+        <ReadingSection id="utilisation" title="3. Utilisation du service">
+          <p>
+            <strong>Utilisation autorisée.</strong> Just Tools est destiné à un
+            usage personnel et professionnel légitime. Tu peux utiliser les
+            outils pour tes projets de développement, à des fins éducatives ou
+            pour améliorer ta productivité.
+          </p>
+          <p>
+            <strong>Utilisation interdite&nbsp;:</strong>
+          </p>
+          <ul>
+            <li>utilisation à des fins illégales ou frauduleuses&nbsp;;</li>
+            <li>tentative de compromission de la sécurité du service&nbsp;;</li>
+            <li>utilisation excessive pouvant nuire aux autres utilisateurs&nbsp;;</li>
+            <li>reproduction ou distribution non autorisée du contenu&nbsp;;</li>
+            <li>utilisation des outils pour créer du contenu malveillant.</li>
+          </ul>
+        </ReadingSection>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
-                2. Acceptation des Conditions
-              </h2>
-              <p className="text-muted-foreground">
-                L'utilisation de Just Tools implique l'acceptation pleine et
-                entière des présentes conditions générales d'utilisation. Si
-                vous n'acceptez pas ces conditions, veuillez ne pas utiliser le
-                service.
-              </p>
-            </section>
+        <ReadingSection id="propriete" title="4. Propriété intellectuelle">
+          <p>
+            Just Tools est un projet open source sous licence MIT. Le code source
+            est disponible sur GitHub et peut être utilisé, modifié et distribué
+            conformément aux termes de cette licence.
+          </p>
+          <p>
+            Les marques, logos et noms commerciaux restent la propriété
+            d&apos;Ascencia et ne peuvent être utilisés sans autorisation écrite.
+          </p>
+        </ReadingSection>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
-                3. Utilisation du Service
-              </h2>
-              <h3 className="text-xl font-medium text-foreground mb-3">
-                3.1 Utilisation Autorisée
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Just Tools est destiné à un usage personnel et professionnel
-                légitime. Vous pouvez utiliser les outils pour vos projets de
-                développement, à des fins éducatives ou pour améliorer votre
-                productivité.
-              </p>
+        <ReadingSection id="responsabilite" title="5. Limitation de responsabilité">
+          <p>
+            Just Tools est fourni «&nbsp;en l&apos;état&nbsp;», sans garantie
+            d&apos;aucune sorte. Ascencia et Ahmed Karim ne peuvent être tenus
+            responsables&nbsp;:
+          </p>
+          <ul>
+            <li>
+              des dommages directs ou indirects résultant de l&apos;utilisation
+              du service&nbsp;;
+            </li>
+            <li>de la perte de données ou de la corruption de fichiers&nbsp;;</li>
+            <li>des interruptions de service ou des dysfonctionnements&nbsp;;</li>
+            <li>de l&apos;utilisation inappropriée des outils.</li>
+          </ul>
+        </ReadingSection>
 
-              <h3 className="text-xl font-medium text-foreground mb-3">
-                3.2 Utilisation Interdite
-              </h3>
-              <ul className="list-disc pl-6 text-muted-foreground mb-4">
-                <li>Utilisation à des fins illégales ou frauduleuses</li>
-                <li>Tentative de compromission de la sécurité du service</li>
-                <li>
-                  Utilisation excessive pouvant nuire aux autres utilisateurs
-                </li>
-                <li>Reproduction ou distribution non autorisée du contenu</li>
-                <li>
-                  Utilisation des outils pour créer du contenu malveillant
-                </li>
-              </ul>
-            </section>
+        <ReadingSection id="donnees" title="6. Confidentialité et données">
+          <p>
+            Just Tools respecte ta vie privée. Les données que tu saisis dans
+            les outils sont traitées localement dans ton navigateur et ne sont
+            pas transmises à nos serveurs.
+          </p>
+          <p>
+            Nous ne collectons aucune donnée personnelle identifiable. Les
+            seules données collectées sont anonymes et servent à améliorer le
+            service. Le détail figure dans la{" "}
+            <a href="/legal/privacy">politique de confidentialité</a>.
+          </p>
+        </ReadingSection>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
-                4. Propriété Intellectuelle
-              </h2>
-              <p className="text-muted-foreground mb-4">
-                Just Tools est un projet open source sous licence MIT. Le code
-                source est disponible sur GitHub et peut être utilisé, modifié
-                et distribué conformément aux termes de la licence MIT.
-              </p>
-              <p className="text-muted-foreground">
-                Les marques, logos et noms commerciaux restent la propriété
-                d'Ascencia et ne peuvent être utilisés sans autorisation écrite.
-              </p>
-            </section>
+        <ReadingSection id="service" title="7. Modifications du service">
+          <p>
+            Nous nous réservons le droit de modifier, suspendre ou interrompre
+            le service à tout moment, avec ou sans préavis. Nous nous efforçons
+            de le maintenir disponible et fonctionnel, mais ne pouvons garantir
+            une disponibilité continue.
+          </p>
+        </ReadingSection>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
-                5. Limitation de Responsabilité
-              </h2>
-              <p className="text-muted-foreground mb-4">
-                Just Tools est fourni "en l'état" sans garantie d'aucune sorte.
-                Ascencia et Ahmed Karim ne peuvent être tenus responsables :
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground mb-4">
-                <li>
-                  Des dommages directs ou indirects résultant de l'utilisation
-                  du service
-                </li>
-                <li>De la perte de données ou de la corruption de fichiers</li>
-                <li>Des interruptions de service ou des dysfonctionnements</li>
-                <li>
-                  De l'utilisation inappropriée des outils par les utilisateurs
-                </li>
-              </ul>
-            </section>
+        <ReadingSection id="conditions" title="8. Modifications des conditions">
+          <p>
+            Ces conditions peuvent être modifiées à tout moment. Les
+            modifications entrent en vigueur dès leur publication sur le site, et
+            il t&apos;appartient de les consulter régulièrement.
+          </p>
+        </ReadingSection>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
-                6. Confidentialité et Données
-              </h2>
-              <p className="text-muted-foreground mb-4">
-                Just Tools respecte votre vie privée. Les données que vous
-                saisissez dans les outils sont traitées localement dans votre
-                navigateur et ne sont pas transmises à nos serveurs.
-              </p>
-              <p className="text-muted-foreground">
-                Nous ne collectons aucune donnée personnelle identifiable. Les
-                seules données collectées sont anonymes et utilisées pour
-                améliorer le service (statistiques d'utilisation).
-              </p>
-            </section>
+        <ReadingSection id="droit" title="9. Droit applicable">
+          <p>
+            Les présentes conditions sont régies par le droit français. Tout
+            litige sera soumis à la compétence des tribunaux français.
+          </p>
+        </ReadingSection>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
-                7. Modifications du Service
-              </h2>
-              <p className="text-muted-foreground">
-                Nous nous réservons le droit de modifier, suspendre ou
-                interrompre le service à tout moment, avec ou sans préavis. Nous
-                nous efforçons de maintenir le service disponible et
-                fonctionnel, mais ne pouvons garantir une disponibilité
-                continue.
-              </p>
-            </section>
+        <ReadingSection id="contact" title="10. Contact">
+          <p>
+            Pour toute question sur ces conditions, écris à{" "}
+            <a href={`mailto:${PROJECT_CONFIG.contact.email}`}>
+              {PROJECT_CONFIG.contact.email}
+            </a>
+            . Le service est édité par Ahmed Karim (PedroKarim) pour Ascencia (
+            <a
+              href={PROJECT_CONFIG.company.website}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ascencia.re
+            </a>
+            ), et son code est public sur{" "}
+            <a
+              href={PROJECT_CONFIG.project.github}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              GitHub
+            </a>
+            .
+          </p>
+        </ReadingSection>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
-                8. Modifications des Conditions
-              </h2>
-              <p className="text-muted-foreground">
-                Ces conditions peuvent être modifiées à tout moment. Les
-                modifications entrent en vigueur dès leur publication sur le
-                site. Il est de votre responsabilité de consulter régulièrement
-                ces conditions.
-              </p>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
-                9. Droit Applicable
-              </h2>
-              <p className="text-muted-foreground">
-                Les présentes conditions sont régies par le droit français. Tout
-                litige sera soumis à la compétence des tribunaux français.
-              </p>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
-                10. Contact
-              </h2>
-              <p className="text-muted-foreground">
-                Pour toute question concernant ces conditions, vous pouvez nous
-                contacter :
-              </p>
-              <div className="mt-4 p-4 bg-secondary rounded-lg">
-                <p className="text-muted-foreground">
-                  <strong>Développeur :</strong> Ahmed Karim (PedroKarim)
-                  <br />
-                  <strong>Entreprise :</strong> Ascencia
-                  <br />
-                  <strong>Site web :</strong>{" "}
-                  <a
-                    href="https://ascencia.re"
-                    className="text-primary hover:underline"
-                  >
-                    https://ascencia.re
-                  </a>
-                  <br />
-                  <strong>Projet GitHub :</strong>{" "}
-                  <a
-                    href="https://github.com/pedrokarim/just-tools"
-                    className="text-primary hover:underline"
-                  >
-                    https://github.com/pedrokarim/just-tools
-                  </a>
-                </p>
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-    </div>
+        <LegalSignature
+          sibling={{
+            href: "/legal/privacy",
+            label: "Politique de confidentialité",
+          }}
+        />
+      </ReadingColumn>
+    </SiteShell>
   );
 }

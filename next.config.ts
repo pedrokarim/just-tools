@@ -142,7 +142,7 @@ const nextConfig: NextConfig = {
 
   // Optimisations de performance
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion"],
+    optimizePackageImports: ["lucide-react"],
     // Optimisations pour réduire l'utilisation mémoire
     memoryBasedWorkersCount: true,
   },
@@ -152,6 +152,17 @@ const nextConfig: NextConfig = {
   // Redirection pour SEO
   async redirects() {
     return [
+      // Les adresses qu'un visiteur ou un agent essaie d'instinct.
+      {
+        source: "/privacy",
+        destination: "/legal/privacy",
+        permanent: true,
+      },
+      {
+        source: "/terms",
+        destination: "/legal/terms",
+        permanent: true,
+      },
       {
         source: "/base64",
         destination: "/tools/base64-converter",

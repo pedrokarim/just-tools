@@ -1,296 +1,159 @@
-"use client";
-
-import { Suspense, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/navbar";
 import Link from "next/link";
-import Image from "next/image";
-import {
-  ArrowRight,
-  Zap,
-  Sparkles,
-  CheckCircle,
-  Github } from "lucide-react";
-import { tools } from "@/lib/tools-metadata";
-import { PROJECT_CONFIG } from "@/lib/constants";
-import { ContributionModal } from "@/components/contribution-modal";
-import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { ArrowRight, Github } from "lucide-react";
+import { JustToolsMark } from "@/components/brand/just-tools-lockup";
 import { OtherProjects } from "@/components/other-projects";
-import {
-  ToolsSection,
-  ToolsSectionFallback } from "@/components/tools-section";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { ContributeButton } from "@/components/site/contribute-button";
+import { SiteShell } from "@/components/site/site-shell";
+import { ToolRegistry } from "@/components/site/tool-registry";
+import { Button } from "@/components/ui/button";
+import { PROJECT_CONFIG } from "@/lib/constants";
+import { tools } from "@/lib/tools-metadata";
 
-const features = [
+const PRINCIPLES = [
   {
-    icon: <Zap className="w-6 h-6" aria-hidden="true" />,
-    title: "Rapide & Efficace",
-    description:
-      "Outils optimisés pour une productivité maximale, directement dans votre navigateur.",
+    title: "Rien à installer, rien à créer",
+    text: "Pas de compte ni d'abonnement. Tu ouvres la page et l'outil est là, sur ton ordinateur comme sur ton téléphone.",
   },
   {
-    icon: <Sparkles className="w-6 h-6" aria-hidden="true" />,
-    title: "Interface Moderne",
-    description:
-      "Design épuré et intuitif pour une expérience fluide sur tous les appareils.",
+    title: "Tes fichiers restent chez toi",
+    text: "Tes textes et tes images sont traités dans ton navigateur. Seule la traduction de la synthèse vocale passe par un service tiers, et uniquement quand tu la demandes.",
   },
   {
-    icon: <CheckCircle className="w-6 h-6" aria-hidden="true" />,
-    title: "Gratuit & Open Source",
-    description:
-      "Accès libre à tous les outils, sans limitation ni inscription requise.",
+    title: "Ouvert, et installable",
+    text: "Le code est public sous licence MIT. Le site s'installe comme une application, pour retrouver tes outils en un clic.",
   },
 ];
 
+/**
+ * L'accueil. Un établi plutôt qu'une vitrine : les outils arrivent dès le premier
+ * écran, parce que c'est pour eux qu'on vient.
+ *
+ * La page entière est rendue côté serveur : le titre, le registre et chaque lien
+ * sont dans le HTML, pour un moteur de recherche comme pour un agent.
+ *
+ * Le mouvement se limite à l'arrivée : les courbes de niveau apparaissent, la
+ * braise monte, le texte suit. Un seul moment, puis plus rien ne bouge.
+ */
 export default function Home() {
-  const [showContributionModal, setShowContributionModal] = useState(false);
-
   return (
-    <div className="min-h-screen bg-background">
-      <a
-        href="#contenu"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-foreground focus:ring-[3px] focus:ring-ring/50"
-      >
-        Aller au contenu principal
-      </a>
+    <SiteShell>
+      <main id="contenu" className="flex-1">
+        <section className="asc-summit jt-summit relative overflow-hidden px-5 pt-16 pb-20 md:pt-24 md:pb-28 lg:px-8">
+          <span aria-hidden="true" className="asc-ember-glow jt-glow" />
 
-      <Navbar />
+          <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 text-center">
+            <div className="jt-rise">
+              <JustToolsMark size={64} title="" />
+            </div>
 
-      <main id="contenu">
-        {/* Hero Section - Squarespace style dark hero */}
-        <section className="relative min-h-[90vh] flex items-center bg-[#0a0a0f] overflow-hidden">
-          {/* Hero image - right side, overflow */}
-          <div className="absolute right-0 top-0 bottom-0 w-[55%] hidden lg:block">
-            <Image
-              src="/assets/images/hero-workspace.jpg"
-              alt="Developer workspace"
-              fill
-              className="object-cover object-center"
-              priority
-            />
-            {/* Gradient overlay from left to blend with dark bg */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f] via-[#0a0a0f]/60 to-transparent" />
-          </div>
+            <h1
+              className="jt-rise text-fg text-[clamp(2.375rem,6.4vw,3.875rem)] leading-[1.04] font-bold tracking-[-0.04em] text-balance"
+              style={{ "--jt-step": 1 } as React.CSSProperties}
+            >
+              Les outils dont les devs ont besoin
+            </h1>
 
-          {/* Content */}
-          <div className="relative z-10 container mx-auto px-4 lg:px-8">
-            <div className="max-w-2xl pt-24 pb-20 lg:py-0">
-              <p className="text-white/50 text-sm font-medium tracking-widest uppercase mb-8">
-                {tools.length} outils gratuits & open source
-              </p>
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-[1.05] tracking-tight mb-8">
-                Les outils
-                <br />
-                dont les devs
-                <br />
-                ont besoin.
-              </h1>
-              <p className="text-lg lg:text-xl text-white/60 max-w-lg leading-relaxed mb-10">
-                Une collection d'outils de développement pour simplifier
-                votre workflow quotidien.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button
-                  size="lg"
-                  className="bg-white text-black hover:bg-white/90 text-base px-8 h-12 font-medium"
-                  asChild
+            <p
+              className="jt-rise text-fg-muted max-w-[46ch] text-[clamp(1rem,2vw,1.1875rem)] leading-relaxed text-pretty"
+              style={{ "--jt-step": 2 } as React.CSSProperties}
+            >
+              {tools.length} outils qui tournent dans ton navigateur&nbsp;:
+              gratuits, sans compte et open source.
+            </p>
+
+            <div
+              className="jt-rise flex flex-col items-center gap-3 pt-1 sm:flex-row"
+              style={{ "--jt-step": 3 } as React.CSSProperties}
+            >
+              <Button asChild size="lg" className="min-w-52">
+                <a href="#outils">
+                  Parcourir les outils
+                  <ArrowRight aria-hidden="true" />
+                </a>
+              </Button>
+              <Button asChild size="lg" variant="ghost">
+                <a
+                  href={PROJECT_CONFIG.project.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <a href="#tools">
-                    Découvrir les outils
-                    <ArrowRight className="w-4 h-4 ml-2" aria-hidden="true" />
-                  </a>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white text-base px-8 h-12 font-medium"
-                  asChild
-                >
-                  <Link
-                    href={PROJECT_CONFIG.project.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Github className="w-4 h-4 mr-2" aria-hidden="true" />
-                    Code source
-                  </Link>
-                </Button>
-              </div>
+                  <Github aria-hidden="true" />
+                  Code source
+                </a>
+              </Button>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section className="py-24 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-16">
-              {features.map((feature, index) => (
-                <div key={index} className="space-y-4">
-                  <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center text-foreground">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground">
-                    {feature.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+        <section
+          id="outils"
+          aria-labelledby="outils-titre"
+          className="mx-auto w-full max-w-6xl scroll-mt-20 px-5 py-14 md:py-16 lg:px-8"
+        >
+          <h2
+            id="outils-titre"
+            className="text-fg mb-8 text-2xl font-bold tracking-[-0.03em] md:text-3xl"
+          >
+            Tous les outils
+          </h2>
+          <ToolRegistry />
         </section>
 
-        {/* Tools Section */}
-        <section id="tools" className="py-24">
-          <div className="container mx-auto px-4">
-            <div className="max-w-6xl mx-auto">
-              <div className="text-center space-y-4 mb-14">
-                <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-                  Outils disponibles
-                </h2>
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                  Découvrez notre collection d'outils essentiels pour votre
-                  développement
+        <section
+          aria-labelledby="principes-titre"
+          className="mx-auto w-full max-w-6xl px-5 pb-16 lg:px-8"
+        >
+          <h2
+            id="principes-titre"
+            className="text-fg mb-8 text-2xl font-bold tracking-[-0.03em] md:text-3xl"
+          >
+            Comment c&apos;est fait
+          </h2>
+          <div className="grid gap-x-10 gap-y-8 md:grid-cols-3">
+            {PRINCIPLES.map((principle) => (
+              <div key={principle.title}>
+                <h3 className="text-fg mb-2 text-[0.9375rem] font-semibold tracking-tight">
+                  {principle.title}
+                </h3>
+                <p className="text-fg-muted text-sm leading-relaxed">
+                  {principle.text}
                 </p>
               </div>
-
-              <Suspense fallback={<ToolsSectionFallback />}>
-                <ToolsSection />
-              </Suspense>
-            </div>
+            ))}
           </div>
         </section>
 
-        {/* Community Section */}
-        <section className="border-t border-border">
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto text-center py-24 space-y-6">
-              <h2 className="text-3xl font-bold text-foreground">
-                Rejoignez la communauté
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Contribuez au projet open source et partagez vos idées pour
-                améliorer Just Tools.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button
-                  size="lg"
-                  className="text-base"
-                  onClick={() => setShowContributionModal(true)}
-                >
-                  Contribuer
-                  <ArrowRight className="w-4 h-4 ml-2" aria-hidden="true" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-base"
-                  asChild
-                >
-                  <Link
-                    href={PROJECT_CONFIG.project.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Voir le code source
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Other Projects Section */}
         <OtherProjects />
+
+        <section
+          aria-labelledby="contribuer-titre"
+          className="border-border bg-surface asc-contours-tight border-t py-14"
+        >
+          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-10 gap-y-5 px-5 lg:px-8">
+            <div className="max-w-xl">
+              <h2
+                id="contribuer-titre"
+                className="text-fg mb-2 text-2xl font-bold tracking-[-0.03em]"
+              >
+                Il te manque un outil&nbsp;?
+              </h2>
+              <p className="text-fg-muted text-[0.9375rem] leading-relaxed">
+                Signale un problème, propose une idée ou écris le code toi-même.
+                Tout se passe en public, sur GitHub.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <ContributeButton>Contribuer</ContributeButton>
+              <Button asChild variant="secondary">
+                <Link href="/contact">Nous écrire</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-background border-t border-border">
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-8">
-              <div className="flex items-center justify-center space-x-2 mb-4">
-                <Image
-                  src="/assets/images/icon-origin.png"
-                  alt="Just Tools Logo"
-                  width={32}
-                  height={32}
-                />
-                <span className="text-lg font-bold text-foreground">
-                  {PROJECT_CONFIG.name}
-                </span>
-              </div>
-              <p className="text-muted-foreground text-sm">
-                Développé par {PROJECT_CONFIG.creator.alias}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-6 mb-8">
-              <Link
-                href="/about"
-                className="text-muted-foreground hover:text-foreground transition-colors text-sm"
-              >
-                À Propos
-              </Link>
-              <Link
-                href="/legal/terms"
-                className="text-muted-foreground hover:text-foreground transition-colors text-sm"
-              >
-                Conditions d'Utilisation
-              </Link>
-              <Link
-                href="/legal/privacy"
-                className="text-muted-foreground hover:text-foreground transition-colors text-sm"
-              >
-                Politique de Confidentialité
-              </Link>
-              <Link
-                href={PROJECT_CONFIG.project.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors text-sm"
-              >
-                Code Source
-              </Link>
-              <Link
-                href={PROJECT_CONFIG.company.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors text-sm"
-              >
-                {PROJECT_CONFIG.company.name}
-              </Link>
-            </div>
-
-            <div className="border-t border-border pt-6 text-center">
-              <p className="text-muted-foreground text-sm">
-                &copy; {PROJECT_CONFIG.dates.copyrightYear}{" "}
-                {PROJECT_CONFIG.legal.developerName} -{" "}
-                {PROJECT_CONFIG.legal.companyName}. Tous droits réservés.
-              </p>
-              <p className="text-muted-foreground text-xs mt-2">
-                {PROJECT_CONFIG.name} est un projet open source sous licence{" "}
-                {PROJECT_CONFIG.project.license}.
-              </p>
-              <p className="text-muted-foreground text-xs mt-2">
-                <span translate="no">
-                  v{PROJECT_CONFIG.version}
-                  {process.env.NEXT_PUBLIC_BUILD_SHA
-                    ? ` · ${process.env.NEXT_PUBLIC_BUILD_SHA}`
-                    : ""}
-                </span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      <ContributionModal
-        isOpen={showContributionModal}
-        onClose={() => setShowContributionModal(false)}
-      />
-
       <PWAInstallPrompt />
-    </div>
+    </SiteShell>
   );
 }

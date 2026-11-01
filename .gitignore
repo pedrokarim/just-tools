@@ -66,3 +66,6 @@ temp
 
 # Dossiers de travail locaux (topologie du serveur, plans de migration).
 docs/local/
+
+# Copie de Prettier, refaite à chaque construction (scripts/vendor-prettier.js)
+public/vendor/

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,11 +22,16 @@ import {
   DialogTitle,
   DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Database, RefreshCw, Eye, FileText, Users, Shield, Globe, Hash } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
 import { AdminLoading } from "@/components/ui/loading";
+import {
+  AdminSection,
+  EmptyState,
+  formatDateTime,
+  formatInteger,
+  formatLocation,
+  PageHeader,
+  RefreshButton,
+  RelativeTime } from "@/components/admin/admin-page";
 
 interface DatabaseStats {
   totalPageViews: number;
@@ -68,15 +72,68 @@ interface DatabaseStats {
 interface TableData {
   name: string;
   count: number;
-  icon: React.ComponentType<{ className?: string }>;
   description: string;
-  color: string;
+}
+
+/** Une liste courte des derniers événements, avec son état vide. */
+function RecentList({
+  title,
+  emptyTitle,
+  children,
+}: {
+  title: string;
+  emptyTitle: string;
+  children: React.ReactNode[];
+}) {
+  return (
+    <Card className="gap-3">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {children.length > 0 ? (
+          <ul className="divide-border divide-y">{children}</ul>
+        ) : (
+          <EmptyState title={emptyTitle} />
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function RecentItem({
+  primary,
+  secondary,
+  title,
+  timestamp,
+}: {
+  primary: React.ReactNode;
+  secondary: React.ReactNode;
+  /** Le texte complet de `primary`, qui se tronque. */
+  title?: string;
+  timestamp: string;
+}) {
+  return (
+    <li className="flex min-w-0 items-start justify-between gap-3 py-2 text-sm first:pt-0 last:pb-0">
+      <div className="min-w-0 flex-1">
+        <div className="text-fg truncate font-medium" title={title}>
+          {primary}
+        </div>
+        <div className="text-fg-muted flex min-w-0 flex-wrap items-center gap-2 text-[0.8125rem]">
+          {secondary}
+        </div>
+      </div>
+      <RelativeTime
+        value={timestamp}
+        className="text-fg-subtle shrink-0 text-xs"
+      />
+    </li>
+  );
 }
 
 export default function DatabasePage() {
   const [stats, setStats] = useState<DatabaseStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing] = useState(false);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [tableDetails, setTableDetails] = useState<any[]>([]);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -147,117 +204,67 @@ export default function DatabasePage() {
     {
       name: "pageView",
       count: stats?.totalPageViews || 0,
-      icon: FileText,
-      description: "Vues de pages enregistrées",
-      color: "text-blue-600",
+      description: "Vues de pages",
     },
     {
       name: "uniqueVisitor",
       count: stats?.totalUniqueVisitors || 0,
-      icon: Users,
       description: "Visiteurs uniques",
-      color: "text-green-600",
     },
     {
       name: "loginAttempt",
       count: stats?.totalLoginAttempts || 0,
-      icon: Shield,
       description: "Tentatives de connexion",
-      color: "text-purple-600",
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Base de données
-            </h1>
-            <p className="text-muted-foreground">
-              Gestion et visualisation des données
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-center min-h-[400px]">
-          <AdminLoading
-            mode="full"
-            message="Chargement de la base de données..."
-            submessage="Analyse des tables et statistiques"
-          />
-        </div>
-      </div>
-    );
-  }
+  const totalDetailPages = Math.ceil(
+    tablePagination.total / tablePagination.pageSize
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Base de données</h1>
-          <p className="text-muted-foreground">
-            Gestion et visualisation des données
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={fetchDatabaseStats}
-            disabled={refreshing}
-            variant="outline"
-            size="sm"
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
-            />
-            {refreshing ? "Actualisation..." : "Actualiser"}
-          </Button>
-        </div>
-      </div>
+    <>
+      <PageHeader
+        title="Base de données"
+        description="Les tables du site et leurs derniers enregistrements."
+        actions={
+          <RefreshButton onClick={fetchDatabaseStats} busy={loading} />
+        }
+      />
 
-      {/* Vue d'ensemble des tables */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Tables de la base de données
-          </CardTitle>
-          <CardDescription>
-            Cliquez sur une table pour voir ses détails
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Table</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Enregistrements</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tables.map((table) => {
-                const Icon = table.icon;
-                return (
-                  <TableRow
-                    key={table.name}
-                    className="cursor-pointer hover:bg-muted/50"
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Icon className={`h-4 w-4 ${table.color}`} />
-                        <span className="font-mono text-sm">{table.name}</span>
-                      </div>
+      {loading ? (
+        <AdminLoading message="Lecture de la base de données…" />
+      ) : (
+        <>
+          {/* Vue d'ensemble des tables */}
+          <AdminSection
+            title="Tables"
+            description="Ouvre une table pour parcourir ses enregistrements."
+          >
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Table</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-end">Enregistrements</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tables.map((table) => (
+                  <TableRow key={table.name}>
+                    <TableCell className="font-mono text-[0.8125rem]">
+                      {table.name}
                     </TableCell>
-                    <TableCell>{table.description}</TableCell>
-                    <TableCell className="text-right">
-                      <Badge variant="secondary">
-                        {table.count.toLocaleString()}
-                      </Badge>
+                    <TableCell className="text-fg-muted">
+                      {table.description}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-end tabular-nums">
+                      {formatInteger(table.count)}
+                    </TableCell>
+                    <TableCell className="py-1 text-end">
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
@@ -265,329 +272,241 @@ export default function DatabasePage() {
                             size="sm"
                             onClick={() => handleTableClick(table.name)}
                           >
-                            <Eye className="h-4 w-4 mr-1" />
                             Voir
+                            <span className="sr-only"> la table {table.name}</span>
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-[95vw] max-h-[90vh] w-full sm:max-w-[95vw]">
+                        {/* La fenêtre est bornée à l'écran : seule la zone du
+                            tableau défile, sur les deux axes, et la pagination
+                            reste visible sous elle. */}
+                        <DialogContent className="flex flex-col overflow-hidden sm:max-w-[min(72rem,calc(100vw-2rem))]">
                           <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                              <Icon className={`h-5 w-5 ${table.color}`} />
-                              Table: {table.name}
+                            <DialogTitle>
+                              Table{" "}
+                              <span className="font-mono break-all">
+                                {table.name}
+                              </span>
                             </DialogTitle>
                             <DialogDescription>
-                              {table.description} -{" "}
-                              {table.count.toLocaleString()} enregistrements
+                              {table.description},{" "}
+                              <span className="tabular-nums">
+                                {formatInteger(table.count)}
+                              </span>{" "}
+                              enregistrements.
                             </DialogDescription>
                           </DialogHeader>
-                          <ScrollArea className="h-[70vh] w-full">
-                            {detailsLoading ? (
-                              <AdminLoading
-                                mode="compact"
-                                message="Chargement des détails..."
-                                submessage="Récupération des enregistrements"
-                              />
-                            ) : (
-                              <div className="space-y-4">
-                                {tableDetails.length === 0 ? (
-                                  <div className="text-center py-8 text-muted-foreground">
-                                    Aucun enregistrement trouvé
-                                  </div>
-                                ) : (
-                                  <div className="overflow-x-auto">
-                                    <Table className="min-w-full">
-                                      <TableHeader>
-                                        <TableRow>
-                                          {Object.keys(
-                                            tableDetails[0] || {}
-                                          ).map((key) => (
+                          {detailsLoading ? (
+                            <AdminLoading
+                              mode="compact"
+                              message="Chargement des enregistrements…"
+                            />
+                          ) : (
+                            <div className="flex min-h-0 flex-1 flex-col gap-4">
+                              {tableDetails.length === 0 ? (
+                                <EmptyState
+                                  title="Aucun enregistrement"
+                                  description="Cette table est vide pour l'instant."
+                                />
+                              ) : (
+                                <div className="border-border rounded-card min-h-0 flex-1 overflow-auto border [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-1 [&>[data-slot=table-container]]:overflow-visible [&>[data-slot=table-container]]:rounded-none [&>[data-slot=table-container]]:border-0">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        {Object.keys(tableDetails[0] || {}).map(
+                                          (key) => (
                                             <TableHead
                                               key={key}
-                                              className="text-xs whitespace-nowrap px-2 py-1"
+                                              className="px-3 py-2 normal-case"
                                             >
                                               {key}
                                             </TableHead>
-                                          ))}
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {tableDetails
-                                          .slice(0, 50)
-                                          .map((record, index) => (
-                                            <TableRow key={index}>
-                                              {Object.entries(record).map(
-                                                ([key, value]) => (
-                                                  <TableCell
-                                                    key={key}
-                                                    className="text-xs px-2 py-1 max-w-32"
-                                                  >
-                                                    {renderCellValue(
-                                                      key,
-                                                      value
-                                                    )}
-                                                  </TableCell>
-                                                )
-                                              )}
-                                            </TableRow>
-                                          ))}
-                                      </TableBody>
-                                    </Table>
-                                  </div>
-                                )}
-                                {/* Pagination pour les détails de table */}
-                                {(() => {
-                                  console.log(
-                                    "État pagination:",
-                                    tablePagination
-                                  );
-                                  return null;
-                                })()}
-                                {tablePagination.total > 0 && (
-                                  <div className="flex items-center justify-between pt-4 border-t">
-                                    <div className="text-sm text-muted-foreground">
-                                      Affichage de{" "}
-                                      {(tablePagination.page - 1) *
-                                        tablePagination.pageSize +
-                                        1}{" "}
-                                      à{" "}
-                                      {Math.min(
-                                        tablePagination.page *
-                                          tablePagination.pageSize,
-                                        tablePagination.total
-                                      )}{" "}
-                                      sur{" "}
-                                      {tablePagination.total.toLocaleString()}{" "}
-                                      enregistrements
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={tablePagination.page === 1}
-                                        onClick={() =>
-                                          fetchTableDetails(
-                                            selectedTable!,
-                                            tablePagination.page - 1,
-                                            tablePagination.pageSize
                                           )
-                                        }
-                                      >
-                                        Précédent
-                                      </Button>
-                                      <span className="text-sm">
-                                        Page {tablePagination.page} sur{" "}
-                                        {Math.ceil(
-                                          tablePagination.total /
-                                            tablePagination.pageSize
                                         )}
-                                      </span>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={
-                                          tablePagination.page >=
-                                          Math.ceil(
-                                            tablePagination.total /
-                                              tablePagination.pageSize
-                                          )
-                                        }
-                                        onClick={() =>
-                                          fetchTableDetails(
-                                            selectedTable!,
-                                            tablePagination.page + 1,
-                                            tablePagination.pageSize
-                                          )
-                                        }
-                                      >
-                                        Suivant
-                                      </Button>
-                                    </div>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {tableDetails
+                                        .slice(0, 50)
+                                        .map((record, index) => (
+                                          <TableRow key={index}>
+                                            {Object.entries(record).map(
+                                              ([key, value]) => (
+                                                <TableCell
+                                                  key={key}
+                                                  className="max-w-64 px-3 py-1.5 text-xs"
+                                                >
+                                                  {renderCellValue(key, value)}
+                                                </TableCell>
+                                              )
+                                            )}
+                                          </TableRow>
+                                        ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              )}
+                              {/* Pagination pour les détails de table */}
+                              {tablePagination.total > 0 && (
+                                <div className="border-border flex shrink-0 flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t pt-4">
+                                  <div className="text-fg-muted text-sm tabular-nums">
+                                    {(tablePagination.page - 1) *
+                                      tablePagination.pageSize +
+                                      1}{" "}
+                                    à{" "}
+                                    {Math.min(
+                                      tablePagination.page *
+                                        tablePagination.pageSize,
+                                      tablePagination.total
+                                    )}{" "}
+                                    sur {formatInteger(tablePagination.total)}
                                   </div>
-                                )}
-                              </div>
-                            )}
-                          </ScrollArea>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={tablePagination.page === 1}
+                                      onClick={() =>
+                                        fetchTableDetails(
+                                          selectedTable!,
+                                          tablePagination.page - 1,
+                                          tablePagination.pageSize
+                                        )
+                                      }
+                                    >
+                                      Précédent
+                                    </Button>
+                                    <span className="text-fg-muted text-sm whitespace-nowrap tabular-nums">
+                                      Page {tablePagination.page} sur{" "}
+                                      {totalDetailPages}
+                                    </span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={
+                                        tablePagination.page >= totalDetailPages
+                                      }
+                                      onClick={() =>
+                                        fetchTableDetails(
+                                          selectedTable!,
+                                          tablePagination.page + 1,
+                                          tablePagination.pageSize
+                                        )
+                                      }
+                                    >
+                                      Suivant
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </DialogContent>
                       </Dialog>
                     </TableCell>
                   </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </AdminSection>
+
+          {/* Statistiques récentes */}
+          <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-3">
+            <RecentList title="Dernières vues" emptyTitle="Aucune vue enregistrée">
+              {(stats?.recentPageViews ?? []).slice(0, 5).map((view) => (
+                <RecentItem
+                  key={view.id}
+                  primary={view.pagePath}
+                  title={view.pagePath}
+                  secondary={formatLocation(view.country, view.city) ?? "Inconnu"}
+                  timestamp={view.timestamp}
+                />
+              ))}
+            </RecentList>
+
+            <RecentList
+              title="Derniers visiteurs"
+              emptyTitle="Aucun visiteur enregistré"
+            >
+              {(stats?.recentVisitors ?? []).slice(0, 5).map((visitor) => (
+                <RecentItem
+                  key={visitor.id}
+                  primary={
+                    <span className="font-mono text-[0.8125rem]">
+                      {visitor.fingerprint.slice(0, 8)}…
+                    </span>
+                  }
+                  title={visitor.fingerprint}
+                  secondary={
+                    <span className="tabular-nums">
+                      {formatInteger(visitor.visitCount)} visites
+                    </span>
+                  }
+                  timestamp={visitor.lastVisit}
+                />
+              ))}
+            </RecentList>
+
+            <RecentList
+              title="Dernières connexions"
+              emptyTitle="Aucune tentative enregistrée"
+            >
+              {(stats?.recentLoginAttempts ?? []).slice(0, 5).map((attempt) => {
+                const account = attempt.username || "Utilisateur inconnu";
+                return (
+                  <RecentItem
+                    key={attempt.id}
+                    primary={account}
+                    title={account}
+                    secondary={
+                      <>
+                        <Badge
+                          variant={attempt.success ? "success" : "destructive"}
+                        >
+                          {attempt.success ? "Réussie" : "Refusée"}
+                        </Badge>
+                        {attempt.country && <span>{attempt.country}</span>}
+                      </>
+                    }
+                    timestamp={attempt.timestamp}
+                  />
                 );
               })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Statistiques récentes */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Dernières vues de pages */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Dernières vues
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {stats?.recentPageViews.slice(0, 5).map((view) => (
-                <div
-                  key={view.id}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{view.pagePath}</div>
-                    <div className="text-muted-foreground flex items-center gap-2">
-                      <Globe className="h-3 w-3" />
-                      {view.country || "Inconnu"}
-                      {view.city && `, ${view.city}`}
-                    </div>
-                  </div>
-                  <div className="text-right text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(view.timestamp), {
-                      addSuffix: true,
-                      locale: fr,
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Derniers visiteurs */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Derniers visiteurs
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {stats?.recentVisitors.slice(0, 5).map((visitor) => (
-                <div
-                  key={visitor.id}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">
-                      <Hash className="h-3 w-3 inline mr-1" />
-                      {visitor.fingerprint.slice(0, 8)}...
-                    </div>
-                    <div className="text-muted-foreground">
-                      {visitor.visitCount} visites
-                    </div>
-                  </div>
-                  <div className="text-right text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(visitor.lastVisit), {
-                      addSuffix: true,
-                      locale: fr,
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Dernières tentatives de connexion */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Dernières connexions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {stats?.recentLoginAttempts.slice(0, 5).map((attempt) => (
-                <div
-                  key={attempt.id}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">
-                      {attempt.username || "Utilisateur inconnu"}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={attempt.success ? "default" : "destructive"}
-                        className="text-xs"
-                      >
-                        {attempt.success ? "Réussi" : "Échoué"}
-                      </Badge>
-                      {attempt.country && (
-                        <span className="text-muted-foreground text-xs">
-                          {attempt.country}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(attempt.timestamp), {
-                      addSuffix: true,
-                      locale: fr,
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+            </RecentList>
+          </div>
+        </>
+      )}
+    </>
   );
 }
 
 function renderCellValue(key: string, value: any): React.ReactNode {
   if (value === null || value === undefined) {
-    return <span className="text-muted-foreground">null</span>;
+    return <span className="text-fg-subtle font-mono">null</span>;
   }
 
   if (typeof value === "boolean") {
-    return (
-      <Badge variant={value ? "default" : "secondary"}>
-        {value ? "Oui" : "Non"}
-      </Badge>
-    );
+    return <Badge variant="secondary">{value ? "Oui" : "Non"}</Badge>;
   }
 
   if (key === "timestamp" || key === "firstVisit" || key === "lastVisit") {
-    return (
-      <div className="text-xs">
-        <div>{new Date(value).toLocaleDateString("fr-FR")}</div>
-        <div className="text-muted-foreground">
-          {new Date(value).toLocaleTimeString("fr-FR")}
-        </div>
-      </div>
-    );
+    return <span className="tabular-nums">{formatDateTime(value)}</span>;
   }
 
   if (key === "fingerprint") {
     return (
-      <div className="font-mono text-xs">
-        <Hash className="h-3 w-3 inline mr-1" />
-        {String(value).slice(0, 12)}...
-      </div>
+      <span className="font-mono" title={String(value)}>
+        {String(value).slice(0, 12)}…
+      </span>
     );
   }
 
-  if (key === "userAgent") {
+  if (key === "userAgent" || (typeof value === "string" && value.length > 50)) {
     return (
-      <div className="text-xs max-w-32 truncate" title={String(value)}>
+      <div className="truncate" title={String(value)}>
         {String(value)}
       </div>
     );
   }
 
-  if (typeof value === "string" && value.length > 50) {
-    return (
-      <div className="text-xs max-w-32 truncate" title={value}>
-        {value.slice(0, 50)}...
-      </div>
-    );
-  }
-
-  return <span className="text-xs">{String(value)}</span>;
+  return <span>{String(value)}</span>;
 }

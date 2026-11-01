@@ -27,8 +27,7 @@ Toute la documentation du projet est disponible dans le dossier [`docs/`](./docs
 - **Next.js 15** - Framework React moderne avec App Router et Turbopack
 - **TypeScript** - Typage statique pour un code plus robuste
 - **Tailwind CSS 4** - Framework CSS utilitaire de nouvelle génération
-- **shadcn/ui** - Composants UI réutilisables et personnalisables
-- **Framer Motion** - Animations fluides et transitions élégantes
+- **shadcn/ui** - Base des composants UI, redessinés avec la grammaire d'Ascencia ID
 - **Jotai & Zustand** - Gestion d'état moderne et performante
 - **Lucide React** - Icônes modernes et cohérentes
 - **Sonner** - Notifications toast élégantes
@@ -39,7 +38,7 @@ Toute la documentation du projet est disponible dans le dossier [`docs/`](./docs
 ### 🎨 Interface Moderne
 - Design responsive et adaptatif
 - Support du mode sombre/clair automatique
-- Animations fluides avec Framer Motion
+- Animations mesurées, en CSS, qui respectent le réglage de mouvement réduit
 - Interface utilisateur intuitive et accessible
 - Effets visuels avancés (particules, confettis, etc.)
 
@@ -228,10 +227,10 @@ just-tools/
 ## 🎨 Personnalisation
 
 ### Thème
-Le projet utilise Tailwind CSS 4 avec des variables CSS personnalisées. Modifiez `src/app/globals.css` pour changer les couleurs et le thème.
+Le site porte l'identité d'Ascencia ID, direction « Basalte ». Les règles de design, de mouvement et de ton sont dans [`docs/DESIGN.md`](./docs/DESIGN.md), et `tests/unit/design-rules.test.ts` les vérifie à chaque lancement.
 
 ### Composants
-Les composants shadcn/ui peuvent être personnalisés dans `src/components/ui/`.
+`src/components/ui/` garde l'API de shadcn/ui avec la grammaire d'Ascencia ID, et `src/components/site/` porte ce qui est propre à Just Tools.
 
 ### Animations
 Le projet inclut de nombreux composants d'animation réutilisables dans `src/components/`.
@@ -310,7 +309,6 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 - [Tailwind CSS](https://tailwindcss.com/) pour le framework CSS
 - [Lucide](https://lucide.dev/) pour les icônes
 - [Next.js](https://nextjs.org/) pour le framework React
-- [Framer Motion](https://www.framer.com/motion/) pour les animations
 
 ## ✨ Nouvelles Fonctionnalités
 

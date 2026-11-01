@@ -1,100 +1,122 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle } from "@/components/ui/card";
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type CSSProperties,
+  type DragEvent,
+  type FormEvent,
+} from "react";
+import { Download, ImagePlus, Loader2, Scissors, X } from "lucide-react";
+import { toast } from "sonner";
+import { ToolPage } from "@/components/site/tool-shell";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import {
-  Upload,
-  Download,
-  Link as LinkIcon,
-  Scissors,
-  Loader2,
-  X,
-  Image as ImageIcon,
-  FileImage } from "lucide-react";
-import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type BackgroundOption = "transparent" | "white" | "black" | "custom";
+type StageView = "result" | "source";
 
 const MAX_IMAGE_PIXELS = 4_000_000;
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
+
+const BACKGROUND_OPTIONS: { value: BackgroundOption; label: string }[] = [
+  { value: "transparent", label: "Transparent" },
+  { value: "white", label: "Blanc" },
+  { value: "black", label: "Noir" },
+  { value: "custom", label: "Personnalisé" },
+];
+
+/** Le damier de la transparence, sur les jetons : il suit le thème. */
+const CHECKER_STYLE: CSSProperties = {
+  backgroundImage:
+    "repeating-conic-gradient(var(--asc-border) 0% 25%, transparent 0% 50%)",
+  backgroundSize: "20px 20px",
+};
 
 export default function RemoveBackgroundPage() {
   const [sourceFile, setSourceFile] = useState<Blob | null>(null);
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
+  const [view, setView] = useState<StageView>("source");
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [progressLabel, setProgressLabel] = useState<string>("");
+  const [progressLabel, setProgressLabel] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
   const [background, setBackground] = useState<BackgroundOption>("transparent");
   const [customColor, setCustomColor] = useState("#ffffff");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    return () => {
+  // Deux effets séparés : avec un seul, l'arrivée du résultat révoquait aussi
+  // l'URL de l'image d'origine, encore affichée.
+  useEffect(
+    () => () => {
       if (sourceUrl) URL.revokeObjectURL(sourceUrl);
-      if (resultUrl) URL.revokeObjectURL(resultUrl);
-    };
-  }, [sourceUrl, resultUrl]);
-
-  const loadFromBlob = useCallback(
-    async (blob: Blob) => {
-      if (!blob.type.startsWith("image/")) {
-        toast.error("Veuillez sélectionner une image valide");
-        return;
-      }
-      if (blob.size > MAX_FILE_SIZE) {
-        toast.error("Image trop volumineuse (max 20 Mo)");
-        return;
-      }
-
-      if (sourceUrl) URL.revokeObjectURL(sourceUrl);
-      if (resultUrl) URL.revokeObjectURL(resultUrl);
-
-      const url = URL.createObjectURL(blob);
-      setSourceUrl(url);
-      setSourceFile(blob);
-      setResultUrl(null);
-      setResultBlob(null);
-      toast.success("Image chargée");
     },
-    [sourceUrl, resultUrl]
+    [sourceUrl]
   );
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  useEffect(
+    () => () => {
+      if (resultUrl) URL.revokeObjectURL(resultUrl);
+    },
+    [resultUrl]
+  );
+
+  const loadFromBlob = (blob: Blob) => {
+    if (!blob.type.startsWith("image/")) {
+      toast.error("Ce fichier n'est pas une image. Choisis un PNG, un JPG ou un WebP.");
+      return;
+    }
+    if (blob.size > MAX_FILE_SIZE) {
+      toast.error("Image trop lourde. Choisis un fichier de 20 Mo au plus.");
+      return;
+    }
+
+    setSourceUrl(URL.createObjectURL(blob));
+    setSourceFile(blob);
+    setResultUrl(null);
+    setResultBlob(null);
+    setView("source");
+  };
+
+  const handleFileInput = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) loadFromBlob(file);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
+  const handleDrop = (event: DragEvent) => {
+    event.preventDefault();
     setIsDragOver(false);
-    const file = e.dataTransfer.files?.[0];
+    const file = event.dataTransfer.files?.[0];
     if (file) loadFromBlob(file);
   };
 
-  const handleUrlLoad = async () => {
+  const handleDragLeave = (event: DragEvent) => {
+    // Passer au-dessus d'un enfant de la zone n'est pas en sortir.
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleUrlLoad = async (event: FormEvent) => {
+    event.preventDefault();
     const trimmed = imageUrl.trim();
     if (!trimmed) {
-      toast.error("Veuillez entrer une URL d'image");
+      toast.error("Colle d'abord l'adresse d'une image.");
       return;
     }
     try {
       new URL(trimmed);
     } catch {
-      toast.error("URL invalide");
+      toast.error(
+        "Adresse invalide. Colle une adresse complète, comme https://exemple.com/image.jpg."
+      );
       return;
     }
 
@@ -103,10 +125,11 @@ export default function RemoveBackgroundPage() {
       const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(trimmed)}`;
       const response = await fetch(proxyUrl);
       if (!response.ok) throw new Error("fetch failed");
-      const blob = await response.blob();
-      await loadFromBlob(blob);
+      loadFromBlob(await response.blob());
     } catch {
-      toast.error("Impossible de charger l'image depuis cette URL");
+      toast.error(
+        "Image impossible à charger. Vérifie que l'adresse pointe vers une image publique."
+      );
     } finally {
       setIsLoadingUrl(false);
     }
@@ -140,7 +163,7 @@ export default function RemoveBackgroundPage() {
     if (!sourceFile) return;
     setIsProcessing(true);
     setProgress(0);
-    setProgressLabel("Préparation...");
+    setProgressLabel("Préparation…");
 
     try {
       const resized = await resizeIfTooLarge(sourceFile);
@@ -149,28 +172,24 @@ export default function RemoveBackgroundPage() {
 
       const output = await removeBackground(resized, {
         progress: (key: string, current: number, total: number) => {
-          const pct = total > 0 ? Math.round((current / total) * 100) : 0;
-          setProgress(pct);
+          const percent = total > 0 ? Math.round((current / total) * 100) : 0;
+          setProgress(percent);
           if (key.startsWith("fetch")) {
-            setProgressLabel("Téléchargement du modèle IA (première fois)...");
+            setProgressLabel("Téléchargement du modèle, la première fois seulement…");
           } else if (key.startsWith("compute")) {
-            setProgressLabel("Analyse de l'image...");
+            setProgressLabel("Analyse de l'image…");
           } else {
-            setProgressLabel("Traitement...");
+            setProgressLabel("Traitement…");
           }
         },
       });
 
-      if (resultUrl) URL.revokeObjectURL(resultUrl);
-      const url = URL.createObjectURL(output);
       setResultBlob(output);
-      setResultUrl(url);
-      toast.success("Arrière-plan supprimé !");
+      setResultUrl(URL.createObjectURL(output));
+      setView("result");
     } catch (err) {
       console.error(err);
-      toast.error(
-        "Erreur lors du traitement. Essayez avec une image plus petite."
-      );
+      toast.error("Le traitement a échoué. Réessaie avec une image plus petite.");
     } finally {
       setIsProcessing(false);
       setProgress(0);
@@ -187,24 +206,23 @@ export default function RemoveBackgroundPage() {
 
   const composeForExport = async (): Promise<Blob> => {
     if (!resultBlob) throw new Error("no result");
-    const bg = getBackgroundColor();
-    if (!bg) return resultBlob;
+    const color = getBackgroundColor();
+    if (!color) return resultBlob;
 
     const bitmap = await createImageBitmap(resultBlob);
     const canvas = document.createElement("canvas");
     canvas.width = bitmap.width;
     canvas.height = bitmap.height;
     const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = bg;
+    ctx.fillStyle = color;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(bitmap, 0, 0);
     bitmap.close();
 
-    const mime = "image/png";
     return await new Promise<Blob>((resolve, reject) =>
       canvas.toBlob(
         (b) => (b ? resolve(b) : reject(new Error("compose failed"))),
-        mime
+        "image/png"
       )
     );
   };
@@ -214,299 +232,232 @@ export default function RemoveBackgroundPage() {
     try {
       const blob = await composeForExport();
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `remove-background-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `remove-background-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      toast.success("Image téléchargée");
     } catch {
-      toast.error("Erreur lors du téléchargement");
+      toast.error("Le téléchargement a échoué. Réessaie.");
     }
   };
 
   const handleReset = () => {
-    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
-    if (resultUrl) URL.revokeObjectURL(resultUrl);
     setSourceFile(null);
     setSourceUrl(null);
     setResultBlob(null);
     setResultUrl(null);
     setImageUrl("");
+    setView("source");
   };
 
-  const bgColor = getBackgroundColor();
+  const showsResult = view === "result" && resultUrl !== null;
+  const backgroundColor = getBackgroundColor();
+  const stageStyle: CSSProperties | undefined = !showsResult
+    ? undefined
+    : backgroundColor
+      ? { backgroundColor }
+      : CHECKER_STYLE;
 
-  const checkerStyle: React.CSSProperties = {
-    backgroundImage:
-      "linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)",
-    backgroundSize: "20px 20px",
-    backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px",
-  };
+  if (!sourceFile) {
+    return (
+      <ToolPage>
+        <label
+          onDrop={handleDrop}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setIsDragOver(true);
+          }}
+          onDragLeave={handleDragLeave}
+          className={cn(
+            "rounded-card has-focus-visible:border-primary flex min-h-72 cursor-pointer flex-col items-center justify-center gap-2 border border-dashed px-6 py-10 text-center transition-colors duration-(--animate-duration-fast)",
+            isDragOver
+              ? "border-primary bg-primary-soft"
+              : "border-border-strong hover:border-primary hover:bg-surface"
+          )}
+        >
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileInput}
+            className="sr-only"
+          />
+          <ImagePlus size={20} className="text-fg-subtle" aria-hidden="true" />
+          <span className="text-fg text-sm font-medium">
+            {isDragOver
+              ? "Dépose l'image ici"
+              : "Glisse une image ici, ou clique pour la choisir"}
+          </span>
+          <span className="text-fg-muted text-[0.8125rem] leading-snug">
+            PNG, JPG ou WebP, 20&nbsp;Mo au plus. Ton fichier est traité dans ton
+            navigateur et n&apos;est envoyé nulle part.
+          </span>
+        </label>
+
+        <form
+          onSubmit={handleUrlLoad}
+          noValidate
+          className="flex flex-col gap-2"
+        >
+          <Label htmlFor="image-url">Ou colle l&apos;adresse d&apos;une image</Label>
+          <div className="flex gap-2">
+            <Input
+              id="image-url"
+              type="url"
+              placeholder="https://exemple.com/image.jpg"
+              value={imageUrl}
+              onChange={(event) => setImageUrl(event.target.value)}
+              className="flex-1"
+            />
+            <Button type="submit" variant="secondary" disabled={isLoadingUrl}>
+              {isLoadingUrl && (
+                <Loader2 className="asc-animate-spin" aria-hidden="true" />
+              )}
+              Charger
+            </Button>
+          </div>
+        </form>
+      </ToolPage>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8 text-center">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 mb-4">
-          <Scissors className="w-7 h-7" />
-        </div>
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">
-          Suppression d&apos;Arrière-plan
-        </h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Supprimez automatiquement l&apos;arrière-plan de vos images grâce à
-          une IA qui s&apos;exécute entièrement dans votre navigateur. Aucun
-          upload serveur.
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
-          <Badge variant="secondary">100% client-side</Badge>
-          <Badge variant="secondary">Gratuit</Badge>
-          <Badge variant="secondary">Confidentiel</Badge>
-        </div>
-      </div>
+    <ToolPage>
+      <Card className="asc-animate-step-in gap-4 p-4 sm:p-5">
+        <div
+          className="bg-surface border-border rounded-field relative h-[min(60dvh,36rem)] min-h-72 w-full overflow-hidden border"
+          style={stageStyle}
+        >
+          {sourceUrl && (
+            <div
+              // Sur un parent : l'animation de l'image fixe son opacité.
+              className={cn(
+                "absolute inset-0 transition-opacity duration-(--animate-duration-fast)",
+                isProcessing && "opacity-50"
+              )}
+            >
+              {/* `next/image` est inapplicable : ce sont des URL d'objet locales.
+                  La clé fait se remplacer l'avant et l'après à vue. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                key={view}
+                src={showsResult ? (resultUrl ?? sourceUrl) : sourceUrl}
+                alt={showsResult ? "Image sans arrière-plan" : "Image d'origine"}
+                className="asc-animate-fade size-full max-w-full object-contain"
+              />
+            </div>
+          )}
 
-      {!sourceFile && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="w-5 h-5" />
-              Importer une image
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="file" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="file" className="gap-2">
-                  <FileImage className="w-4 h-4" />
-                  Fichier
-                </TabsTrigger>
-                <TabsTrigger value="url" className="gap-2">
-                  <LinkIcon className="w-4 h-4" />
-                  URL
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="file" className="mt-4">
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsDragOver(true);
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault();
-                    setIsDragOver(false);
-                  }}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
-                    isDragOver
-                      ? "border-sky-500 bg-sky-50 dark:bg-sky-950/30"
-                      : "border-muted-foreground/25 hover:border-sky-400"
-                  }`}
-                >
-                  <ImageIcon className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-                  <p className="text-sm font-medium">
-                    Glissez-déposez une image ici
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    ou cliquez pour parcourir (PNG, JPG, WebP · max 20 Mo)
-                  </p>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileInput}
-                    className="hidden"
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="url" className="mt-4 space-y-3">
-                <Label htmlFor="image-url">URL de l&apos;image</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="image-url"
-                    type="url"
-                    placeholder="https://exemple.com/image.jpg"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleUrlLoad();
-                    }}
-                  />
-                  <Button
-                    onClick={handleUrlLoad}
-                    disabled={isLoadingUrl}
-                    className="shrink-0"
-                  >
-                    {isLoadingUrl ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      "Charger"
-                    )}
-                  </Button>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      )}
-
-      {sourceFile && (
-        <div className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center justify-between">
-                  <span>Image originale</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="relative aspect-square w-full rounded-md overflow-hidden bg-muted">
-                  {sourceUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={sourceUrl}
-                      alt="original"
-                      className="absolute inset-0 w-full h-full object-contain"
-                    />
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Résultat</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div
-                  className="relative aspect-square w-full rounded-md overflow-hidden"
-                  style={
-                    bgColor
-                      ? { backgroundColor: bgColor }
-                      : checkerStyle
-                  }
-                >
-                  {resultUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={resultUrl}
-                      alt="result"
-                      className="absolute inset-0 w-full h-full object-contain"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
-                      {isProcessing ? (
-                        <div className="flex flex-col items-center gap-3 px-6 text-center">
-                          <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
-                          <div className="text-sm font-medium">
-                            {progressLabel}
-                          </div>
-                          {progress > 0 && (
-                            <div className="w-full max-w-xs">
-                              <div className="h-2 bg-muted-foreground/20 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-sky-500 transition-[width]"
-                                  style={{ width: `${progress}%` }}
-                                />
-                              </div>
-                              <div className="text-xs mt-1">{progress}%</div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        "Cliquez sur « Supprimer l'arrière-plan »"
-                      )}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <div className="flex flex-wrap gap-3 items-center">
-                <Button
-                  onClick={handleRemoveBackground}
-                  disabled={isProcessing || !!resultUrl}
-                  size="lg"
-                  className="gap-2"
-                >
-                  {isProcessing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Scissors className="w-4 h-4" />
-                  )}
-                  {resultUrl
-                    ? "Arrière-plan supprimé"
-                    : "Supprimer l'arrière-plan"}
-                </Button>
-
-                <Button
-                  variant="outline"
-                  onClick={handleReset}
-                  disabled={isProcessing}
-                  className="gap-2"
-                >
-                  <X className="w-4 h-4" />
-                  Nouvelle image
-                </Button>
-
-                {resultUrl && (
-                  <Button
-                    onClick={handleDownload}
-                    variant="default"
-                    className="gap-2 ml-auto"
-                  >
-                    <Download className="w-4 h-4" />
-                    Télécharger
-                  </Button>
+          {isProcessing && (
+            <div
+              role="status"
+              className="asc-animate-rise bg-elevated border-border absolute inset-x-3 bottom-3 flex flex-col gap-2 rounded-field border p-3"
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-fg min-w-0 text-sm font-medium">
+                  {progressLabel}
+                </span>
+                {progress > 0 && (
+                  <span className="text-fg-subtle shrink-0 text-xs tabular-nums">
+                    {progress}&nbsp;%
+                  </span>
                 )}
               </div>
-
-              {resultUrl && (
-                <div className="space-y-2 pt-2 border-t">
-                  <Label>Fond de l&apos;image exportée</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {(
-                      [
-                        { value: "transparent", label: "Transparent" },
-                        { value: "white", label: "Blanc" },
-                        { value: "black", label: "Noir" },
-                        { value: "custom", label: "Personnalisé" },
-                      ] as const
-                    ).map((opt) => (
-                      <Button
-                        key={opt.value}
-                        variant={
-                          background === opt.value ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => setBackground(opt.value)}
-                      >
-                        {opt.label}
-                      </Button>
-                    ))}
-                    {background === "custom" && (
-                      <input
-                        type="color"
-                        value={customColor}
-                        onChange={(e) => setCustomColor(e.target.value)}
-                        className="h-9 w-14 rounded cursor-pointer border"
-                        aria-label="Couleur de fond personnalisée"
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              <div className="bg-border h-1.5 overflow-hidden rounded-full">
+                <div
+                  className="bg-primary h-full origin-left rounded-full transition-[scale] duration-(--animate-duration-fast)"
+                  style={{ scale: `${progress / 100} 1` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {resultUrl ? (
+            <Button onClick={handleDownload}>
+              <Download aria-hidden="true" />
+              Télécharger
+            </Button>
+          ) : (
+            <Button onClick={handleRemoveBackground} disabled={isProcessing}>
+              {isProcessing ? (
+                <Loader2 className="asc-animate-spin" aria-hidden="true" />
+              ) : (
+                <Scissors aria-hidden="true" />
+              )}
+              Supprimer l&apos;arrière-plan
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            onClick={handleReset}
+            disabled={isProcessing}
+          >
+            <X aria-hidden="true" />
+            Nouvelle image
+          </Button>
+
+          {resultUrl && (
+            <div
+              role="group"
+              aria-label="Image affichée"
+              className="flex items-center gap-1 sm:ms-auto"
+            >
+              <Button
+                size="sm"
+                variant={view === "result" ? "soft" : "ghost"}
+                aria-pressed={view === "result"}
+                onClick={() => setView("result")}
+              >
+                Résultat
+              </Button>
+              <Button
+                size="sm"
+                variant={view === "source" ? "soft" : "ghost"}
+                aria-pressed={view === "source"}
+                onClick={() => setView("source")}
+              >
+                Original
+              </Button>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {resultUrl && (
+        <fieldset className="asc-animate-step-in flex flex-col gap-1">
+          <legend className="text-fg mb-2 text-sm font-medium">
+            Fond de l&apos;image exportée
+          </legend>
+          <div className="flex flex-wrap items-center gap-2">
+            {BACKGROUND_OPTIONS.map(({ value, label }) => (
+              <Button
+                key={value}
+                variant={background === value ? "soft" : "outline"}
+                aria-pressed={background === value}
+                onClick={() => {
+                  setBackground(value);
+                  setView("result");
+                }}
+              >
+                {label}
+              </Button>
+            ))}
+            {background === "custom" && (
+              <Input
+                type="color"
+                aria-label="Couleur de fond personnalisée"
+                value={customColor}
+                onChange={(event) => setCustomColor(event.target.value)}
+                className="w-14 shrink-0 cursor-pointer p-1"
+              />
+            )}
+          </div>
+        </fieldset>
       )}
-    </div>
+    </ToolPage>
   );
 }

@@ -44,7 +44,7 @@ export const SAMPLE_TEXTS = [
   {
     title: "Salutation",
     description: "Message de bienvenue simple",
-    content: "Bonjour ! Comment allez-vous aujourd'hui ?",
+    content: "Bonjour ! Comment vas-tu aujourd'hui ?",
   },
   {
     title: "Technologie",

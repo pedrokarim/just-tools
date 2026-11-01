@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAtom } from "jotai";
 import { toast } from "sonner";
+import { CopyButton } from "@/components/site/copy-button";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -22,20 +23,16 @@ import {
   SelectTrigger,
   SelectValue } from "@/components/ui/select";
 import {
-  AlertCircle,
   ArrowRightLeft,
   BookOpen,
-  Copy,
+  ClipboardPaste,
   Eye,
   Languages,
-  Library,
   Loader2,
   Maximize2,
-  Mic,
-  MicOff,
   Pause,
   Pencil,
-  Settings,
+  Play,
   Trash2,
   Upload,
   Volume2,
@@ -45,9 +42,11 @@ import { cleanTextForTTS } from "@/lib/text-processing";
 import { detectLanguage, translateText } from "@/lib/translation";
 import {
   extractTextFromImage,
+  getClipboardText,
   importTextFile } from "@/lib/file-import";
 import {
   DEFAULT_SETTINGS,
+  SAMPLE_TEXTS,
   ttsHistoryAtom,
   ttsSavedTextsAtom,
   ttsSettingsAtom,
@@ -59,7 +58,6 @@ import {
   stripTtsParams,
   type TtsLaunchParams } from "@/lib/tts-params";
 import {
-  formatDuration,
   pickDefaultVoice,
   useTtsPlayer,
   type SpeechOverrides } from "@/hooks/use-tts-player";
@@ -68,9 +66,25 @@ import { ReaderText } from "@/components/text-to-speech/reader-text";
 import { SettingsPanel } from "@/components/text-to-speech/settings-panel";
 import { ImportPanel } from "@/components/text-to-speech/import-panel";
 import { LibraryPanel } from "@/components/text-to-speech/library-panel";
+import { cn } from "@/lib/utils";
 
 /** Évènement émis par le gestionnaire de lancement PWA (voir launch-handler). */
 const LAUNCH_EVENT = "just-tools:launch";
+
+/** L'exemple de l'état vide : assez long pour entendre la voix. */
+const ARRIVAL_SAMPLE = SAMPLE_TEXTS[1];
+
+const PANEL_CLASS = "min-h-0 overflow-y-auto px-4 pb-4";
+
+/** Les langues s'écrivent en toutes lettres : un drapeau emoji n'est pas un libellé. */
+const LANGUAGE_ITEMS = TRANSLATION_LANGUAGES.map((lang) => (
+  <SelectItem key={lang.code} value={lang.code}>
+    {lang.nativeName ?? lang.name}
+  </SelectItem>
+));
+
+const countOf = (count: number, noun: string) =>
+  `${count.toLocaleString("fr-FR")} ${noun}${count > 1 ? "s" : ""}`;
 
 export default function TextToSpeech() {
   const [settings, setSettings] = useAtom(ttsSettingsAtom);
@@ -87,7 +101,6 @@ export default function TextToSpeech() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
 
   const [showSaveBox, setShowSaveBox] = useState(false);
   const [saveName, setSaveName] = useState("");
@@ -129,8 +142,8 @@ export default function TextToSpeech() {
     console.error("Erreur de synthèse vocale:", error);
     toast.error(
       error === "unsupported"
-        ? "La synthèse vocale n'est pas disponible dans ce navigateur"
-        : "Erreur lors de la lecture"
+        ? "Ton navigateur ne propose pas la synthèse vocale. Essaie avec Edge ou Chrome."
+        : "La lecture a échoué. Relance-la ou choisis une autre voix."
     );
   }, []);
 
@@ -276,14 +289,6 @@ export default function TextToSpeech() {
   }, [settings.clipboardAutoRead, setText]);
 
   // --- Actions -------------------------------------------------------------
-  const handleCopyText = useCallback(() => {
-    if (!text.trim()) return;
-    navigator.clipboard
-      .writeText(text)
-      .then(() => toast.success("Texte copié"))
-      .catch(() => toast.error("Impossible de copier le texte"));
-  }, [text]);
-
   const handleClearText = useCallback(() => {
     if (!text.trim()) return;
     setText("");
@@ -291,32 +296,37 @@ export default function TextToSpeech() {
     toast.success("Texte effacé");
   }, [setText, text]);
 
-  const handleCopyLink = useCallback(() => {
-    const cleaned = cleanTextForTTS(text);
-    if (!cleaned) return;
+  const handlePaste = useCallback(async () => {
+    try {
+      await getClipboardText(setText);
+    } catch (error) {
+      // `getClipboardText` a déjà prévenu l'utilisateur.
+      console.error("Erreur clipboard:", error);
+    }
+  }, [setText]);
 
+  /** Le clic vaut geste utilisateur : la lecture part sans être bloquée. */
+  const handlePlaySample = useCallback(() => {
+    setText(ARRIVAL_SAMPLE.content);
+    playText(cleanTextForTTS(ARRIVAL_SAMPLE.content));
+  }, [playText, setText]);
+
+  const getShareLink = useCallback(() => {
     const url = buildTtsUrl(window.location.origin, {
-      text: cleaned,
+      text: cleanTextForTTS(text),
       autoplay: true,
       mini: readerMode,
       rate: overrides?.rate,
       voice: settings.selectedVoice || undefined,
     });
 
-    navigator.clipboard
-      .writeText(url)
-      .then(() => {
-        setLinkCopied(true);
-        setTimeout(() => setLinkCopied(false), 2000);
-        if (url.length > 8000) {
-          toast.warning(
-            "Lien copié, mais très long : certains navigateurs tronquent au-delà de ~8 000 caractères"
-          );
-        } else {
-          toast.success("Lien de lecture automatique copié");
-        }
-      })
-      .catch(() => toast.error("Impossible de copier le lien"));
+    if (url.length > 8000) {
+      toast.warning(
+        "Ce lien est très long : certains navigateurs le tronquent au-delà de 8 000 caractères."
+      );
+    }
+
+    return url;
   }, [overrides?.rate, readerMode, settings.selectedVoice, text]);
 
   /**
@@ -339,7 +349,7 @@ export default function TextToSpeech() {
 
   const handleTranslate = useCallback(async () => {
     if (!text.trim()) {
-      toast.error("Aucun texte à traduire");
+      toast.error("Écris d'abord un texte à traduire.");
       return;
     }
 
@@ -350,7 +360,7 @@ export default function TextToSpeech() {
       if (sourceLanguage === "auto") {
         actualSource = await detectLanguage(text);
         toast.info(
-          `Langue détectée : ${
+          `Langue détectée : ${
             TRANSLATION_LANGUAGES.find((item) => item.code === actualSource)
               ?.name || actualSource
           }`
@@ -368,7 +378,7 @@ export default function TextToSpeech() {
       }
     } catch (error) {
       console.error("Erreur de traduction:", error);
-      toast.error("Erreur lors de la traduction, service indisponible");
+      toast.error("Le service de traduction ne répond pas. Réessaie dans un instant.");
     } finally {
       setIsTranslating(false);
     }
@@ -400,7 +410,7 @@ export default function TextToSpeech() {
 
   const handleConfirmSave = useCallback(() => {
     if (!saveName.trim()) {
-      toast.error("Veuillez nommer le texte");
+      toast.error("Donne un nom à ce texte.");
       return;
     }
 
@@ -474,77 +484,57 @@ export default function TextToSpeech() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [pause, play, skipSeconds, status, stop]);
 
-  const characterCount = text.length;
-  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
-  const activeVoiceName =
-    overrides?.voice || settings.selectedVoice || "voix par défaut";
+  const hasText = Boolean(text.trim());
+  const characterCount = countOf(text.length, "caractère");
+  const wordCount = countOf(
+    hasText ? text.trim().split(/\s+/).length : 0,
+    "mot"
+  );
   const showReaderText = followMode && isActive && source.length > 0;
 
-  const statusBadge = (
-    <Badge
-      variant={
-        status === "playing"
-          ? "default"
-          : status === "paused"
-          ? "secondary"
-          : "outline"
-      }
-      className={status === "playing" ? "bg-emerald-500" : ""}
-    >
-      {status === "loading" ? (
-        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-      ) : status === "playing" ? (
-        <Mic className="mr-1 h-3 w-3" />
-      ) : status === "paused" ? (
-        <Pause className="mr-1 h-3 w-3" />
-      ) : (
-        <MicOff className="mr-1 h-3 w-3" />
-      )}
-      {status === "loading"
-        ? "Préparation…"
-        : status === "playing"
-        ? "Lecture"
-        : status === "paused"
-        ? "En pause"
-        : "Prêt"}
-    </Badge>
-  );
-
-  const playerBar = (size: "default" | "large") => (
-    <PlayerBar
-      status={status}
-      position={position}
-      totalChars={totalChars}
-      currentTimeMs={currentTimeMs}
-      durationMs={durationMs}
-      charsPerSecond={charsPerSecond}
-      onPlay={play}
-      onPause={pause}
-      onStop={stop}
-      onSeekChar={seekToChar}
-      onSkip={skipSeconds}
-      size={size}
-    />
-  );
-
   return (
-    <div className="relative flex h-full flex-col overflow-hidden">
-      {/* Barre d'état */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-2">
-        {statusBadge}
+    // Les colonnes suivent la place réelle de l'outil, pas celle de la fenêtre :
+    // le rail en prend 256 px, ou 64 une fois réduit.
+    <div className="@container relative flex h-full min-w-0 flex-col overflow-hidden">
+      {/* La même barre dans les deux modes : le bouton de bascule ne bouge pas.
+          Le mode lecteur n'y garde que lui. */}
+      <div
+        className={cn(
+          "flex h-12 shrink-0 items-center gap-2 px-3 @2xl:px-4",
+          !readerMode && "border-border border-b"
+        )}
+      >
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          {!readerMode && isActive && (
+            <Badge variant={status === "playing" ? "success" : "secondary"}>
+              {status === "loading" ? (
+                <Loader2 className="asc-animate-spin" aria-hidden="true" />
+              ) : status === "playing" ? (
+                <Volume2 aria-hidden="true" />
+              ) : (
+                <Pause aria-hidden="true" />
+              )}
+              {status === "loading"
+                ? "Préparation…"
+                : status === "playing"
+                ? "Lecture"
+                : "En pause"}
+            </Badge>
+          )}
 
-        <span className="text-sm text-muted-foreground">
-          {characterCount} caractères • {wordCount} mots
-          {totalChars > 0 && ` • ~${formatDuration(durationMs)}`}
-        </span>
+          {!readerMode && hasText && (
+            <span
+              className="text-fg-muted min-w-0 truncate text-[0.8125rem] tabular-nums"
+              title={`${characterCount}, ${wordCount}`}
+            >
+              <span className="@max-md:hidden">{characterCount}, </span>
+              {wordCount}
+            </span>
+          )}
+        </div>
 
-        <span className="hidden items-center gap-1 text-sm text-muted-foreground md:flex">
-          <Volume2 className="h-3.5 w-3.5" />
-          <span className="max-w-[220px] truncate">{activeVoiceName}</span>
-        </span>
-
-        <div className="ml-auto flex items-center gap-2">
-          {isActive && (
+        <div className="flex shrink-0 items-center gap-1">
+          {!readerMode && isActive && (
             <Button
               variant="ghost"
               size="sm"
@@ -556,12 +546,36 @@ export default function TextToSpeech() {
               }
             >
               {followMode ? (
-                <Pencil className="mr-1 h-4 w-4" />
+                <Pencil aria-hidden="true" />
               ) : (
-                <Eye className="mr-1 h-4 w-4" />
+                <Eye aria-hidden="true" />
               )}
-              {followMode ? "Éditer" : "Suivre"}
+              <span className="@max-md:sr-only">
+                {followMode ? "Éditer" : "Suivre"}
+              </span>
             </Button>
+          )}
+
+          {!readerMode && hasText && (
+            <>
+              <CopyButton
+                value={text}
+                iconOnly
+                variant="ghost"
+                size="icon-sm"
+                label="Copier le texte"
+                copiedLabel="Texte copié"
+              />
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={handleClearText}
+                aria-label="Effacer le texte"
+                title="Effacer le texte"
+              >
+                <Trash2 aria-hidden="true" />
+              </Button>
+            </>
           )}
 
           <Button
@@ -571,373 +585,311 @@ export default function TextToSpeech() {
             title="Basculer entre l'outil complet et le lecteur épuré"
           >
             {readerMode ? (
-              <Maximize2 className="mr-1 h-4 w-4" />
+              <Maximize2 aria-hidden="true" />
             ) : (
-              <BookOpen className="mr-1 h-4 w-4" />
+              <BookOpen aria-hidden="true" />
             )}
-            {readerMode ? "Outil complet" : "Mode lecteur"}
+            <span className="@max-md:sr-only">
+              {readerMode ? "Outil complet" : "Mode lecteur"}
+            </span>
           </Button>
         </div>
       </div>
 
       {readerMode ? (
         /* --- Mode lecteur épuré --- */
-        <div className="flex min-h-0 flex-1 items-center justify-center p-4">
-          <Card className="flex h-full w-full max-w-3xl flex-col gap-4 py-4">
-            <CardContent className="flex min-h-0 flex-1 flex-col px-5">
-              {source ? (
-                <ReaderText
-                  source={source}
-                  position={position}
-                  wordRange={wordRange}
-                  onSeekChar={seekToChar}
-                  className="min-h-0 flex-1 pr-2"
-                  textClassName="text-lg leading-loose"
-                />
-              ) : (
-                <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-                  <MicOff className="h-10 w-10" />
-                  <p>Aucun texte à lire.</p>
-                  <p className="max-w-sm text-xs">
-                    Ce mode est conçu pour être ouvert avec un texte dans
-                    l&apos;URL (
-                    <code className="rounded bg-muted px-1">?text=…&amp;autoplay=1</code>
-                    ).
+        source ? (
+          <ReaderText
+            source={source}
+            position={position}
+            wordRange={wordRange}
+            onSeekChar={seekToChar}
+            className="min-h-0 flex-1 px-4 pb-6"
+            textClassName="mx-auto max-w-2xl text-lg leading-loose @2xl:text-xl"
+          />
+        ) : (
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+            <div className="mx-auto flex h-full max-w-2xl flex-col items-start justify-center gap-3">
+              <p className="text-fg text-lg font-semibold">Aucun texte à lire</p>
+              <p className="text-fg-muted text-sm leading-relaxed">
+                Écris-en un dans l&apos;outil complet, ou ouvre ce mode avec le
+                texte dans l&apos;adresse&nbsp;:{" "}
+                <code className="bg-surface rounded-xs px-1 font-mono text-xs break-all">
+                  ?text=…&amp;autoplay=1&amp;mini=1
+                </code>
+              </p>
+              <Button variant="secondary" onClick={() => setReaderMode(false)}>
+                Écrire un texte
+              </Button>
+            </div>
+          </div>
+        )
+      ) : (
+        /* --- Outil complet : une seule colonne qui défile tant que la place
+           manque, puis deux colonnes qui défilent chacune de leur côté --- */
+        <div className="grid min-h-0 flex-1 grid-cols-1 overflow-x-hidden overflow-y-auto @4xl:grid-cols-[minmax(0,1fr)_22rem] @4xl:grid-rows-[minmax(0,1fr)] @4xl:overflow-hidden">
+          <div
+            className="relative flex min-h-[50dvh] min-w-0 flex-col @4xl:min-h-0"
+            onDrop={handleDrop}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setIsDragOver(true);
+            }}
+            onDragLeave={(event) => {
+              event.preventDefault();
+              // Passer d'un enfant à l'autre déclenche aussi cet évènement.
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                setIsDragOver(false);
+              }
+            }}
+          >
+            {showReaderText ? (
+              <ReaderText
+                source={source}
+                position={position}
+                wordRange={wordRange}
+                onSeekChar={seekToChar}
+                className="asc-animate-fade min-h-0 flex-1 p-4"
+              />
+            ) : (
+              <Textarea
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                aria-label="Texte à lire"
+                placeholder="Écris ou colle ton texte ici. Tu peux aussi y déposer un fichier ou une image."
+                // Même rythme que `ReaderText` : passer de l'édition au suivi ne
+                // décale pas le texte. `leading` après `text-base`, que
+                // tailwind-merge retirerait sinon.
+                className="field-sizing-fixed min-h-0 flex-1 resize-none rounded-none border-0 bg-transparent p-4 text-base leading-relaxed focus-visible:shadow-[inset_0_0_0_2px_color-mix(in_srgb,var(--asc-primary)_16%,transparent)]"
+              />
+            )}
+
+            {originalText && (
+              <div className="border-border bg-surface flex min-w-0 shrink-0 items-start gap-2 border-t py-2 ps-4 pe-2">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <p className="text-fg-muted text-xs font-medium">
+                    Texte original
+                  </p>
+                  <p className="text-fg-muted max-h-20 overflow-y-auto text-sm leading-relaxed break-words whitespace-pre-wrap">
+                    {originalText}
                   </p>
                 </div>
-              )}
-            </CardContent>
-            <div className="px-5">{playerBar("large")}</div>
-          </Card>
-        </div>
-      ) : (
-        /* --- Outil complet, sans défilement de page sur grand écran --- */
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 lg:overflow-hidden">
-          <div className="grid h-full min-h-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
-            {/* Colonne texte + lecture */}
-            <div className="flex min-h-[55vh] flex-col gap-3 lg:min-h-0">
-              <Card className="flex min-h-0 flex-1 flex-col gap-3 py-4">
-                <CardHeader className="px-4">
-                  <CardTitle className="flex items-center justify-between gap-2 text-base">
-                    <span>{showReaderText ? "Lecture en cours" : "Texte à lire"}</span>
-                    <span className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCopyText}
-                        disabled={!text.trim()}
-                      >
-                        <Copy className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Copier</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleClearText}
-                        disabled={!text.trim()}
-                      >
-                        <Trash2 className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Effacer</span>
-                      </Button>
-                    </span>
-                  </CardTitle>
-                </CardHeader>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setOriginalText("")}
+                  aria-label="Masquer le texte original"
+                  title="Masquer le texte original"
+                >
+                  <X aria-hidden="true" />
+                </Button>
+              </div>
+            )}
 
-                <CardContent className="flex min-h-0 flex-1 flex-col gap-2 px-4">
-                  <div
-                    className={`relative flex min-h-0 flex-1 flex-col rounded-lg border-2 border-dashed transition-colors ${
-                      isDragOver
-                        ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/20"
-                        : "border-transparent"
-                    }`}
-                    onDrop={handleDrop}
-                    onDragOver={(event) => {
-                      event.preventDefault();
-                      setIsDragOver(true);
-                    }}
-                    onDragLeave={(event) => {
-                      event.preventDefault();
-                      setIsDragOver(false);
-                    }}
+            {hasText ? (
+              <div className="border-border flex min-w-0 shrink-0 items-center gap-2 border-t px-3 py-2">
+                <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
+                  <SelectTrigger
+                    size="sm"
+                    aria-label="Langue du texte"
+                    className="min-w-0 flex-1 @2xl:max-w-44"
                   >
-                    {showReaderText ? (
-                      <ReaderText
-                        source={source}
-                        position={position}
-                        wordRange={wordRange}
-                        onSeekChar={seekToChar}
-                        className="min-h-0 flex-1 rounded-lg border bg-muted/30 p-3"
-                      />
-                    ) : (
-                      <Textarea
-                        value={text}
-                        onChange={(event) => setText(event.target.value)}
-                        placeholder="Entrez votre texte, glissez-déposez un fichier ou une image, ou utilisez l'onglet Import…"
-                        className="min-h-0 flex-1 resize-none"
-                      />
-                    )}
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Détecter</SelectItem>
+                    {LANGUAGE_ITEMS}
+                  </SelectContent>
+                </Select>
 
-                    {isDragOver && (
-                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-lg bg-emerald-500/10 backdrop-blur-sm">
-                        <div className="text-center">
-                          <Upload className="mx-auto mb-2 h-10 w-10 text-emerald-500" />
-                          <p className="font-medium text-emerald-600 dark:text-emerald-400">
-                            Déposez votre fichier
-                          </p>
-                          <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80">
-                            Texte (.txt, .md, .csv, .json) ou image (OCR)
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => {
+                    if (sourceLanguage === "auto") return;
+                    setSourceLanguage(targetLanguage);
+                    setTargetLanguage(sourceLanguage);
+                  }}
+                  disabled={sourceLanguage === "auto"}
+                  aria-label="Inverser les langues"
+                  title="Inverser les langues"
+                >
+                  <ArrowRightLeft aria-hidden="true" />
+                </Button>
 
-                    {isImporting && (
-                      <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-background/70 backdrop-blur-sm">
-                        <div className="text-center">
-                          <Loader2 className="mx-auto mb-2 h-10 w-10 animate-spin text-emerald-500" />
-                          <p className="text-sm font-medium">Import en cours…</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                <Select value={targetLanguage} onValueChange={setTargetLanguage}>
+                  <SelectTrigger
+                    size="sm"
+                    aria-label="Langue de traduction"
+                    className="min-w-0 flex-1 @2xl:max-w-44"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>{LANGUAGE_ITEMS}</SelectContent>
+                </Select>
 
-                  {originalText && (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-950/20">
-                      <div className="mb-1 flex items-center justify-between">
-                        <span className="flex items-center gap-1 text-xs font-medium text-amber-800 dark:text-amber-200">
-                          <Languages className="h-3 w-3" />
-                          Texte original
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 w-5 p-0"
-                          onClick={() => setOriginalText("")}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <div className="max-h-16 overflow-y-auto text-xs text-amber-700 dark:text-amber-300">
-                        {originalText}
-                      </div>
-                    </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleTranslate}
+                  disabled={isTranslating}
+                >
+                  {isTranslating ? (
+                    <Loader2 className="asc-animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Languages aria-hidden="true" />
                   )}
+                  <span className="@max-md:sr-only">Traduire</span>
+                </Button>
+              </div>
+            ) : (
+              <div className="border-border flex min-w-0 shrink-0 flex-wrap items-center gap-2 border-t px-3 py-2">
+                <Button variant="secondary" size="sm" onClick={handlePaste}>
+                  <ClipboardPaste aria-hidden="true" />
+                  Coller
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handlePlaySample}>
+                  <Play aria-hidden="true" />
+                  Écouter un exemple
+                </Button>
+              </div>
+            )}
 
-                  {/* Traduction */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Select
-                      value={sourceLanguage}
-                      onValueChange={setSourceLanguage}
-                    >
-                      <SelectTrigger className="h-8 w-28">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="auto">🔍 Auto</SelectItem>
-                        {TRANSLATION_LANGUAGES.map((lang) => (
-                          <SelectItem key={lang.code} value={lang.code}>
-                            <span className="flex items-center gap-1">
-                              <span>{lang.flag}</span>
-                              <span className="text-xs">
-                                {lang.code.toUpperCase()}
-                              </span>
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+            {isDragOver && (
+              <div className="asc-animate-fade border-primary bg-primary-soft text-primary-soft-fg rounded-card pointer-events-none absolute inset-2 flex flex-col items-center justify-center gap-1 border-2 border-dashed p-4 text-center">
+                <Upload size={16} aria-hidden="true" />
+                <p className="text-sm font-semibold">Dépose ton fichier ici</p>
+                <p className="text-xs">
+                  Texte (.txt, .md, .csv, .json) ou image à lire par OCR
+                </p>
+              </div>
+            )}
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => {
-                        if (sourceLanguage === "auto") return;
-                        setSourceLanguage(targetLanguage);
-                        setTargetLanguage(sourceLanguage);
-                      }}
-                      disabled={sourceLanguage === "auto"}
-                      title="Inverser les langues"
-                    >
-                      <ArrowRightLeft className="h-3 w-3" />
-                    </Button>
+            {isImporting && (
+              <div className="asc-animate-fade bg-bg/90 text-fg absolute inset-0 flex items-center justify-center gap-2 p-4">
+                <Loader2
+                  size={16}
+                  className="asc-animate-spin"
+                  aria-hidden="true"
+                />
+                <p className="text-sm font-medium">Import en cours…</p>
+              </div>
+            )}
+          </div>
 
-                    <Select
-                      value={targetLanguage}
-                      onValueChange={setTargetLanguage}
-                    >
-                      <SelectTrigger className="h-8 w-28">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TRANSLATION_LANGUAGES.map((lang) => (
-                          <SelectItem key={lang.code} value={lang.code}>
-                            <span className="flex items-center gap-1">
-                              <span>{lang.flag}</span>
-                              <span className="text-xs">
-                                {lang.code.toUpperCase()}
-                              </span>
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <Button
-                      size="sm"
-                      className="h-8 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
-                      onClick={handleTranslate}
-                      disabled={!text.trim() || isTranslating}
-                    >
-                      {isTranslating ? (
-                        <Loader2 className="h-3 w-3 animate-spin sm:mr-2" />
-                      ) : (
-                        <Languages className="h-3 w-3 sm:mr-2" />
-                      )}
-                      <span className="hidden sm:inline">Traduire</span>
-                    </Button>
-
-                    <span className="ml-auto hidden text-xs text-muted-foreground xl:block">
-                      <kbd className="rounded bg-muted px-1.5 py-0.5">
-                        Ctrl+Entrée
-                      </kbd>{" "}
-                      lire •{" "}
-                      <kbd className="rounded bg-muted px-1.5 py-0.5">
-                        Ctrl+Espace
-                      </kbd>{" "}
-                      pause •{" "}
-                      <kbd className="rounded bg-muted px-1.5 py-0.5">
-                        Ctrl+←/→
-                      </kbd>{" "}
-                      ±10 s
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shrink-0 py-3">
-                <CardContent className="px-4">{playerBar("default")}</CardContent>
-              </Card>
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="border-border min-h-0 min-w-0 gap-0 border-t @4xl:border-s @4xl:border-t-0"
+          >
+            <div className="shrink-0 p-3">
+              <TabsList className="w-full">
+                <TabsTrigger value="settings">Réglages</TabsTrigger>
+                <TabsTrigger value="import">Import</TabsTrigger>
+                <TabsTrigger value="library">Bibliothèque</TabsTrigger>
+              </TabsList>
             </div>
 
-            {/* Colonne panneaux */}
-            <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="flex min-h-[50vh] flex-col lg:min-h-0"
-            >
-              <TabsList className="grid w-full shrink-0 grid-cols-3">
-                <TabsTrigger value="settings">
-                  <Settings className="mr-1 h-4 w-4" />
-                  Réglages
-                </TabsTrigger>
-                <TabsTrigger value="import">
-                  <Upload className="mr-1 h-4 w-4" />
-                  Import
-                </TabsTrigger>
-                <TabsTrigger value="library">
-                  <Library className="mr-1 h-4 w-4" />
-                  Bibliothèque
-                </TabsTrigger>
-              </TabsList>
+            <TabsContent value="settings" className={PANEL_CLASS}>
+              <SettingsPanel
+                settings={settings}
+                onSettingsChange={setSettings}
+                voices={voices}
+                overrides={overrides}
+                onClearOverrides={() => setOverrides(undefined)}
+                onClearOverride={handleClearOverride}
+                onReset={() => setShowResetDialog(true)}
+                getShareLink={getShareLink}
+                canCopyLink={hasText}
+              />
+            </TabsContent>
 
-              <TabsContent
-                value="settings"
-                className="min-h-0 flex-1 overflow-y-auto rounded-lg border p-4"
-              >
-                <SettingsPanel
-                  settings={settings}
-                  onSettingsChange={setSettings}
-                  voices={voices}
-                  overrides={overrides}
-                  onClearOverrides={() => setOverrides(undefined)}
-                  onClearOverride={handleClearOverride}
-                  onReset={() => setShowResetDialog(true)}
-                  onCopyLink={handleCopyLink}
-                  linkCopied={linkCopied}
-                  canCopyLink={Boolean(text.trim())}
-                />
-              </TabsContent>
+            <TabsContent value="import" className={PANEL_CLASS}>
+              <ImportPanel
+                onText={setText}
+                onAppendText={(incoming) =>
+                  setText((prev) =>
+                    prev.trim() ? `${prev}\n\n${incoming}` : incoming
+                  )
+                }
+              />
+            </TabsContent>
 
-              <TabsContent
-                value="import"
-                className="min-h-0 flex-1 overflow-y-auto rounded-lg border p-4"
-              >
-                <ImportPanel
-                  onText={setText}
-                  onAppendText={(incoming) =>
-                    setText((prev) =>
-                      prev.trim() ? `${prev}\n\n${incoming}` : incoming
-                    )
-                  }
-                />
-              </TabsContent>
-
-              <TabsContent
-                value="library"
-                className="min-h-0 flex-1 overflow-y-auto rounded-lg border p-4"
-              >
-                <LibraryPanel
-                  savedTexts={savedTexts}
-                  history={history}
-                  canSave={Boolean(text.trim())}
-                  showSaveBox={showSaveBox}
-                  saveName={saveName}
-                  isSaving={isSaving}
-                  onSaveNameChange={setSaveName}
-                  onRequestSave={() => {
-                    setSaveName("");
-                    setShowSaveBox((prev) => !prev);
-                  }}
-                  onConfirmSave={handleConfirmSave}
-                  onLoad={(content) => {
-                    setText(content);
-                    toast.success("Texte chargé");
-                  }}
-                  onDelete={(id) => {
-                    setRawSavedTexts((prev) =>
-                      prev.filter((item) => item.id !== id)
-                    );
-                    toast.success("Texte supprimé");
-                  }}
-                  onClearHistory={() => {
-                    setHistory([]);
-                    toast.success("Historique vidé");
-                  }}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
+            <TabsContent value="library" className={PANEL_CLASS}>
+              <LibraryPanel
+                savedTexts={savedTexts}
+                history={history}
+                canSave={hasText}
+                showSaveBox={showSaveBox}
+                saveName={saveName}
+                isSaving={isSaving}
+                onSaveNameChange={setSaveName}
+                onRequestSave={() => {
+                  setSaveName("");
+                  setShowSaveBox((prev) => !prev);
+                }}
+                onConfirmSave={handleConfirmSave}
+                onLoad={(content) => {
+                  setText(content);
+                  toast.success("Texte chargé");
+                }}
+                onDelete={(id) => {
+                  setRawSavedTexts((prev) =>
+                    prev.filter((item) => item.id !== id)
+                  );
+                  toast.success("Texte supprimé");
+                }}
+                onClearHistory={() => {
+                  setHistory([]);
+                  toast.success("Historique vidé");
+                }}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       )}
 
+      {/* Le lecteur reste à portée quel que soit l'endroit où l'on a défilé. */}
+      <div className="border-border shrink-0 border-t px-4 py-3">
+        <div className={cn("min-w-0", readerMode && "mx-auto max-w-2xl")}>
+          <PlayerBar
+            status={status}
+            position={position}
+            totalChars={totalChars}
+            currentTimeMs={currentTimeMs}
+            durationMs={durationMs}
+            charsPerSecond={charsPerSecond}
+            onPlay={play}
+            onPause={pause}
+            onStop={stop}
+            onSeekChar={seekToChar}
+            onSkip={skipSeconds}
+            size={readerMode ? "large" : "default"}
+          />
+        </div>
+      </div>
+
       {/* Lecture automatique refusée par le navigateur */}
       {blocked && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <Card className="mx-4 max-w-md py-5 text-center">
-            <CardContent className="space-y-3 px-6">
-              <AlertCircle className="mx-auto h-10 w-10 text-amber-500" />
-              <h2 className="text-lg font-semibold">
-                Le navigateur attend une interaction
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Chromium refuse de démarrer une synthèse vocale sans geste de
-                l&apos;utilisateur. Un clic — n&apos;importe où — suffit à lancer
-                la lecture.
-              </p>
-              <div className="flex justify-center gap-2 pt-1">
-                <Button
-                  onClick={retryBlocked}
-                  className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
-                >
-                  <Mic className="mr-2 h-4 w-4" />
-                  Lancer la lecture
-                </Button>
-                <Button variant="outline" onClick={dismissBlocked}>
-                  Annuler
-                </Button>
-              </div>
-            </CardContent>
+        <div className="asc-animate-fade bg-overlay absolute inset-0 z-(--z-overlay) flex items-center justify-center p-4">
+          <Card
+            data-tts-unblock-prompt className="asc-animate-rise shadow-card max-h-full w-full max-w-md gap-3 overflow-y-auto p-6">
+            <h2 className="text-fg text-lg leading-snug font-semibold">
+              Ton navigateur attend un geste de ta part
+            </h2>
+            <p className="text-fg-muted text-sm leading-relaxed">
+              Il refuse de démarrer une synthèse vocale sans interaction. Un clic
+              n&apos;importe où suffit à lancer la lecture.
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button onClick={retryBlocked}>
+                <Play aria-hidden="true" />
+                Lancer la lecture
+              </Button>
+              <Button variant="outline" onClick={dismissBlocked}>
+                Annuler
+              </Button>
+            </div>
           </Card>
         </div>
       )}
@@ -945,10 +897,11 @@ export default function TextToSpeech() {
       <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Réinitialiser tout</DialogTitle>
+            <DialogTitle>Tout réinitialiser&nbsp;?</DialogTitle>
             <DialogDescription>
-              Réglages, texte courant et historique seront effacés. Les textes
-              sauvegardés sont conservés. Cette action est irréversible.
+              Tes réglages, le texte courant et l&apos;historique seront effacés.
+              Tes textes sauvegardés sont conservés. Cette action est
+              irréversible.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Formateur de Code - Formatez votre code automatiquement",
+  title: "Formateur de Code - Formate ton code automatiquement",
   description:
-    "Outil gratuit pour formater automatiquement votre code dans différents langages. Interface simple et intuitive pour un formatage parfait.",
+    "Outil gratuit pour formater automatiquement ton code dans différents langages. Interface simple et intuitive pour un formatage parfait.",
   keywords: [
     "formateur de code",
     "formatage code",
@@ -16,9 +16,9 @@ export const metadata: Metadata = {
     "gratuit formatage",
   ],
   openGraph: {
-    title: "Formateur de Code - Formatez votre code automatiquement",
+    title: "Formateur de Code - Formate ton code automatiquement",
     description:
-      "Outil gratuit pour formater automatiquement votre code dans différents langages.",
+      "Outil gratuit pour formater automatiquement ton code dans différents langages.",
     url: "https://just-tools.ascencia.re/tools/code-formatter",
     type: "website",
     images: [
@@ -32,9 +32,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Formateur de Code - Formatez votre code automatiquement",
+    title: "Formateur de Code - Formate ton code automatiquement",
     description:
-      "Outil gratuit pour formater automatiquement votre code dans différents langages.",
+      "Outil gratuit pour formater automatiquement ton code dans différents langages.",
     images: ["/og-image.png"],
   },
   alternates: {

@@ -10,22 +10,24 @@ export interface SwitchProps
 const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
   ({ className: _className, label, ...props }, ref) => {
     return (
-      <div className="flex items-center space-x-2">
-        <label className="relative inline-flex items-center cursor-pointer">
+      <label className="inline-flex min-h-11 cursor-pointer items-center gap-2.5">
+        <span className="relative inline-flex">
           <input
             type="checkbox"
-            className="sr-only peer"
+            role="switch"
+            className="peer sr-only"
             ref={ref}
             {...props}
           />
-          <div className="relative w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-muted peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-600"></div>
-        </label>
-        {label && (
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            {label}
+          <span
+            aria-hidden="true"
+            className="bg-border-strong peer-checked:bg-primary peer-focus-visible:outline-focus block h-6 w-11 rounded-full transition-colors duration-(--animate-duration-fast) peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-disabled:opacity-50 peer-checked:[&>span]:translate-x-5"
+          >
+            <span className="bg-elevated block size-5 translate-x-0.5 translate-y-0.5 rounded-full shadow-sm transition-transform duration-(--animate-duration-fast) ease-(--ease-rise)" />
           </span>
-        )}
-      </div>
+        </span>
+        {label && <span className="text-fg text-sm font-medium">{label}</span>}
+      </label>
     );
   }
 );

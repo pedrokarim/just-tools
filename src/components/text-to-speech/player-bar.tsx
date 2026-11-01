@@ -3,16 +3,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
-import {
-  Loader2,
-  Pause,
-  Play,
-  RotateCcw,
-  Rewind,
-  FastForward,
-  Square } from "lucide-react";
+import { Loader2, Pause, Play, RotateCcw, Square } from "lucide-react";
 import { formatDuration, type PlayerStatus } from "@/hooks/use-tts-player";
+import { cn } from "@/lib/utils";
 
 interface PlayerBarProps {
   status: PlayerStatus;
@@ -28,7 +21,7 @@ interface PlayerBarProps {
   onStop: () => void;
   onSeekChar: (char: number) => void;
   onSkip: (seconds: number) => void;
-  /** Variante compacte pour le mode lecteur. */
+  /** Variante du mode lecteur : toujours sur deux lignes, bouton agrandi. */
   size?: "default" | "large";
 }
 
@@ -63,9 +56,88 @@ export function PlayerBar({
   const hasContent = totalChars > 0;
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-3">
-        <span className="w-12 shrink-0 text-right font-mono text-xs text-muted-foreground tabular-nums">
+    <div
+      className={cn(
+        // Les commandes viennent d'abord dans le DOM : le clavier les atteint
+        // avant le curseur, même quand celui-ci s'affiche au-dessus.
+        "flex min-w-0 flex-col-reverse gap-3",
+        !large && "@3xl:flex-row @3xl:items-center @3xl:gap-6"
+      )}
+    >
+      <div className="flex shrink-0 items-center justify-center gap-1.5">
+        <Button
+          variant="ghost"
+          className="px-3 tabular-nums"
+          onClick={() => onSkip(-10)}
+          disabled={disabled || !hasContent}
+          aria-label="Reculer de 10 secondes"
+          title="Reculer de 10 secondes"
+        >
+          −10&nbsp;s
+        </Button>
+
+        <Button
+          onClick={isPlaying || isLoading ? onPause : onPlay}
+          disabled={disabled || !hasContent}
+          size={large ? "lg" : "default"}
+          // Largeur fixe : le libellé change sans décaler les boutons voisins.
+          className="min-w-36"
+        >
+          {isLoading ? (
+            <Loader2 className="asc-animate-spin" aria-hidden="true" />
+          ) : isPlaying ? (
+            <Pause aria-hidden="true" />
+          ) : (
+            <Play aria-hidden="true" />
+          )}
+          {isLoading
+            ? "Préparation…"
+            : isPlaying
+            ? "Pause"
+            : status === "paused"
+            ? "Reprendre"
+            : "Lire"}
+        </Button>
+
+        {/* Un seul emplacement : « arrêter » et « revenir au début » ne servent
+            jamais en même temps, et le rang de boutons ne bouge pas. */}
+        {status === "idle" && position > 0 ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onSeekChar(0)}
+            aria-label="Revenir au début"
+            title="Revenir au début"
+          >
+            <RotateCcw aria-hidden="true" />
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onStop}
+            disabled={disabled || status === "idle"}
+            aria-label="Arrêter"
+            title="Arrêter et revenir au début"
+          >
+            <Square aria-hidden="true" />
+          </Button>
+        )}
+
+        <Button
+          variant="ghost"
+          className="px-3 tabular-nums"
+          onClick={() => onSkip(10)}
+          disabled={disabled || !hasContent}
+          aria-label="Avancer de 10 secondes"
+          title="Avancer de 10 secondes"
+        >
+          +10&nbsp;s
+        </Button>
+      </div>
+
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <span className="text-fg-muted min-w-10 shrink-0 text-end font-mono text-xs tabular-nums">
           {formatDuration(displayTimeMs)}
         </span>
 
@@ -81,88 +153,15 @@ export function PlayerBar({
             setScrubbing(null);
             onSeekChar(value);
           }}
-          className="flex-1"
+          className="min-w-0 flex-1"
         />
 
         <span
-          className="w-14 shrink-0 font-mono text-xs text-muted-foreground tabular-nums"
+          className="text-fg-muted min-w-12 shrink-0 font-mono text-xs tabular-nums"
           title="Durée estimée à partir du débit mesuré pendant la lecture"
         >
           ~{formatDuration(durationMs)}
         </span>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <Button
-          variant="outline"
-          size={large ? "default" : "sm"}
-          onClick={() => onSkip(-10)}
-          disabled={disabled || !hasContent}
-          title="Reculer de 10 secondes"
-        >
-          <Rewind className="h-4 w-4" />
-          <span className="ml-1 text-xs">10s</span>
-        </Button>
-
-        <Button
-          onClick={isPlaying || isLoading ? onPause : onPlay}
-          disabled={disabled || !hasContent}
-          size={large ? "lg" : "default"}
-          className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
-        >
-          {isLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : isPlaying ? (
-            <Pause className="mr-2 h-4 w-4" />
-          ) : (
-            <Play className="mr-2 h-4 w-4" />
-          )}
-          {isLoading
-            ? "Préparation…"
-            : isPlaying
-            ? "Pause"
-            : status === "paused"
-            ? "Reprendre"
-            : "Lire"}
-        </Button>
-
-        <Button
-          variant="outline"
-          size={large ? "default" : "sm"}
-          onClick={onStop}
-          disabled={disabled || status === "idle"}
-          title="Arrêter et revenir au début"
-        >
-          <Square className="h-4 w-4" />
-        </Button>
-
-        <Button
-          variant="outline"
-          size={large ? "default" : "sm"}
-          onClick={() => onSkip(10)}
-          disabled={disabled || !hasContent}
-          title="Avancer de 10 secondes"
-        >
-          <span className="mr-1 text-xs">10s</span>
-          <FastForward className="h-4 w-4" />
-        </Button>
-
-        {position > 0 && status === "idle" && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onSeekChar(0)}
-            title="Revenir au début"
-          >
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-        )}
-
-        {hasContent && (
-          <Badge variant="outline" className="ml-1 font-mono text-[10px]">
-            {Math.floor(displayChar)} / {totalChars}
-          </Badge>
-        )}
       </div>
     </div>
   );

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Download, X } from "lucide-react";
+import { JustToolsMark } from "@/components/brand/just-tools-lockup";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Download, X, Smartphone, Monitor } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -14,187 +14,112 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+const DISMISSED_KEY = "pwa-prompt-dismissed";
+const DISMISS_DAYS = 7;
+const SHOW_DELAY_MS = 3000;
+
+/** Vrai si l'invite a été refusée il y a moins de sept jours. */
+function wasDismissedRecently() {
+  try {
+    const dismissed = localStorage.getItem(DISMISSED_KEY);
+    if (!dismissed) return false;
+    const limit = Date.now() - DISMISS_DAYS * 24 * 60 * 60 * 1000;
+    if (new Date(dismissed).getTime() > limit) return true;
+    localStorage.removeItem(DISMISSED_KEY);
+  } catch {
+    // Stockage indisponible : on propose, au pire une fois de trop.
+  }
+  return false;
+}
+
+function isInstalled() {
+  const legacyStandalone = (window.navigator as { standalone?: boolean })
+    .standalone;
+  return (
+    legacyStandalone === true ||
+    window.matchMedia("(display-mode: standalone)").matches
+  );
+}
+
+/**
+ * L'invite d'installation, discrète et refusable. Elle attend que le navigateur
+ * déclare l'installation possible, et se tait une semaine si on la ferme.
+ */
 export function PWAInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] =
+  const [installEvent, setInstallEvent] =
     useState<BeforeInstallPromptEvent | null>(null);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Vérifier si l'app est déjà installée
-    const checkInstallation = () => {
-      const standalone = window.matchMedia(
-        "(display-mode: standalone)"
-      ).matches;
-      const isInstalled = (window.navigator as any).standalone || standalone;
-      setIsStandalone(isInstalled);
-      setIsInstalled(isInstalled);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const onBeforeInstall = (event: Event) => {
+      event.preventDefault();
+      if (isInstalled() || wasDismissedRecently()) return;
+      timer = setTimeout(
+        () => setInstallEvent(event as BeforeInstallPromptEvent),
+        SHOW_DELAY_MS
+      );
     };
+    const onInstalled = () => setInstallEvent(null);
 
-    checkInstallation();
-
-    // Vérifier si le prompt a été fermé récemment (7 jours)
-    const checkDismissed = () => {
-      const dismissed = localStorage.getItem("pwa-prompt-dismissed");
-      if (dismissed) {
-        const dismissedDate = new Date(dismissed);
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-        if (dismissedDate > sevenDaysAgo) {
-          return false; // Ne pas afficher
-        } else {
-          // Supprimer l'ancienne entrée
-          localStorage.removeItem("pwa-prompt-dismissed");
-        }
-      }
-      return true; // Afficher
-    };
-
-    // Écouter l'événement beforeinstallprompt
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-
-      // Afficher le prompt après un délai si pas déjà fermé
-      setTimeout(() => {
-        if (!isInstalled && !isStandalone && checkDismissed()) {
-          setShowInstallPrompt(true);
-          // Animation d'entrée
-          setTimeout(() => setIsVisible(true), 100);
-        }
-      }, 3000); // 3 secondes après le chargement
-    };
-
-    // Écouter l'événement appinstalled
-    const handleAppInstalled = () => {
-      setIsInstalled(true);
-      setShowInstallPrompt(false);
-      setDeferredPrompt(null);
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    window.addEventListener("appinstalled", handleAppInstalled);
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("appinstalled", onInstalled);
 
     return () => {
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstallPrompt
-      );
-      window.removeEventListener("appinstalled", handleAppInstalled);
+      if (timer) clearTimeout(timer);
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("appinstalled", onInstalled);
     };
-  }, [isInstalled, isStandalone]);
+  }, []);
 
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+  if (!installEvent) return null;
 
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === "accepted") {
-      console.log("Utilisateur a accepté l'installation");
-      setIsInstalled(true);
-    } else {
-      console.log("Utilisateur a refusé l'installation");
+  const dismiss = () => {
+    setInstallEvent(null);
+    try {
+      localStorage.setItem(DISMISSED_KEY, new Date().toISOString());
+    } catch {
+      // Sans stockage, l'invite reviendra à la prochaine visite.
     }
-
-    setDeferredPrompt(null);
-    handleDismiss();
   };
 
-  const handleDismiss = () => {
-    setIsVisible(false);
-    setTimeout(() => {
-      setShowInstallPrompt(false);
-      // Ne plus afficher pendant 7 jours
-      localStorage.setItem("pwa-prompt-dismissed", new Date().toISOString());
-    }, 300);
+  const install = async () => {
+    await installEvent.prompt();
+    await installEvent.userChoice;
+    setInstallEvent(null);
   };
-
-  // Ne pas afficher si déjà installé
-  if (isInstalled || isStandalone || !showInstallPrompt) {
-    return null;
-  }
 
   return (
-    <div
-      className={`fixed bottom-4 right-4 z-50 transition-[transform,opacity] duration-300 ease-out ${
-        isVisible
-          ? "translate-y-0 opacity-100 scale-100"
-          : "translate-y-4 opacity-0 scale-95"
-      }`}
+    <aside
+      aria-label="Installer Just Tools"
+      className="asc-animate-rise border-border bg-elevated shadow-pop rounded-card fixed right-4 bottom-4 left-4 z-(--z-overlay) flex flex-col gap-3 border p-4 sm:left-auto sm:w-80"
     >
-      <div className="bg-white dark:bg-background border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-w-sm w-80 p-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <Download className="w-5 h-5 text-blue-600" />
-            <span className="font-semibold text-sm">Installer Just Tools</span>
-          </div>
-          <button
-            onClick={handleDismiss}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+      <div className="flex items-start gap-3">
+        <JustToolsMark size={32} title="" />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <p className="text-fg text-sm font-semibold">Installer Just Tools</p>
+          <p className="text-fg-muted text-[0.8125rem] leading-snug">
+            Retrouve tes outils en un clic, dans leur propre fenêtre.
+          </p>
         </div>
-
-        {/* Content */}
-        <div className="space-y-3 mb-4">
-          <div className="flex items-center space-x-3 p-2 bg-blue-50 dark:bg-blue-950/50 rounded-lg">
-            <Smartphone className="w-6 h-6 text-blue-600 flex-shrink-0" />
-            <div>
-              <p className="font-medium text-xs">Application native</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                Accès rapide depuis votre écran d'accueil
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3 p-2 bg-green-50 dark:bg-green-950/50 rounded-lg">
-            <Monitor className="w-6 h-6 text-green-600 flex-shrink-0" />
-            <div>
-              <p className="font-medium text-xs">Fonctionne hors ligne</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                Utilisez les outils même sans connexion
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-1">
-            <Badge variant="secondary" className="text-xs">
-              <Download className="w-3 h-3 mr-1" />
-              Installation rapide
-            </Badge>
-            <Badge variant="secondary" className="text-xs">
-              <Smartphone className="w-3 h-3 mr-1" />
-              Interface native
-            </Badge>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDismiss}
-            className="flex-1 text-xs"
-          >
-            Plus tard
-          </Button>
-          <Button
-            onClick={handleInstallClick}
-            size="sm"
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-xs"
-          >
-            <Download className="w-3 h-3 mr-1" />
-            Installer
-          </Button>
-        </div>
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label="Fermer"
+          className="text-fg-subtle hover:bg-surface hover:text-fg -me-1.5 -mt-1.5 flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-sm"
+        >
+          <X size={16} aria-hidden="true" />
+        </button>
       </div>
-    </div>
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" size="sm" onClick={dismiss}>
+          Plus tard
+        </Button>
+        <Button size="sm" onClick={install}>
+          <Download aria-hidden="true" />
+          Installer
+        </Button>
+      </div>
+    </aside>
   );
 }

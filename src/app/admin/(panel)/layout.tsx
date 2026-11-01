@@ -10,7 +10,7 @@ import { AdminChrome } from "@/components/admin/admin-chrome";
  *
  * Il était côté client : un composant monté, qui attendait la session, patientait
  * une seconde en dur, puis interrogeait `/api/auth/check-authorization` avant de
- * décider. Trois conséquences, toutes désagréables — le contenu clignotait avant
+ * décider. Trois conséquences, toutes désagréables : le contenu clignotait avant
  * de disparaître, la décision arrivait après le rendu, et la page dépendait du
  * JavaScript pour se protéger visuellement.
  *
@@ -25,7 +25,7 @@ import { AdminChrome } from "@/components/admin/admin-chrome";
  *
  * ── Le groupe de routes ────────────────────────────────────────────────────
  *
- * `(panel)` ne change aucune URL — `/admin`, `/admin/visitors`… sont
+ * `(panel)` ne change aucune URL : `/admin`, `/admin/visitors`… sont
  * inchangées. Il sert à ce que `/admin/login` et `/admin/access-denied`
  * échappent à ce layout : sans ça, la page de connexion serait gardée par le
  * garde qu'elle sert à franchir.

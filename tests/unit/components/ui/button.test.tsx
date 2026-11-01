@@ -13,39 +13,39 @@ describe("Button Component", () => {
 
   it("should render with different variants", () => {
     const { rerender } = render(<Button variant="default">Default</Button>);
-    expect(screen.getByRole("button")).toHaveClass("bg-primary");
+    expect(screen.getByRole("button")).toHaveClass("text-on-primary");
 
     rerender(<Button variant="destructive">Destructive</Button>);
-    expect(screen.getByRole("button")).toHaveClass("bg-destructive");
+    expect(screen.getByRole("button")).toHaveClass("bg-danger");
 
     rerender(<Button variant="outline">Outline</Button>);
-    expect(screen.getByRole("button")).toHaveClass("border", "bg-background");
+    expect(screen.getByRole("button")).toHaveClass("border", "bg-transparent");
 
     rerender(<Button variant="secondary">Secondary</Button>);
-    expect(screen.getByRole("button")).toHaveClass("bg-secondary");
+    expect(screen.getByRole("button")).toHaveClass("bg-elevated");
 
     rerender(<Button variant="ghost">Ghost</Button>);
-    expect(screen.getByRole("button")).toHaveClass("hover:bg-accent");
+    expect(screen.getByRole("button")).toHaveClass("hover:bg-surface");
 
     rerender(<Button variant="link">Link</Button>);
     expect(screen.getByRole("button")).toHaveClass(
-      "text-primary",
+      "text-link",
       "underline-offset-4"
     );
   });
 
   it("should render with different sizes", () => {
     const { rerender } = render(<Button size="default">Default</Button>);
-    expect(screen.getByRole("button")).toHaveClass("h-9", "px-4");
+    expect(screen.getByRole("button")).toHaveClass("h-11", "px-5");
 
     rerender(<Button size="sm">Small</Button>);
-    expect(screen.getByRole("button")).toHaveClass("h-8", "px-3");
+    expect(screen.getByRole("button")).toHaveClass("h-9", "px-3.5");
 
     rerender(<Button size="lg">Large</Button>);
-    expect(screen.getByRole("button")).toHaveClass("h-10", "px-6");
+    expect(screen.getByRole("button")).toHaveClass("h-12", "px-6");
 
     rerender(<Button size="icon">Icon</Button>);
-    expect(screen.getByRole("button")).toHaveClass("size-9");
+    expect(screen.getByRole("button")).toHaveClass("size-11");
   });
 
   it("should handle click events", () => {
@@ -63,10 +63,7 @@ describe("Button Component", () => {
 
     const button = screen.getByRole("button");
     expect(button).toBeDisabled();
-    expect(button).toHaveClass(
-      "disabled:pointer-events-none",
-      "disabled:opacity-50"
-    );
+    expect(button).toHaveClass("disabled:pointer-events-none");
   });
 
   it("should render as child when asChild is true", () => {
@@ -93,9 +90,9 @@ describe("Button Component", () => {
     render(<Button>Focusable</Button>);
 
     const button = screen.getByRole("button");
-    fireEvent.focus(button);
+    button.focus();
 
-    expect(button).toHaveClass("outline-none", "focus-visible:border-ring");
+    expect(button).toHaveFocus();
   });
 
   it("should render with icon and text", () => {

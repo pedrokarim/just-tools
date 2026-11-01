@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Effet de Trame - Ajoutez des effets halftone à vos images",
+  title: "Effet de Trame - Ajoute des effets halftone à tes images",
   description:
-    "Outil gratuit pour ajouter des effets de trame halftone à vos images avec des paramètres personnalisables. Interface intuitive avec prévisualisation.",
+    "Outil gratuit pour ajouter des effets de trame halftone à tes images avec des paramètres personnalisables. Interface intuitive avec prévisualisation.",
   keywords: [
     "effet de trame",
     "halftone",
@@ -15,9 +15,9 @@ export const metadata: Metadata = {
     "effet artistique",
   ],
   openGraph: {
-    title: "Effet de Trame - Ajoutez des effets halftone à vos images",
+    title: "Effet de Trame - Ajoute des effets halftone à tes images",
     description:
-      "Outil gratuit pour ajouter des effets de trame halftone à vos images.",
+      "Outil gratuit pour ajouter des effets de trame halftone à tes images.",
     url: "https://just-tools.ascencia.re/tools/halftone",
     type: "website",
     images: [
@@ -31,9 +31,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Effet de Trame - Ajoutez des effets halftone à vos images",
+    title: "Effet de Trame - Ajoute des effets halftone à tes images",
     description:
-      "Outil gratuit pour ajouter des effets de trame halftone à vos images.",
+      "Outil gratuit pour ajouter des effets de trame halftone à tes images.",
     images: ["/og-image.png"],
   },
   alternates: {

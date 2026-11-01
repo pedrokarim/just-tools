@@ -80,7 +80,7 @@ export const PROJECT_CONFIG = {
     name: "Just Tools - Outils de développement gratuits",
     shortName: "Just Tools",
     description:
-      "Collection d'outils de développement pratiques et créatifs pour simplifier votre workflow quotidien",
+      "Collection d'outils de développement pratiques et créatifs pour simplifier ton quotidien",
     themeColor: "#2563eb",
     backgroundColor: "#ffffff",
     display: "standalone",

@@ -1,506 +1,523 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
-import { Separator } from "@/components/ui/separator";
-import { Slider } from "@/components/ui/slider";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger } from "@/components/ui/dialog";
-import { Upload, Link, Copy, Palette, History, Image as ImageIcon, Loader2, FileText, Code, Hash } from "lucide-react";
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+  type FormEvent,
+} from "react";
+import { ImagePlus, Link as LinkIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import ColorThief from "colorthief";
+import { CopyButton } from "@/components/site/copy-button";
+import { ToolPage } from "@/components/site/tool-shell";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 interface ColorPalette {
   id: string;
   colors: string[];
+  /** Une miniature en data URL, ou une chaîne vide pour une entrée ancienne. */
   imageUrl: string;
   timestamp: number;
   colorCount: number;
 }
 
-interface CopyFormat {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  format: (colors: string[]) => string;
-}
+const HISTORY_KEY = "colorExtractorHistory";
+const HISTORY_LIMIT = 10;
+const THUMBNAIL_SIZE = 320;
+const MIN_COLORS = 5;
+const MAX_COLORS = 20;
 
-const copyFormats: CopyFormat[] = [
+const COPY_FORMATS = [
   {
     id: "css",
-    name: "Variables CSS",
-    icon: <Code className="w-4 h-4" />,
-    format: (colors) => {
-      return `:root {\n${colors
+    name: "CSS",
+    format: (colors: string[]) =>
+      `:root {\n${colors
         .map((color, index) => `  --color-${index + 1}: ${color};`)
-        .join("\n")}\n}`;
-    },
+        .join("\n")}\n}`,
   },
   {
     id: "json",
     name: "JSON",
-    icon: <FileText className="w-4 h-4" />,
-    format: (colors) => {
-      return JSON.stringify({ colors }, null, 2);
-    },
+    format: (colors: string[]) => JSON.stringify({ colors }, null, 2),
   },
   {
     id: "hex",
-    name: "Codes Hexadécimaux",
-    icon: <Hash className="w-4 h-4" />,
-    format: (colors) => {
-      return colors.join(", ");
-    },
+    name: "Hexa",
+    format: (colors: string[]) => colors.join(", "),
   },
   {
     id: "array",
-    name: "Tableau Simple",
-    icon: <FileText className="w-4 h-4" />,
-    format: (colors) => {
-      return `[${colors.map((color) => `"${color}"`).join(", ")}]`;
-    },
+    name: "Tableau",
+    format: (colors: string[]) =>
+      `[${colors.map((color) => `"${color}"`).join(", ")}]`,
   },
 ];
 
+function readHistory(): ColorPalette[] {
+  try {
+    const saved = localStorage.getItem(HISTORY_KEY);
+    if (!saved) return [];
+    const entries = JSON.parse(saved) as ColorPalette[];
+    // Les anciennes entrées gardaient une URL d'objet, morte dès le rechargement.
+    return entries.map((entry) =>
+      entry.imageUrl.startsWith("blob:") ? { ...entry, imageUrl: "" } : entry
+    );
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Une miniature autonome : l'historique survit au rechargement, ce qu'une URL
+ * d'objet ne permet pas, et reste assez léger pour le localStorage.
+ */
+function createThumbnail(image: HTMLImageElement) {
+  const { naturalWidth, naturalHeight } = image;
+  const scale = Math.min(
+    1,
+    THUMBNAIL_SIZE / Math.max(naturalWidth, naturalHeight, 1)
+  );
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(naturalHeight * scale));
+  canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.7);
+}
+
 export default function ColorExtractor() {
-  const [imageUrl, setImageUrl] = useState("");
-  const [, setUploadedImage] = useState<File | null>(null);
+  const [urlDraft, setUrlDraft] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
   const [dominantColors, setDominantColors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [colorCount, setColorCount] = useState(10);
   const [history, setHistory] = useState<ColorPalette[]>([]);
-  const [showCopyDialog, setShowCopyDialog] = useState(false);
-  const [selectedFormat, setSelectedFormat] = useState<CopyFormat>(
-    copyFormats[0]
-  );
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
+  const [historyReady, setHistoryReady] = useState(false);
+  const [formatId, setFormatId] = useState(COPY_FORMATS[0].id);
+  const latestExtraction = useRef(0);
 
-  // Charger l'historique depuis le localStorage
+  const hasResult = previewUrl !== "" || dominantColors.length > 0;
+
   useEffect(() => {
-    const savedHistory = localStorage.getItem("colorExtractorHistory");
-    if (savedHistory) {
-      try {
-        setHistory(JSON.parse(savedHistory));
-      } catch (error) {
-        console.error("Erreur lors du chargement de l'historique:", error);
-      }
-    }
+    setHistory(readHistory());
+    setHistoryReady(true);
   }, []);
 
-  // Sauvegarder l'historique dans le localStorage
+  // `historyReady` empêche d'écrire la liste vide initiale : en mode strict, les
+  // effets rejoués relisaient ce `[]` et l'historique disparaissait.
   useEffect(() => {
-    localStorage.setItem("colorExtractorHistory", JSON.stringify(history));
-  }, [history]);
+    if (!historyReady) return;
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    } catch {
+      // Stockage plein ou bloqué : l'historique vaut pour cette visite.
+    }
+  }, [history, historyReady]);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(
+    () => () => {
+      if (previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
+    },
+    [previewUrl]
+  );
+
+  const extractColors = (
+    imageSrc: string,
+    count: number,
+    remember: boolean
+  ) => {
+    // Seule la dernière analyse compte : une image lourde lancée avant ne doit
+    // pas écraser le résultat d'une image choisie après.
+    latestExtraction.current += 1;
+    const extraction = latestExtraction.current;
+    setIsLoading(true);
+
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+
+    image.onload = () => {
+      if (extraction !== latestExtraction.current) return;
+      try {
+        const colors = new ColorThief()
+          .getPalette(image, count)
+          .map(
+            ([r, g, b]) =>
+              `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
+          );
+        setDominantColors(colors);
+
+        if (remember) {
+          const entry: ColorPalette = {
+            id: Date.now().toString(),
+            colors,
+            imageUrl: createThumbnail(image),
+            timestamp: Date.now(),
+            colorCount: colors.length,
+          };
+          setHistory((previous) => [
+            entry,
+            ...previous.slice(0, HISTORY_LIMIT - 1),
+          ]);
+        }
+      } catch (error) {
+        console.error("Erreur lors de l'extraction :", error);
+        toast.error("Extraction impossible sur cette image. Essaie-en une autre.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    image.onerror = () => {
+      if (extraction !== latestExtraction.current) return;
+      setPreviewUrl("");
+      setDominantColors([]);
+      setIsLoading(false);
+      toast.error(
+        "Image impossible à charger. Vérifie que l'adresse pointe vers une image publique."
+      );
+    };
+
+    image.src = imageSrc;
+  };
+
+  const loadFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Ce fichier n'est pas une image. Choisis un PNG, un JPG ou un WebP.");
+      return;
+    }
+    setUrlDraft("");
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    extractColors(url, colorCount, true);
+  };
+
+  const handleFileInput = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setUploadedImage(file);
-      setImageUrl("");
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-      extractColorsFromImage(url);
+    if (file) loadFile(file);
+    // Sans ça, choisir deux fois le même fichier ne déclenche rien.
+    event.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent) => {
+    event.preventDefault();
+    setIsDragOver(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) loadFile(file);
+  };
+
+  const handleDragLeave = (event: DragEvent) => {
+    // Passer au-dessus d'un enfant de la zone n'est pas en sortir.
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+      setIsDragOver(false);
     }
   };
 
-  const handleUrlSubmit = async () => {
-    if (!imageUrl.trim()) {
-      toast.error("Veuillez entrer une URL d'image valide");
+  const handleUrlSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    const trimmed = urlDraft.trim();
+    if (!trimmed) {
+      toast.error("Colle d'abord l'adresse d'une image.");
       return;
     }
 
     try {
-      // Validation basique de l'URL
-      new URL(imageUrl.trim());
+      new URL(trimmed);
     } catch {
       toast.error(
-        "URL invalide. Veuillez entrer une URL complète (ex: https://exemple.com/image.jpg)"
+        "Adresse invalide. Colle une adresse complète, comme https://exemple.com/image.jpg."
       );
       return;
     }
 
-    setUploadedImage(null);
-    setPreviewUrl(imageUrl);
-
-    // Utiliser notre API proxy pour éviter les problèmes CORS
-    const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(
-      imageUrl.trim()
-    )}`;
-    extractColorsFromImage(proxyUrl);
+    // Le proxy évite les blocages CORS, à l'affichage comme à l'analyse.
+    const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(trimmed)}`;
+    setPreviewUrl(proxyUrl);
+    extractColors(proxyUrl, colorCount, true);
   };
 
-  const extractColorsFromImage = async (imageSrc: string) => {
-    setIsLoading(true);
-    try {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-
-      img.onload = async () => {
-        try {
-          const colorThief = new ColorThief();
-          const palette = colorThief.getPalette(img, Math.min(colorCount, 20));
-
-          const colors = palette.map(
-            ([r, g, b]: [number, number, number]) =>
-              `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
-          );
-          setDominantColors(colors);
-
-          // Ajouter à l'historique
-          const newPalette: ColorPalette = {
-            id: Date.now().toString(),
-            colors,
-            imageUrl: imageSrc,
-            timestamp: Date.now(),
-            colorCount: colors.length,
-          };
-
-          setHistory((prev) => [newPalette, ...prev.slice(0, 9)]); // Garder max 10 éléments
-          toast.success(`${colors.length} couleurs dominantes extraites !`);
-        } catch (error) {
-          console.error("Erreur lors de l'extraction:", error);
-          toast.error("Erreur lors de l'extraction des couleurs");
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      img.onerror = () => {
-        toast.error(
-          "Impossible de charger l'image. Vérifiez que :\n" +
-            "• L'URL est correcte et pointe vers une image\n" +
-            "• Le domaine est autorisé (Unsplash, Picsum, etc.)\n" +
-            "• L'image est accessible publiquement"
-        );
-        setIsLoading(false);
-      };
-
-      img.src = imageSrc;
-    } catch (error) {
-      console.error("Erreur:", error);
-      toast.error("Erreur lors du traitement de l'image");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("Copié dans le presse-papiers !");
-      setShowCopyDialog(false);
-    } catch {
-      toast.error("Erreur lors de la copie");
-    }
+  const handleCountCommit = (count: number) => {
+    if (previewUrl) extractColors(previewUrl, count, false);
   };
 
   const loadFromHistory = (palette: ColorPalette) => {
+    latestExtraction.current += 1;
+    setIsLoading(false);
     setDominantColors(palette.colors);
     setPreviewUrl(palette.imageUrl);
-    setColorCount(palette.colorCount);
-    toast.success("Palette chargée depuis l'historique");
+    setColorCount(Math.max(MIN_COLORS, palette.colorCount));
+    toast.success("Palette rechargée depuis l'historique.");
   };
 
   const clearHistory = () => {
     setHistory([]);
-    localStorage.removeItem("colorExtractorHistory");
-    toast.success("Historique effacé");
+    try {
+      localStorage.removeItem(HISTORY_KEY);
+    } catch {
+      // Stockage bloqué : il n'y a rien à retirer.
+    }
   };
 
   return (
-    <div className="w-full space-y-8 p-6">
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Section Upload/URL */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Upload className="w-5 h-5" />
-              <span>Source d'image</span>
-            </CardTitle>
-            <CardDescription>
-              Uploadez une image ou entrez une URL
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Upload de fichier */}
-            <div className="space-y-2">
-              <Label htmlFor="image-upload">Uploadez une image</Label>
-              <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  id="image-upload"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Choisir une image
-                </Button>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* URL d'image */}
-            <div className="space-y-2">
-              <Label htmlFor="image-url">Ou entrez une URL d'image</Label>
-              <div className="flex space-x-2">
-                <Input
-                  id="image-url"
-                  type="url"
-                  placeholder="https://example.com/image.jpg"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="flex-1"
-                />
-                <Button onClick={handleUrlSubmit} disabled={isLoading}>
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Link className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* Paramètres */}
-            <div className="space-y-2">
-              <Label>Nombre de couleurs dominantes: {colorCount}</Label>
-              <Slider
-                value={[colorCount]}
-                onValueChange={(value) => setColorCount(value[0])}
-                max={20}
-                min={5}
-                step={1}
-                className="w-full"
-              />
-              <p className="text-sm text-slate-500">Entre 5 et 20 couleurs</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Prévisualisation */}
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <ImageIcon className="w-5 h-5" />
-              <span>Prévisualisation</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {previewUrl ? (
-              <div className="space-y-4">
-                {/* `next/image` est inapplicable ici : la source est une URL
-                    d'objet produite par URL.createObjectURL (fichier local, non
-                    optimisable côté serveur), et le `ref` sert à lire les
-                    pixels dans un canvas. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  ref={imageRef}
-                  src={previewUrl}
-                  alt="Image à analyser"
-                  className="w-full h-48 object-cover rounded-lg"
-                />
-                {isLoading && (
-                  <div className="flex items-center justify-center space-x-2 text-slate-600">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Extraction des couleurs...</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="h-48 flex items-center justify-center text-slate-500 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg">
-                <div className="text-center">
-                  <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>Aucune image sélectionnée</p>
-                </div>
-              </div>
+    <ToolPage>
+      {hasResult && (
+        <Card className="asc-animate-step-in @container gap-5 p-5">
+          <div
+            className={cn(
+              "grid gap-5",
+              previewUrl && "@3xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"
             )}
-          </CardContent>
-        </Card>
-      </div>
+          >
+            {previewUrl && (
+              // `next/image` est inapplicable : la source est une URL d'objet, une
+              // miniature en data URL ou le proxy, hors de portée de l'optimiseur.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={previewUrl}
+                alt="Image analysée"
+                className="bg-surface border-border rounded-field max-h-96 w-full max-w-full border object-contain"
+              />
+            )}
 
-      {/* Résultats */}
-      {dominantColors.length > 0 && (
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center space-x-2">
-                <Palette className="w-5 h-5" />
-                <span>Couleurs dominantes ({dominantColors.length})</span>
-              </CardTitle>
-              <Dialog open={showCopyDialog} onOpenChange={setShowCopyDialog}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copier
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Choisir le format de copie</DialogTitle>
-                    <DialogDescription>
-                      Sélectionnez le format dans lequel vous souhaitez copier
-                      les couleurs
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid grid-cols-2 gap-4">
-                    {copyFormats.map((format) => (
-                      <Button
-                        key={format.id}
-                        variant={
-                          selectedFormat.id === format.id
-                            ? "default"
-                            : "outline"
-                        }
-                        onClick={() => setSelectedFormat(format)}
-                        className="h-auto p-4 flex flex-col items-center space-y-2"
-                      >
-                        {format.icon}
-                        <span className="text-sm">{format.name}</span>
-                      </Button>
-                    ))}
-                  </div>
-
-                  {/* Prévisualisation */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">
-                      Prévisualisation :
-                    </Label>
-                    <div className="bg-slate-50 dark:bg-background border rounded-lg p-4 max-h-32 overflow-y-auto">
-                      <pre className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-all">
-                        {selectedFormat.format(dominantColors)}
-                      </pre>
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <Button
-                      onClick={() =>
-                        copyToClipboard(selectedFormat.format(dominantColors))
-                      }
-                      className="flex-1"
-                    >
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copier
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowCopyDialog(false)}
-                    >
-                      Annuler
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-4">
-              {dominantColors.map((color, index) => (
-                <div
-                  key={index}
-                  className="group relative cursor-pointer"
-                  onClick={() => copyToClipboard(color)}
+            <div className="flex min-w-0 flex-col gap-3">
+              {isLoading ? (
+                <p
+                  role="status"
+                  className="text-fg-muted flex items-center gap-2 text-sm"
                 >
-                  <div
-                    className="w-full h-16 rounded-lg shadow-md group-hover:scale-105 transition-transform duration-200"
-                    style={{ backgroundColor: color }}
+                  <Loader2
+                    size={14}
+                    className="asc-animate-spin"
+                    aria-hidden="true"
                   />
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                    {color}
-                  </div>
-                </div>
-              ))}
+                  Extraction des couleurs…
+                </p>
+              ) : (
+                <h2 className="text-fg text-sm font-medium">
+                  {dominantColors.length}&nbsp;couleurs dominantes
+                </h2>
+              )}
+
+              <ul
+                // Le remplacement se voit, y compris quand seul le nombre a changé.
+                key={dominantColors.join()}
+                className="asc-animate-fade grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-x-3 gap-y-2"
+              >
+                {dominantColors.map((color, index) => (
+                  <li key={index} className="flex min-w-0 flex-col gap-0.5">
+                    <div
+                      aria-hidden="true"
+                      className="border-border h-14 rounded-md border"
+                      style={{ backgroundColor: color }}
+                    />
+                    <div className="flex min-w-0 items-center justify-between gap-1">
+                      <span className="text-fg font-mono text-xs">{color}</span>
+                      <CopyButton
+                        value={color}
+                        iconOnly
+                        variant="ghost"
+                        size="icon"
+                        label={`Copier ${color}`}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </CardContent>
+          </div>
+
+          {dominantColors.length > 0 && (
+            <Tabs
+              value={formatId}
+              onValueChange={setFormatId}
+              className="border-border gap-3 border-t pt-4"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <TabsList aria-label="Format de copie" className="max-sm:w-full">
+                  {COPY_FORMATS.map(({ id, name }) => (
+                    <TabsTrigger key={id} value={id}>
+                      {name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                <CopyButton
+                  value={() =>
+                    (
+                      COPY_FORMATS.find(({ id }) => id === formatId) ??
+                      COPY_FORMATS[0]
+                    ).format(dominantColors)
+                  }
+                  label="Copier toutes les couleurs"
+                  className="max-sm:w-full"
+                />
+              </div>
+              {COPY_FORMATS.map(({ id, format }) => (
+                <TabsContent key={id} value={id} className="min-w-0">
+                  <pre className="bg-surface border-border text-fg-muted rounded-field max-h-44 overflow-y-auto border p-3 font-mono text-xs break-all whitespace-pre-wrap">
+                    {format(dominantColors)}
+                  </pre>
+                </TabsContent>
+              ))}
+            </Tabs>
+          )}
         </Card>
       )}
 
-      {/* Historique */}
+      <section
+        aria-label="Image à analyser"
+        className={cn(
+          "flex flex-col gap-5",
+          hasResult && "border-border border-t pt-6"
+        )}
+      >
+        <label
+          onDrop={handleDrop}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setIsDragOver(true);
+          }}
+          onDragLeave={handleDragLeave}
+          className={cn(
+            "rounded-card has-focus-visible:border-primary flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed px-6 text-center transition-colors duration-(--animate-duration-fast)",
+            hasResult ? "min-h-32 py-6" : "min-h-64 py-10",
+            isDragOver
+              ? "border-primary bg-primary-soft"
+              : "border-border-strong hover:border-primary hover:bg-surface"
+          )}
+        >
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileInput}
+            className="sr-only"
+          />
+          <ImagePlus size={20} className="text-fg-subtle" aria-hidden="true" />
+          <span className="text-fg text-sm font-medium">
+            {isDragOver
+              ? "Dépose l'image ici"
+              : hasResult
+                ? "Glisse une autre image ici, ou clique pour la choisir"
+                : "Glisse une image ici, ou clique pour la choisir"}
+          </span>
+          <span className="text-fg-muted text-[0.8125rem] leading-snug">
+            PNG, JPG ou WebP. Ton fichier est analysé dans ton navigateur.
+          </span>
+        </label>
+
+        <form
+          onSubmit={handleUrlSubmit}
+          noValidate
+          className="flex flex-col gap-2"
+        >
+          <Label htmlFor="image-url">Ou colle l&apos;adresse d&apos;une image</Label>
+          <div className="flex gap-2">
+            <Input
+              id="image-url"
+              type="url"
+              placeholder="https://exemple.com/image.jpg"
+              value={urlDraft}
+              onChange={(event) => setUrlDraft(event.target.value)}
+              className="flex-1"
+            />
+            <Button type="submit" variant="secondary" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="asc-animate-spin" aria-hidden="true" />
+              ) : (
+                <LinkIcon aria-hidden="true" />
+              )}
+              Analyser
+            </Button>
+          </div>
+        </form>
+
+        <div className="border-border flex flex-col gap-3 border-t pt-5">
+          <div className="flex items-baseline justify-between gap-3">
+            <Label htmlFor="color-count">Nombre de couleurs</Label>
+            <span className="text-fg font-mono text-sm tabular-nums">
+              {colorCount}
+            </span>
+          </div>
+          <Slider
+            id="color-count"
+            aria-label="Nombre de couleurs"
+            min={MIN_COLORS}
+            max={MAX_COLORS}
+            step={1}
+            value={[colorCount]}
+            onValueChange={([count]) => setColorCount(count)}
+            onValueCommit={([count]) => handleCountCommit(count)}
+          />
+        </div>
+      </section>
+
       {history.length > 0 && (
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center space-x-2">
-                <History className="w-5 h-5" />
-                <span>Historique ({history.length})</span>
-              </CardTitle>
-              <Button variant="outline" size="sm" onClick={clearHistory}>
-                Effacer
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {history.map((palette) => (
-                <div
-                  key={palette.id}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+        <section
+          aria-labelledby="extraction-history"
+          className="border-border flex flex-col gap-2 border-t pt-6"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="extraction-history" className="text-fg text-sm font-medium">
+              Historique
+            </h2>
+            <Button variant="ghost" size="sm" onClick={clearHistory}>
+              Effacer
+            </Button>
+          </div>
+          <ul className="divide-border flex flex-col divide-y">
+            {history.map((palette) => (
+              <li key={palette.id}>
+                <button
+                  type="button"
                   onClick={() => loadFromHistory(palette)}
+                  className="hover:bg-surface rounded-field flex w-full min-w-0 cursor-pointer items-center gap-3 px-2 py-2.5 text-start transition-colors duration-(--animate-duration-fast)"
                 >
-                  <div className="flex items-center space-x-3 mb-3">
-                    {/* Même raison : l'historique conserve des URL d'objet
-                        locales, hors de portée de l'optimiseur. */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {palette.imageUrl ? (
+                    // Même raison : une miniature en data URL.
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={palette.imageUrl}
-                      alt={`Aperçu de la palette de ${palette.colorCount} couleurs`}
-                      className="w-12 h-12 object-cover rounded"
+                      alt=""
+                      className="size-12 shrink-0 rounded-md object-cover"
                     />
-                    <div>
-                      <p className="text-sm font-medium">
-                        {palette.colorCount} couleurs
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {new Date(palette.timestamp).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex space-x-1">
-                    {palette.colors.slice(0, 5).map((color, index) => (
-                      <div
-                        key={index}
-                        className="w-6 h-6 rounded border"
-                        style={{ backgroundColor: color }}
-                        title={color}
-                      />
-                    ))}
-                    {palette.colors.length > 5 && (
-                      <div className="w-6 h-6 rounded border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs">
-                        +{palette.colors.length - 5}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      className="bg-surface size-12 shrink-0 rounded-md"
+                    />
+                  )}
+                  <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <span className="text-fg-muted text-xs">
+                      {palette.colorCount}&nbsp;couleurs,{" "}
+                      {new Date(palette.timestamp).toLocaleDateString("fr-FR")}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="flex h-5 overflow-hidden rounded-sm"
+                    >
+                      {palette.colors.map((color, index) => (
+                        <span
+                          key={index}
+                          className="min-w-0 flex-1"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
-    </div>
+    </ToolPage>
   );
 }

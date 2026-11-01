@@ -1,18 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { RefreshCw, Database, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Database, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { AdminLoading } from "@/components/ui/loading";
+import { Stat, StatGrid } from "@/components/ui/loading-card";
+import {
+  formatDateTime,
+  formatInteger,
+  PageHeader,
+  RefreshButton } from "@/components/admin/admin-page";
+import { cn } from "@/lib/utils";
 
 interface CacheStats {
   artifactSetsCount: number;
@@ -37,19 +37,24 @@ export default function AdminArtifactsPage() {
           setStats(result.data);
         } else {
           toast.error(
-            result.error || "Erreur lors de la récupération des stats"
+            result.error ||
+              "Impossible de lire les statistiques. Réessaie dans un instant."
           );
         }
       } else if (response.status === 403) {
         toast.error(
-          "Accès refusé : Seuls les administrateurs peuvent accéder à cette page"
+          "Accès refusé : seuls les administrateurs peuvent ouvrir cette page."
         );
       } else {
-        toast.error("Erreur lors de la récupération des statistiques");
+        toast.error(
+          "Impossible de lire les statistiques. Réessaie dans un instant."
+        );
       }
     } catch (error) {
       console.error("Erreur lors du chargement des stats:", error);
-      toast.error("Erreur lors du chargement des statistiques");
+      toast.error(
+        "Impossible de lire les statistiques. Vérifie ta connexion, puis réessaie."
+      );
     } finally {
       setLoading(false);
     }
@@ -73,11 +78,16 @@ export default function AdminArtifactsPage() {
         // Recharger les stats
         await fetchCacheStats();
       } else {
-        toast.error(result.error || "Erreur lors de la mise à jour du cache");
+        toast.error(
+          result.error ||
+            "Le cache n'a pas pu être mis à jour. Réessaie dans un instant."
+        );
       }
     } catch (error) {
       console.error("Erreur lors de la mise à jour du cache:", error);
-      toast.error("Erreur lors de la mise à jour du cache");
+      toast.error(
+        "Le cache n'a pas pu être mis à jour. Réessaie dans un instant."
+      );
     } finally {
       setRefreshing(false);
     }
@@ -101,11 +111,14 @@ export default function AdminArtifactsPage() {
         // Recharger les stats
         await fetchCacheStats();
       } else {
-        toast.error(result.error || "Erreur lors de l'initialisation");
+        toast.error(
+          result.error ||
+            "Le service n'a pas pu démarrer. Réessaie dans un instant."
+        );
       }
     } catch (error) {
       console.error("Erreur lors de l'initialisation:", error);
-      toast.error("Erreur lors de l'initialisation du service");
+      toast.error("Le service n'a pas pu démarrer. Réessaie dans un instant.");
     } finally {
       setInitializing(false);
     }
@@ -115,199 +128,119 @@ export default function AdminArtifactsPage() {
     fetchCacheStats();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Gestion des Artefacts
-          </h1>
-          <p className="text-muted-foreground">
-            Gestion du cache des données d'artefacts Genshin Impact
-          </p>
-        </div>
-
-        <div className="flex items-center justify-center min-h-[400px]">
-          <AdminLoading
-            mode="full"
-            message="Chargement des statistiques..."
-            submessage="Vérification du cache des artefacts"
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Gestion des Artefacts
-          </h1>
-          <p className="text-muted-foreground">
-            Gestion du cache des données d'artefacts Genshin Impact
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchCacheStats}
-            disabled={refreshing}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+    <>
+      <PageHeader
+        title="Artefacts"
+        description="Le cache des données d'artefacts de Genshin Impact."
+        actions={
+          <>
+            <RefreshButton
+              onClick={fetchCacheStats}
+              busy={loading}
+              disabled={refreshing}
             />
-            {refreshing ? "Actualisation..." : "Actualiser"}
-          </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={initializeService}
+              disabled={initializing || loading}
+            >
+              <Database aria-hidden />
+              {initializing ? "Initialisation…" : "Initialiser le service"}
+            </Button>
+            <Button
+              size="sm"
+              onClick={refreshCache}
+              disabled={refreshing || loading}
+            >
+              <RefreshCw
+                className={cn(refreshing && "asc-animate-spin")}
+                aria-hidden
+              />
+              {refreshing ? "Mise à jour…" : "Actualiser le cache"}
+            </Button>
+          </>
+        }
+      />
 
-          <Separator orientation="vertical" className="h-6 bg-border" />
-
-          <Button
-            variant="default"
-            size="sm"
-            onClick={refreshCache}
-            disabled={refreshing}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+      {loading ? (
+        <AdminLoading message="Lecture du cache des artefacts…" />
+      ) : (
+        <>
+          {/* Statistiques du cache */}
+          <StatGrid columns={3}>
+            <Stat
+              label="Sets en cache"
+              value={formatInteger(stats?.artifactSetsCount || 0)}
             />
-            {refreshing ? "Mise à jour..." : "Actualiser le cache"}
-          </Button>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={initializeService}
-            disabled={initializing}
-            className="flex items-center gap-2"
-          >
-            <Database
-              className={`h-4 w-4 ${initializing ? "animate-pulse" : ""}`}
+            <Stat
+              label="État du cache"
+              value={
+                <Badge variant={stats?.cacheValid ? "success" : "warning"}>
+                  {stats?.cacheValid ? "Valide" : "Expiré"}
+                </Badge>
+              }
+              hint="Valable 24&nbsp;heures"
             />
-            {initializing ? "Initialisation..." : "Initialiser le service"}
-          </Button>
-        </div>
-      </div>
+            <Stat
+              label="Dernière mise à jour"
+              value={
+                <span className="text-base font-semibold">
+                  {stats?.lastUpdated
+                    ? formatDateTime(stats.lastUpdated)
+                    : "Jamais"}
+                </span>
+              }
+            />
+          </StatGrid>
 
-      {/* Statistiques du cache */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Sets d'artefacts en cache
-            </CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats?.artifactSetsCount || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Nombre de sets stockés
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Statut du cache
-            </CardTitle>
-            {stats?.cacheValid ? (
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            ) : (
-              <XCircle className="h-4 w-4 text-red-500" />
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <Badge variant={stats?.cacheValid ? "default" : "destructive"}>
-                {stats?.cacheValid ? "Valide" : "Expiré"}
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Cache valide pendant 24h
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Dernière mise à jour
-            </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm font-medium">
-              {stats?.lastUpdated
-                ? new Date(stats.lastUpdated).toLocaleString("fr-FR")
-                : "Jamais"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Dernière synchronisation
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Informations sur le cache */}
-      <Card>
-        <CardHeader>
-          <CardTitle>À propos du cache des artefacts</CardTitle>
-          <CardDescription>
-            Informations sur le système de cache des données d'artefacts
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <h4 className="font-semibold mb-2">Fonctionnement</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Les données sont récupérées depuis la base de données</li>
-                <li>• Stockage en base de données PostgreSQL</li>
-                <li>• Cache valide pendant 24 heures</li>
-                <li>• Fallback automatique vers les sets par défaut</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Actions disponibles</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
+          {/* Informations sur le cache */}
+          <section className="border-border grid min-w-0 grid-cols-1 gap-6 border-t pt-6 md:grid-cols-2">
+            <div className="flex min-w-0 flex-col gap-2">
+              <h2 className="font-display text-fg text-base font-semibold tracking-tight">
+                Fonctionnement
+              </h2>
+              <ul className="text-fg-muted ms-5 list-disc space-y-1 text-sm leading-relaxed">
+                <li>Les données sont lues depuis la base de données.</li>
+                <li>Le cache reste valable pendant 24&nbsp;heures.</li>
                 <li>
-                  • <strong>Actualiser le cache</strong> : Force la mise à jour
-                  depuis l'API
+                  Sans données, le site se rabat automatiquement sur les sets
+                  par défaut.
                 </li>
                 <li>
-                  • <strong>Initialiser le service</strong> : Configure le cache
-                  initial
-                </li>
-                <li>
-                  • <strong>Actualiser</strong> : Recharge les statistiques
+                  Le cache se met à jour tout seul quand une donnée demandée
+                  n&apos;y figure pas.
                 </li>
               </ul>
             </div>
-          </div>
-
-          <Separator />
-
-          <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
-            <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-              💡 Conseil
-            </h4>
-            <p className="text-sm text-blue-800 dark:text-blue-200">
-              Le cache se met à jour automatiquement quand les données sont
-              demandées et qu'elles ne sont pas en cache. L'actualisation
-              manuelle n'est nécessaire que pour forcer une mise à jour
-              complète.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            <div className="flex min-w-0 flex-col gap-2">
+              <h2 className="font-display text-fg text-base font-semibold tracking-tight">
+                Actions
+              </h2>
+              <ul className="text-fg-muted ms-5 list-disc space-y-1 text-sm leading-relaxed">
+                <li>
+                  <strong className="text-fg font-medium">
+                    Actualiser le cache
+                  </strong>{" "}
+                  force une mise à jour complète depuis l&apos;API. Tu n&apos;en
+                  as besoin que pour devancer la mise à jour automatique.
+                </li>
+                <li>
+                  <strong className="text-fg font-medium">
+                    Initialiser le service
+                  </strong>{" "}
+                  configure le cache initial.
+                </li>
+                <li>
+                  <strong className="text-fg font-medium">Actualiser</strong>{" "}
+                  recharge les statistiques de cette page.
+                </li>
+              </ul>
+            </div>
+          </section>
+        </>
+      )}
+    </>
   );
 }

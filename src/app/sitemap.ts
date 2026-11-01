@@ -14,6 +14,6 @@ import { getReadyTools } from "@/lib/tools-metadata";
  * leur indexation.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const paths = ["/", "/tools", "/about", ...getReadyTools().map((tool) => tool.route)];
+  const paths = ["/", "/tools", "/about", "/contact", ...getReadyTools().map((tool) => tool.route)];
   return paths.map((path) => ({ url: new URL(path, PROJECT_CONFIG.baseUrl).toString() }));
 }

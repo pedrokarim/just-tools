@@ -10,13 +10,13 @@ import {
   CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
-  SidebarMenuSubItem } from "@/components/ui/sidebar";
+  SidebarMenuSubItem,
+  useSidebar } from "@/components/ui/sidebar";
 
 export function NavMain({
   items,
@@ -33,71 +33,88 @@ export function NavMain({
   }[];
 }) {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
+
+  // Sur mobile, la navigation vit dans un tiroir : sans cette fermeture, la page
+  // suivante s'afficherait sous un menu resté ouvert.
+  const closeMobileMenu = () => setOpenMobile(false);
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Administration</SidebarGroupLabel>
-      <SidebarMenu>
-        {items.map((item) => {
-          const isActive = pathname === item.url;
-          const hasSubItems = item.items && item.items.length > 0;
+    <nav aria-label="Navigation de l'administration">
+      <SidebarGroup className="p-3 group-data-[collapsible=icon]:p-2">
+        <SidebarMenu>
+          {items.map((item) => {
+            const isActive = pathname === item.url;
+            const hasSubItems = item.items && item.items.length > 0;
 
-          if (hasSubItems) {
+            if (hasSubItems) {
+              return (
+                <Collapsible
+                  key={item.title}
+                  asChild
+                  defaultOpen={isActive}
+                  className="group/collapsible"
+                >
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton tooltip={item.title} isActive={isActive}>
+                        {item.icon && <item.icon aria-hidden />}
+                        <span>{item.title}</span>
+                        <ChevronRight
+                          className="ml-auto transition-transform duration-(--animate-duration-fast) group-data-[state=open]/collapsible:rotate-90"
+                          aria-hidden
+                        />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {item.items?.map((subItem) => {
+                          const isSubActive = pathname === subItem.url;
+                          return (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={isSubActive}
+                              >
+                                <Link
+                                  href={subItem.url}
+                                  aria-current={isSubActive ? "page" : undefined}
+                                  onClick={closeMobileMenu}
+                                >
+                                  <span>{subItem.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              );
+            }
+
             return (
-              <Collapsible
-                key={item.title}
-                asChild
-                defaultOpen={isActive}
-                className="group/collapsible"
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip={item.title} isActive={isActive}>
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {item.items?.map((subItem) => {
-                        const isSubActive = pathname === subItem.url;
-                        return (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={isSubActive}
-                            >
-                              <Link href={subItem.url}>
-                                <span>{subItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        );
-                      })}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  tooltip={item.title}
+                  isActive={isActive}
+                >
+                  <Link
+                    href={item.url}
+                    aria-current={isActive ? "page" : undefined}
+                    onClick={closeMobileMenu}
+                  >
+                    {item.icon && <item.icon aria-hidden />}
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             );
-          }
-
-          return (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                tooltip={item.title}
-                isActive={isActive}
-              >
-                <Link href={item.url}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          );
-        })}
-      </SidebarMenu>
-    </SidebarGroup>
+          })}
+        </SidebarMenu>
+      </SidebarGroup>
+    </nav>
   );
 }

@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Générateur de Mots de Passe - Créez des mots de passe sécurisés",
+  title: "Générateur de Mots de Passe - Crée des mots de passe sécurisés",
   description:
-    "Outil gratuit pour générer des mots de passe sécurisés et aléatoires. Interface intuitive avec options personnalisables pour tous vos besoins.",
+    "Outil gratuit pour générer des mots de passe sécurisés et aléatoires. Interface intuitive avec options personnalisables pour tous tes besoins.",
   keywords: [
     "générateur mots de passe",
     "mots de passe sécurisés",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     "générateur aléatoire",
   ],
   openGraph: {
-    title: "Générateur de Mots de Passe - Créez des mots de passe sécurisés",
+    title: "Générateur de Mots de Passe - Crée des mots de passe sécurisés",
     description:
       "Outil gratuit pour générer des mots de passe sécurisés et aléatoires.",
     url: "https://just-tools.ascencia.re/tools/password-generator",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Générateur de Mots de Passe - Créez des mots de passe sécurisés",
+    title: "Générateur de Mots de Passe - Crée des mots de passe sécurisés",
     description:
       "Outil gratuit pour générer des mots de passe sécurisés et aléatoires.",
     images: ["/og-image.png"],

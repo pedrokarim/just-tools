@@ -13,6 +13,8 @@ import { rateLimit, clientIp } from "@/lib/rate-limit";
 const LIMIT = 60; // requêtes…
 const WINDOW_MS = 60_000; // …par minute et par IP
 
+const LOOPBACK = new Set(["::1", "127.0.0.1", "::ffff:127.0.0.1"]);
+
 /** Bornes de longueur, alignées sur ce que le schéma peut raisonnablement stocker. */
 const MAX = {
   pagePath: 512,
@@ -35,6 +37,12 @@ function str(value: unknown, max: number): string | undefined {
 
 export async function POST(request: NextRequest) {
   const ipAddress = clientIp(request.headers);
+
+  // Un serveur lancé en local peut pointer sur la base de production : ses
+  // visites, qui sont celles du développeur, n'ont rien à faire dans l'audience.
+  if (LOOPBACK.has(ipAddress)) {
+    return new NextResponse(null, { status: 204 });
+  }
 
   const limit = rateLimit(`analytics:record:${ipAddress}`, LIMIT, WINDOW_MS);
   if (!limit.ok) {

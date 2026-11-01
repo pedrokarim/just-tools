@@ -3,11 +3,12 @@ import ArtefactGeneratorClient from "./page.client";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
+import { ToolPage } from "@/components/site/tool-shell";
 import { ARTIFACT_SETS_TAG } from "@/lib/artefact-generator/artifact-cache";
 
 const title = "Simulateur d'Artefacts Genshin Impact";
 const description =
-  "Générez des artefacts aléatoires de Genshin Impact avec les vraies probabilités du jeu : sets, statistiques principales et sous-statistiques.";
+  "Génère des artefacts aléatoires de Genshin Impact avec les vraies probabilités du jeu : sets, statistiques principales et sous-statistiques.";
 
 export const metadata: Metadata = {
   title,
@@ -70,14 +71,9 @@ export default async function ArtefactGenerator() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-slate-600 dark:text-slate-300">
-              Chargement du générateur d'artefacts...
-            </p>
-          </div>
-        </div>
+        <ToolPage wide>
+          <p className="text-fg-muted text-sm">Chargement du simulateur…</p>
+        </ToolPage>
       }
     >
       <ArtefactGeneratorClient

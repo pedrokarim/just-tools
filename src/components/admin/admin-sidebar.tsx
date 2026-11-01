@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { BarChart3, Settings, Users, Home, FileText, Database, Shield, Sparkles } from "lucide-react";
+import { Settings, Users, Home, FileText, Database, Shield, Sparkles } from "lucide-react";
 
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
 import type { AdminChromeUser } from "./admin-chrome";
+import { JustToolsMark } from "@/components/brand/just-tools-lockup";
 import {
   Sidebar,
   SidebarContent,
@@ -17,7 +18,7 @@ import {
 const navData = {
   navMain: [
     {
-      title: "Dashboard",
+      title: "Tableau de bord",
       url: "/admin",
       icon: Home,
       isActive: true,
@@ -61,21 +62,24 @@ export function AdminSidebar({
 }: React.ComponentProps<typeof Sidebar> & { user: AdminChromeUser }) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <div className="flex items-center gap-2 px-4 py-2 group-data-[collapsible=icon]:justify-center">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary aspect-square">
-            <BarChart3 className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="truncate font-semibold">Admin Panel</span>
-            <span className="truncate text-xs">Just Tools</span>
-          </div>
+      <SidebarHeader className="border-border h-16 shrink-0 flex-row items-center gap-2.5 border-b px-5 py-0 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+        <JustToolsMark size={28} title="" />
+        <div className="flex min-w-0 flex-col gap-0.5 group-data-[collapsible=icon]:hidden">
+          <span
+            translate="no"
+            className="font-display text-fg truncate text-[1.0625rem] leading-none font-semibold tracking-[-0.03em]"
+          >
+            Just Tools
+          </span>
+          <span className="text-fg-subtle truncate text-xs leading-none">
+            Administration
+          </span>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navData.navMain} />
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="border-border border-t p-3 group-data-[collapsible=icon]:p-2">
         <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />

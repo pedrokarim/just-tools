@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Convertisseur Base64 - Encodez et décodez du texte",
+  title: "Convertisseur Base64 - Encode et décodez du texte",
   description:
-    "Outil gratuit pour encoder et décoder du texte en Base64. Interface simple et intuitive pour convertir rapidement vos données.",
+    "Outil gratuit pour encoder et décoder du texte en Base64. Interface simple et intuitive pour convertir rapidement tes données.",
   keywords: [
     "convertisseur base64",
     "encodeur base64",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     "gratuit base64",
   ],
   openGraph: {
-    title: "Convertisseur Base64 - Encodez et décodez du texte",
+    title: "Convertisseur Base64 - Encode et décodez du texte",
     description:
       "Outil gratuit pour encoder et décoder du texte en Base64. Interface simple et intuitive.",
     url: "https://just-tools.ascencia.re/tools/base64-converter",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Convertisseur Base64 - Encodez et décodez du texte",
+    title: "Convertisseur Base64 - Encode et décodez du texte",
     description: "Outil gratuit pour encoder et décoder du texte en Base64.",
     images: ["/og-image.png"],
   },
