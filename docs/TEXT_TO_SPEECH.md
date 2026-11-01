@@ -69,6 +69,10 @@ trois limites :
   estimation, jamais une mesure.
 - **Évènements en vol** : un compteur de génération invalide les rappels des
   utterances annulées, qui arrivent en différé après un `cancel()`.
+- **Enchaînement `cancel()` / `speak()`** : dans le même tick sur une voix en
+  ligne d'Edge, le `speak()` ne démarre jamais et `speaking` reste vrai. Le
+  lecteur attend donc 200 ms après une annulation. Une lecture toujours pas
+  démarrée au bout de 4 s est relancée une fois, puis signalée en erreur.
 
 Raccourcis clavier : `Ctrl+Entrée` lire, `Ctrl+Espace` pause/reprise,
 `Ctrl+Échap` arrêter, `Ctrl+←/→` reculer/avancer de 10 s.
@@ -99,4 +103,6 @@ visible :
 Le module Synthèse vocale d'[Atelier](https://github.com/pedrokarim/atelier)
 enregistre un raccourci global (`Ctrl+Alt+S` par défaut), lit le presse-papiers et ouvre cette
 URL dans Edge. Cas d'usage d'origine : récupérer par OCR le texte affiché à
-l'écran, le copier, puis le faire lire d'une frappe.
+l'écran, le copier, puis le faire lire d'une frappe. Un second raccourci
+(`Ctrl+Alt+T`) traduit le texte dans Atelier avant de l'envoyer : l'outil le
+reçoit déjà traduit, avec `lang` réglé sur la langue cible.

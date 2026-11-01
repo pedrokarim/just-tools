@@ -43,6 +43,15 @@ const MIN_CHARS_PER_SECOND = 4;
 const MAX_CHARS_PER_SECOND = 60;
 /** Délai au-delà duquel une lecture qui n'a pas démarré est jugée bloquée. */
 const BLOCKED_GUARD_MS = 1200;
+/**
+ * Pause entre un `cancel()` et le `speak()` suivant. Enchaînés dans le même
+ * tick sur une voix en ligne d'Edge, le `speak()` ne démarre jamais et
+ * `speaking` reste vrai : rien ne signale le blocage. Mesuré sur Edge 156 :
+ * 50 ms font attendre 2,5 s, 150 ms suffisent, d'où une marge à 200 ms.
+ */
+const CANCEL_SETTLE_MS = 200;
+/** Délai au-delà duquel une file de synthèse coincée est relancée. */
+const STALL_RETRY_MS = 4000;
 const TICK_MS = 100;
 
 const clamp = (value: number, min: number, max: number) =>
@@ -233,6 +242,10 @@ export function useTtsPlayer({
   const generationRef = useRef(0);
   const guardRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startedRef = useRef(false);
+  /** Instant avant lequel `speak()` doit attendre, après un `cancel()`. */
+  const settleUntilRef = useRef(0);
+  /** La lecture en attente a déjà été relancée une fois. */
+  const stallRetriedRef = useRef(false);
   const pendingRef = useRef<number | null>(null);
   const startFromRef = useRef<(from: number) => void>(() => {});
 
@@ -333,6 +346,9 @@ export function useTtsPlayer({
     measureRef.current = null;
     startedRef.current = false;
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      if (speechSynthesis.speaking || speechSynthesis.pending) {
+        settleUntilRef.current = performance.now() + CANCEL_SETTLE_MS;
+      }
       speechSynthesis.cancel();
     }
   }, [clearGuard]);
@@ -421,6 +437,7 @@ export function useTtsPlayer({
         if (generation !== generationRef.current) return;
 
         startedRef.current = true;
+        stallRetriedRef.current = false;
         clearGuard();
         pendingRef.current = null;
         setBlocked(false);
@@ -502,25 +519,58 @@ export function useTtsPlayer({
       };
 
       setStatus("loading");
-      speechSynthesis.speak(utterance);
+
+      const speak = () => {
+        if (generation === generationRef.current) {
+          speechSynthesis.speak(utterance);
+        }
+      };
+      const settleMs = settleUntilRef.current - performance.now();
+      if (settleMs > 0) {
+        setTimeout(speak, settleMs);
+      } else {
+        speak();
+      }
+
+      // Second filet : la file annonce une lecture qui ne vient pas. Une
+      // annulation la libère, et si cela ne suffit pas, autant le dire que
+      // laisser « Préparation… » affiché indéfiniment.
+      const recoverFromStall = () => {
+        if (generation !== generationRef.current || startedRef.current) return;
+
+        abortCurrent();
+
+        if (stallRetriedRef.current) {
+          stallRetriedRef.current = false;
+          setStatus("idle");
+          callbacksRef.current.onError?.("stalled");
+          return;
+        }
+
+        stallRetriedRef.current = true;
+        startFromRef.current(sliceStart);
+      };
 
       // Filet de sécurité : certains Chromium ne signalent pas le refus par une
       // erreur, la lecture ne démarre simplement jamais.
       guardRef.current = setTimeout(() => {
-        if (generation !== generationRef.current) return;
-        if (
-          !startedRef.current &&
-          !speechSynthesis.speaking &&
-          !speechSynthesis.pending
-        ) {
+        if (generation !== generationRef.current || startedRef.current) return;
+
+        if (!speechSynthesis.speaking && !speechSynthesis.pending) {
           pendingRef.current = sliceStart;
           setStatus("idle");
           setBlocked(true);
           callbacksRef.current.onBlocked?.();
+          return;
         }
+
+        guardRef.current = setTimeout(
+          recoverFromStall,
+          STALL_RETRY_MS - BLOCKED_GUARD_MS
+        );
       }, BLOCKED_GUARD_MS);
     },
-    [applyPosition, clearGuard]
+    [abortCurrent, applyPosition, clearGuard]
   );
 
   // `startFrom` s'appelle récursivement (segment suivant) : la ref casse le
