@@ -1,3 +1,4 @@
+import { ANALYTICS_RETENTION_MONTHS } from "@/lib/privacy";
 import { PROJECT_CONFIG } from "@/lib/constants";
 import {
   getToolGroups,
@@ -66,7 +67,7 @@ const PAGES: Record<string, () => string> = {
   "/contact": () =>
     `# Contact\n\n- Un problème ou une idée : [ouvrir une issue sur GitHub](${PROJECT_CONFIG.project.github}/issues).\n- Une question, ou l'exercice de tes droits sur tes données : ${PROJECT_CONFIG.contact.email}.\n\n${PROJECT_CONFIG.name} est développé par ${PROJECT_CONFIG.creator.name} pour [${PROJECT_CONFIG.company.name}](${PROJECT_CONFIG.company.website}).\n\n${FOOTER}`,
   "/legal/privacy": () =>
-    `# Politique de confidentialité\n\nLe texte complet est publié sur [la page dédiée](${absolute("/legal/privacy")}). En résumé : le site collecte des statistiques d'usage anonymes, ni nom ni adresse e-mail, et ne collecte pas le contenu traité par les outils.\n\n${PROCESSING}\n\n${FOOTER}`,
+    `# Politique de confidentialité\n\nLe texte complet est publié sur [la page dédiée](${absolute("/legal/privacy")}). En résumé : le site collecte des statistiques d'usage, avec une adresse IP tronquée, ni nom ni adresse e-mail, et les efface au bout de ${ANALYTICS_RETENTION_MONTHS} mois. Il ne collecte pas le contenu traité par les outils.\n\n${PROCESSING}\n\n${FOOTER}`,
   "/legal/terms": () =>
     `# Conditions générales d'utilisation\n\nLe texte complet est publié sur [la page dédiée](${absolute("/legal/terms")}). Le service est gratuit, fourni en l'état, et régi par le droit français.\n\n${FOOTER}`,
 };

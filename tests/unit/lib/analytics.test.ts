@@ -5,6 +5,7 @@ import {
   getUniqueVisitors,
   clearAnalytics,
   exportAnalytics,
+  purgeExpiredAnalytics,
 } from "@/lib/analytics";
 
 // `vi.mock` est hissé en haut du fichier : sa factory ne peut pas référencer un
@@ -22,6 +23,9 @@ const { mockPrisma } = vi.hoisted(() => ({
       upsert: vi.fn(),
       count: vi.fn(),
       findMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    loginAttempt: {
       deleteMany: vi.fn(),
     },
     $queryRaw: vi.fn(),
@@ -400,6 +404,28 @@ describe("Analytics Functions", () => {
       );
 
       consoleSpy.mockRestore();
+    });
+  });
+});
+
+describe("purgeExpiredAnalytics", () => {
+  it("efface après la durée annoncée, une fois par jour au plus", async () => {
+    vi.clearAllMocks();
+    const now = new Date("2030-03-15T12:00:00.000Z");
+
+    await purgeExpiredAnalytics(now);
+    await purgeExpiredAnalytics(new Date(now.getTime() + 60_000));
+
+    const cutoff = new Date("2028-02-15T12:00:00.000Z");
+    expect(mockPrisma.pageView.deleteMany).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.pageView.deleteMany).toHaveBeenCalledWith({
+      where: { timestamp: { lt: cutoff } },
+    });
+    expect(mockPrisma.uniqueVisitor.deleteMany).toHaveBeenCalledWith({
+      where: { lastVisit: { lt: cutoff } },
+    });
+    expect(mockPrisma.loginAttempt.deleteMany).toHaveBeenCalledWith({
+      where: { timestamp: { lt: cutoff } },
     });
   });
 });

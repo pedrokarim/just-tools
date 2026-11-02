@@ -7,6 +7,7 @@ import {
   SiteShell,
 } from "@/components/site/site-shell";
 import { PROJECT_CONFIG } from "@/lib/constants";
+import { ANALYTICS_RETENTION_MONTHS } from "@/lib/privacy";
 
 export const metadata: Metadata = {
   title: "Politique de confidentialité",
@@ -21,7 +22,7 @@ export default function PrivacyPage() {
       <ReadingColumn
         title="Politique de confidentialité"
         lead="Ce que nous collectons, ce que nous ne collectons pas, et comment exercer tes droits."
-        updatedAt="1er novembre 2026"
+        updatedAt="2 novembre 2026"
       >
         <ReadingSection id="introduction" title="Introduction">
           <p>
@@ -41,7 +42,7 @@ export default function PrivacyPage() {
             <strong>Données techniques&nbsp;:</strong>
           </p>
           <ul>
-            <li>adresse IP anonymisée&nbsp;;</li>
+            <li>adresse IP tronquée, sans sa fin&nbsp;;</li>
             <li>type de navigateur et système d&apos;exploitation&nbsp;;</li>
             <li>pages visitées et temps passé&nbsp;;</li>
             <li>données de performance et erreurs techniques.</li>
@@ -85,8 +86,31 @@ export default function PrivacyPage() {
               techniques et fournir une assistance.
             </li>
             <li>
-              <strong>Statistiques&nbsp;:</strong> des mesures anonymes pour
+              <strong>Statistiques&nbsp;:</strong> des mesures d&apos;audience pour
               comprendre l&apos;utilisation du service.
+            </li>
+          </ul>
+        </ReadingSection>
+
+        <ReadingSection id="conservation" title="Combien de temps nous les gardons">
+          <p>
+            La fin de ton adresse IP est retirée avant tout enregistrement. Le
+            reste est effacé automatiquement&nbsp;:
+          </p>
+          <ul>
+            <li>
+              <strong>Statistiques de visite&nbsp;:</strong>{" "}
+              {ANALYTICS_RETENTION_MONTHS} mois après la visite.
+            </li>
+            <li>
+              <strong>Visiteurs uniques&nbsp;:</strong>{" "}
+              {ANALYTICS_RETENTION_MONTHS} mois après la dernière visite.
+            </li>
+            <li>
+              <strong>Journaux de connexion à l&apos;administration&nbsp;:</strong>{" "}
+              {ANALYTICS_RETENTION_MONTHS} mois. Ils ne concernent que les
+              personnes qui ont tenté de s&apos;y connecter, avec leur compte
+              Discord.
             </li>
           </ul>
         </ReadingSection>
@@ -103,7 +127,7 @@ export default function PrivacyPage() {
               attaques et les abus.
             </li>
             <li>
-              <strong>Cookies analytiques&nbsp;:</strong> statistiques anonymes
+              <strong>Cookies analytiques&nbsp;:</strong> statistiques
               d&apos;utilisation.
             </li>
           </ul>

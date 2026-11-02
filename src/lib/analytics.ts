@@ -1,3 +1,4 @@
+import { ANALYTICS_RETENTION_MONTHS } from "./privacy";
 import { prisma } from "./prisma";
 
 export interface PageViewData {
@@ -43,6 +44,36 @@ export async function recordPageView(data: PageViewData) {
     }
   } catch (error) {
     console.error("Erreur lors de l'enregistrement de la vue de page:", error);
+  }
+}
+
+const PURGE_INTERVAL_MS = 24 * 60 * 60 * 1000;
+let lastPurgeAt = 0;
+
+/**
+ * Efface ce qui dépasse la durée annoncée dans la politique de confidentialité.
+ * Le serveur n'a pas de tâche planifiée : les visites la déclenchent, une fois
+ * par jour au plus.
+ */
+export async function purgeExpiredAnalytics(now = new Date()) {
+  if (now.getTime() - lastPurgeAt < PURGE_INTERVAL_MS) return;
+  lastPurgeAt = now.getTime();
+
+  const cutoff = new Date(now);
+  cutoff.setMonth(cutoff.getMonth() - ANALYTICS_RETENTION_MONTHS);
+
+  try {
+    await prisma.pageView.deleteMany({
+      where: { timestamp: { lt: cutoff } },
+    });
+    await prisma.uniqueVisitor.deleteMany({
+      where: { lastVisit: { lt: cutoff } },
+    });
+    await prisma.loginAttempt.deleteMany({
+      where: { timestamp: { lt: cutoff } },
+    });
+  } catch (error) {
+    console.error("Erreur lors de la purge des statistiques:", error);
   }
 }
 

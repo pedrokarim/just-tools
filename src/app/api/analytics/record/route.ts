@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { recordPageView } from "@/lib/analytics";
+import { purgeExpiredAnalytics, recordPageView } from "@/lib/analytics";
+import { anonymizeIp } from "@/lib/privacy";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 /**
@@ -70,11 +71,14 @@ export async function POST(request: NextRequest) {
     await recordPageView({
       pagePath,
       userAgent: str(body.userAgent, MAX.userAgent),
-      ipAddress,
+      // L'adresse complète ne sert qu'à la limite de débit, en mémoire.
+      ipAddress: anonymizeIp(ipAddress),
       fingerprint: str(body.fingerprint, MAX.fingerprint),
       country: str(body.country, MAX.country),
       city: str(body.city, MAX.city),
     });
+
+    void purgeExpiredAnalytics();
 
     return NextResponse.json({ success: true });
   } catch (error) {

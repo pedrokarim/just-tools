@@ -99,7 +99,7 @@ export default function TermsPage() {
           </p>
           <p>
             Nous ne collectons aucune donnée personnelle identifiable. Les
-            seules données collectées sont anonymes et servent à améliorer le
+            seules données collectées sont des statistiques d&apos;usage, qui servent à améliorer le
             service. Le détail figure dans la{" "}
             <a href="/legal/privacy">politique de confidentialité</a>.
           </p>
