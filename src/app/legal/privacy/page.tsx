@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { LegalSignature } from "@/components/site/legal-signature";
 import {
   ReadingColumn,
@@ -62,6 +63,11 @@ export default function PrivacyPage() {
             <li>cookies de suivi publicitaire&nbsp;;</li>
             <li>données de géolocalisation précises.</li>
           </ul>
+          <p>
+            Tes contenus sont traités dans ton navigateur. Les quelques cas où
+            le réseau entre en jeu sont détaillés sur la{" "}
+            <Link href="/about#traitement">page À propos</Link>.
+          </p>
         </ReadingSection>
 
         <ReadingSection id="usage" title="À quoi servent ces données">

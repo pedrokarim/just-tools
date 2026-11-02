@@ -1,5 +1,6 @@
 import { Metadata } from "next";
-import { Github, Globe } from "lucide-react";
+import Link from "next/link";
+import { Github, Globe, Mail } from "lucide-react";
 import { AscenciaLockup } from "@/components/brand/ascencia-mark";
 import {
   ReadingColumn,
@@ -33,8 +34,44 @@ export default function AboutPage() {
           <p>
             La productivité ne devrait pas dépendre d&apos;une barrière
             financière ou technique. Il n&apos;y a donc ni compte à créer, ni
-            abonnement, ni limite d&apos;usage, et tes fichiers sont traités
-            dans ton navigateur plutôt que sur un serveur.
+            abonnement, ni limite d&apos;usage, ni publicité. Just Tools est
+            édité par {PROJECT_CONFIG.company.name} et ne vend rien.
+          </p>
+        </ReadingSection>
+
+        <ReadingSection id="traitement" title="Où tournent les outils">
+          <p>
+            Dans ton navigateur&nbsp;: ce que tu écris ou importes depuis ton
+            appareil y est traité, et n&apos;est pas envoyé à nos serveurs. Il y
+            a quatre cas où le réseau entre en jeu&nbsp;:
+          </p>
+          <ul>
+            <li>
+              <strong>Import par adresse&nbsp;:</strong> notre serveur va
+              chercher l&apos;image pour toi, car les navigateurs bloquent
+              souvent cet accès direct. Il ne l&apos;enregistre pas.
+            </li>
+            <li>
+              <strong>Traduction de la synthèse vocale&nbsp;:</strong> ton texte
+              part chez LibreTranslate ou MyMemory, seulement quand tu demandes
+              une traduction.
+            </li>
+            <li>
+              <strong>Suppression de fond et lecture du texte d&apos;une
+              image&nbsp;:</strong> le navigateur télécharge d&apos;abord un
+              modèle depuis un service tiers (IMG.LY, jsDelivr). Ton image, elle,
+              ne quitte pas ton appareil.
+            </li>
+            <li>
+              <strong>Générateur d&apos;artefacts&nbsp;:</strong> les sets
+              viennent de notre base de données, le tirage se fait dans ton
+              navigateur.
+            </li>
+          </ul>
+          <p>
+            Le site mesure aussi sa fréquentation, sans le contenu que tu
+            traites&nbsp;: le détail est dans la{" "}
+            <Link href="/legal/privacy">politique de confidentialité</Link>.
           </p>
         </ReadingSection>
 
@@ -50,14 +87,20 @@ export default function AboutPage() {
           <div className="flex flex-wrap gap-3 pt-1">
             <Button asChild variant="secondary">
               <a
-                href={PROJECT_CONFIG.creator.github}
+                href={PROJECT_CONFIG.project.github}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="!text-fg !no-underline"
               >
                 <Github aria-hidden="true" />
-                GitHub
+                Code source
               </a>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link href="/contact" className="!text-fg !no-underline">
+                <Mail aria-hidden="true" />
+                Contact
+              </Link>
             </Button>
             <Button asChild variant="secondary">
               <a

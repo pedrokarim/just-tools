@@ -145,6 +145,13 @@ const jsonLd = {
     "@type": "Organization",
     name: "Ascencia",
     url: "https://ascencia.re",
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: PROJECT_CONFIG.contact.email,
+      url: `${baseUrl}/contact`,
+      availableLanguage: "French",
+    },
   },
   sameAs: [PROJECT_CONFIG.project.github],
   featureList: tools.map((tool) => tool.name),

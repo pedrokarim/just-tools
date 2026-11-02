@@ -39,7 +39,16 @@ const FOOTER = `---
 - [Index pour les agents](${absolute("/llms.txt")})
 `;
 
-const SUMMARY = `${PROJECT_CONFIG.name} réunit ${tools.length} outils de développement gratuits, sans compte et open source (licence ${PROJECT_CONFIG.project.license}). Ils s'adressent aux développeurs et aux créatifs et tournent dans le navigateur : les textes et les images sont traités sur l'appareil. Seule la traduction de la synthèse vocale passe par un service tiers, à la demande de l'utilisateur.`;
+const SUMMARY = `${PROJECT_CONFIG.name} réunit ${tools.length} outils de développement gratuits, sans compte, sans publicité et open source (licence ${PROJECT_CONFIG.project.license}). Ils s'adressent aux développeurs et aux créatifs et tournent dans le navigateur : ce que l'utilisateur écrit ou importe depuis son appareil y est traité, et n'est pas envoyé aux serveurs du site.`;
+
+const PROCESSING = `## Où tournent les outils
+
+Dans le navigateur. Le réseau entre en jeu dans quatre cas :
+
+- Import par adresse : le serveur du site va chercher l'image, sans l'enregistrer.
+- Traduction de la synthèse vocale : le texte part chez LibreTranslate ou MyMemory, seulement à la demande de l'utilisateur.
+- Suppression de fond et lecture du texte d'une image : le navigateur télécharge d'abord un modèle depuis un service tiers (IMG.LY, jsDelivr). L'image ne quitte pas l'appareil.
+- Générateur d'artefacts : les sets viennent de la base de données du site, le tirage se fait dans le navigateur.`;
 
 function homePage() {
   return `# ${PROJECT_CONFIG.name}\n\n${SUMMARY}\n\n## Outils\n\n${TOOL_LIST}\n\n${FOOTER}`;
@@ -53,11 +62,11 @@ const PAGES: Record<string, () => string> = {
   "/": homePage,
   "/tools": toolsPage,
   "/about": () =>
-    `# À propos de ${PROJECT_CONFIG.name}\n\n${SUMMARY}\n\n${PROJECT_CONFIG.name} est créé par ${PROJECT_CONFIG.creator.name} (${PROJECT_CONFIG.creator.alias}) pour [${PROJECT_CONFIG.company.name}](${PROJECT_CONFIG.company.website}). Le code source est public sur [GitHub](${PROJECT_CONFIG.project.github}).\n\n${FOOTER}`,
+    `# À propos de ${PROJECT_CONFIG.name}\n\n${SUMMARY}\n\n${PROCESSING}\n\n## Qui est derrière\n\n${PROJECT_CONFIG.name} est créé par ${PROJECT_CONFIG.creator.name} (${PROJECT_CONFIG.creator.alias}) et édité par [${PROJECT_CONFIG.company.name}](${PROJECT_CONFIG.company.website}). Le site ne vend rien. Le code source est public sur [GitHub](${PROJECT_CONFIG.project.github}).\n\n${FOOTER}`,
   "/contact": () =>
     `# Contact\n\n- Un problème ou une idée : [ouvrir une issue sur GitHub](${PROJECT_CONFIG.project.github}/issues).\n- Une question, ou l'exercice de tes droits sur tes données : ${PROJECT_CONFIG.contact.email}.\n\n${PROJECT_CONFIG.name} est développé par ${PROJECT_CONFIG.creator.name} pour [${PROJECT_CONFIG.company.name}](${PROJECT_CONFIG.company.website}).\n\n${FOOTER}`,
   "/legal/privacy": () =>
-    `# Politique de confidentialité\n\nLe texte complet est publié sur [la page dédiée](${absolute("/legal/privacy")}). En résumé : le site collecte des statistiques d'usage anonymes, ni nom ni adresse e-mail, et ne collecte pas le contenu traité par les outils.\n\n${FOOTER}`,
+    `# Politique de confidentialité\n\nLe texte complet est publié sur [la page dédiée](${absolute("/legal/privacy")}). En résumé : le site collecte des statistiques d'usage anonymes, ni nom ni adresse e-mail, et ne collecte pas le contenu traité par les outils.\n\n${PROCESSING}\n\n${FOOTER}`,
   "/legal/terms": () =>
     `# Conditions générales d'utilisation\n\nLe texte complet est publié sur [la page dédiée](${absolute("/legal/terms")}). Le service est gratuit, fourni en l'état, et régi par le droit français.\n\n${FOOTER}`,
 };

@@ -1,6 +1,6 @@
 {
   "name": "just-tools",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "private": true,
   "scripts": {
     "dev": "node scripts/vendor-prettier.js && bun --bun next dev --turbopack",

@@ -17,7 +17,7 @@ const PRINCIPLES = [
   },
   {
     title: "Tes fichiers restent chez toi",
-    text: "Tes textes et tes images sont traités dans ton navigateur. Seule la traduction de la synthèse vocale passe par un service tiers, et uniquement quand tu la demandes.",
+    text: "Ce que tu écris ou importes depuis ton appareil est traité dans ton navigateur. Le réseau n'entre en jeu que pour une image importée par son adresse ou une traduction que tu demandes.",
   },
   {
     title: "Ouvert, et installable",
