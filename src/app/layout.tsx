@@ -229,10 +229,18 @@ export default function RootLayout({
             Le provider ne rend que ses enfants : il n'introduit aucune frontière
             de rendu, et les enfants restent des Server Components.
             `excludePaths` écarte le back-office, dont le trafic ne dit rien de
-            l'audience. Sans `siteId`, le SDK reste inerte (cf. plus bas). */}
+            l'audience. Sans `siteId`, le SDK reste inerte (cf. plus bas).
+            `consent="granted"` : choix assumé pour ce site, sans bandeau. Le SDK
+            part sinon en `pending` et jette tout, et Sarutobi n'avait rien reçu
+            en douze mois. `autocapture="structured"` n'écoute que les éléments
+            marqués `data-sarutobi`. */}
         <SarutobiProvider
           siteId={process.env.NEXT_PUBLIC_SARUTOBI_SITE_ID ?? ""}
           disabled={!process.env.NEXT_PUBLIC_SARUTOBI_SITE_ID}
+          consent="granted"
+          autocapture="structured"
+          environment={process.env.NODE_ENV}
+          release={`just-tools@${PROJECT_CONFIG.version}`}
           excludePaths={["/admin/**"]}
         >
           <ThemeProvider

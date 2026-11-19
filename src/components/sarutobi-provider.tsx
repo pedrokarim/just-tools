@@ -6,7 +6,7 @@ export { SarutobiProvider } from "@ascencia/sarutobi-react";
  * Réexport client de `SarutobiProvider`.
  *
  * Contournement temporaire d'un défaut d'empaquetage amont : le paquet publié
- * `@ascencia/sarutobi-react@0.1.0-rc.4` ne contient pas la directive
+ * `@ascencia/sarutobi-react` (de rc.4 à rc.7 au moins) ne contient pas la directive
  * `"use client"` dans son `dist`. Importé directement depuis le layout — un
  * Server Component — le provider est alors traité comme composant serveur et le
  * build échoue au prérendu sur « (0 , Q.useRef) is not a function ».
